@@ -12,7 +12,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route element={<PublicRoute />}>
-        {/* <Route path="/login" element={<Login />} /> */}
+        <Route path="/login" element={<Login />} />
       </Route>
 
       <Route element={<ProtectedRoute />}>
