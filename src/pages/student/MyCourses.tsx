@@ -14,33 +14,55 @@ export function MyCourses() {
         setLoading(false);
         return;
       }
-
       try {
         setLoading(true);
         const data = await inscriptionService.getMyCourses(user.id);
         setInscriptions(data);
       } catch (error) {
-        console.error("Error al obtener inscripciones:", error);
+        console.error("Error al cargar:", error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchInscriptions();
   }, [user?.id]);
 
-  if (loading) return <div>Cargando tus cursos...</div>;
+  // Función con mensaje de confirmación
+  const handleCancel = async (id: number) => {
+    // MENSAJE DE CONFIRMACIÓN
+    const confirmacion = window.confirm("¿Estás seguro de que deseas cancelar esta inscripción? Esta acción no se puede deshacer.");
+    if (confirmacion) {
+      try {
+        
+        await inscriptionService.cancel(id);
+
+
+        setInscriptions(prev => prev.filter(ins => ins.id !== id));
+        alert("Inscripción cancelada.");
+      } catch (error) {
+        console.error("Error al cancelar:", error);
+        alert("Hubo un error al procesar la cancelación.");
+      }
+    }
+  };
+
+  if (loading) return <div>Cargando inscripciones...</div>;
 
   return (
     <div>
-      <h1>Mis Cursos Inscritos</h1>
+      <h1>Mis Cursos</h1>
+      <hr />
       {inscriptions.length === 0 ? (
-        <p>No tienes cursos inscritos actualmente o el servidor no responde.</p>
+        <p>No tienes cursos inscritos.</p>
       ) : (
         <ul>
           {inscriptions.map((ins) => (
-            <li key={ins.id}>
-              {ins.courseName} - <strong>{ins.status}</strong>
+            <li key={ins.id} style={{ marginBottom: "15px", border: "1px solid gray", padding: "10px" }}>
+              <strong>{ins.courseName}</strong> - Estado: {ins.status}
+              <br />
+              <button onClick={() => handleCancel(ins.id)}>
+                Cancelar inscripción
+              </button>
             </li>
           ))}
         </ul>
