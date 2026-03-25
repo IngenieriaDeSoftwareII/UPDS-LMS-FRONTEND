@@ -55,7 +55,10 @@ export function Login() {
           };
           navigate(redirects[user.role]);
         },
-        onError: () => setError('Error al iniciar sesión'),
+        onError: (err: any) => {
+          console.log(err);
+          setError(err?.response?.data?.message || 'Error al iniciar sesión');
+        },
       }
     );
   };
