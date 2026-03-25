@@ -45,14 +45,6 @@ export default function CourseCatalog() {
                 {course.titulo}
               </h2>
 
-              <p className="text-sm text-gray-500">
-                {course.categoria.nombre}
-              </p>
-
-              <p className="text-sm text-gray-600">
-                {course.docente.user.firstName} {course.docente.user.lastName}
-              </p>
-
               <p className="text-xs text-gray-400">
                 ⏱ {Math.floor(course.duracion_total_min / 60)}h
               </p>

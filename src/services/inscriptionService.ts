@@ -3,10 +3,7 @@ import type { Course } from '@/types/course'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
-// ===============================
-// DTOs (basados en tu backend)
-// ===============================
-
+// DTOs
 export interface CreateInscriptionDto {
   usuarioId: number
   cursoId: number
@@ -25,15 +22,10 @@ export interface InscriptionResponse {
   curso?: Course
 }
 
-// ===============================
 // SERVICE
-// ===============================
-
 export const inscriptionService = {
 
-  // ===============================
   // INSCRIBIRSE A CURSO
-  // ===============================
   async create(data: CreateInscriptionDto): Promise<InscriptionResponse> {
     const response = await fetch(`${API_URL}/Inscriptions`, {
       method: 'POST',
@@ -51,10 +43,8 @@ export const inscriptionService = {
     return response.json()
   },
 
-  // ===============================
   // OBTENER MIS CURSOS
-  // ===============================
-  async getMyCourses(usuarioId: number): Promise<InscriptionResponse[]> {
+    async getMyCourses(usuarioId: number): Promise<InscriptionResponse[]> {
     const response = await fetch(
       `${API_URL}/Inscriptions/mis-cursos?usuarioId=${usuarioId}`
     )
@@ -66,9 +56,7 @@ export const inscriptionService = {
     return response.json()
   },
 
-  // ===============================
   // CANCELAR INSCRIPCIÓN
-  // ===============================
   async cancel(data: CancelInscriptionDto): Promise<InscriptionResponse> {
     const response = await fetch(`${API_URL}/Inscriptions/cancelar`, {
       method: 'POST',
