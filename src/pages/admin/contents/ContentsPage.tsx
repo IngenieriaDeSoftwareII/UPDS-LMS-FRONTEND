@@ -183,9 +183,9 @@ export function ContentsPage() {
                   <SelectValue placeholder="Seleccione tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="1">🎥 Video</SelectItem>
-                  <SelectItem value="2">📄 Documento</SelectItem>
-                  <SelectItem value="3">🖼 Imagen</SelectItem>
+                  <SelectItem value="0">🎥 Video</SelectItem>
+                  <SelectItem value="1">📄 Documento</SelectItem>
+                  <SelectItem value="2">🖼 Imagen</SelectItem>
                 </SelectContent>
               </Select>
             </div>
