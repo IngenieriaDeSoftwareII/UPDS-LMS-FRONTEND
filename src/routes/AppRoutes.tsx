@@ -5,7 +5,8 @@ import { PersonsPage } from '@/pages/admin/PersonsPage'
 import { AdminRoutes } from '@/routes/AdminRoutes'
 import { TeacherRoutes } from '@/routes/TeacherRoutes'
 import { StudentRoutes } from '@/routes/StudentRoutes'
-import { LessonsPage } from '@/pages/lessons/LessonsPage'
+import { LessonsPage } from '@/pages/admin/lessons/LessonsPage'
+import { ContentsPage } from '@/pages/admin/contents/ContentsPage'
 
 export function AppRoutes() {
   return (
@@ -30,6 +31,8 @@ export function AppRoutes() {
 
         {/* Leccion */}
         <Route path="/lessons" element={<LessonsPage />} />
+        {/* Content */}
+        <Route path="/contents" element={<ContentsPage />} />
 
       </Route>
 
