@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import {
@@ -20,6 +21,8 @@ import { useLessons } from '@/hooks/useLessons'
 import type { Lesson } from '@/hooks/useLessons'
 
 export function DocumentUploadPage() {
+  const navigate = useNavigate()
+
   const [file, setFile] = useState<File | null>(null)
   const [lessonId, setLessonId] = useState<number | null>(null)
   const [title, setTitle] = useState('')
@@ -31,10 +34,7 @@ export function DocumentUploadPage() {
   const { mutate: upload, isPending } = useUploadDocument()
   const { data: lessons, isLoading } = useLessonsList()
 
-  // 🔥 DEBUG COMPLETO
   const handleUpload = () => {
-    console.log('CLICK')
-
     if (!file) {
       alert('Selecciona un archivo')
       return
@@ -45,37 +45,24 @@ export function DocumentUploadPage() {
       return
     }
 
-    console.log('DATA A ENVIAR:', {
-      file,
-      lessonId,
-      title,
-      pageCount,
-    })
-
     upload(
       {
         file,
         lessonId,
-        title,
+        title: title || undefined,
         pageCount,
       },
       {
-        onSuccess: (res) => {
-          console.log('SUCCESS:', res)
+        onSuccess: () => {
           alert('Documento subido correctamente ✅')
 
-          // 🔥 RESET FORM
-          setFile(null)
-          setLessonId(null)
-          setTitle('')
-          setPageCount(undefined)
+          // 🔥 REDIRECCIÓN AUTOMÁTICA
+          navigate('/documents')
         },
         onError: (err: any) => {
-          console.error('ERROR COMPLETO:', err)
+          console.error(err)
 
-          // 🔥 VER ERROR REAL DEL BACKEND
           if (err?.response) {
-            console.error('BACKEND ERROR:', err.response.data)
             alert('Error backend: ' + JSON.stringify(err.response.data))
           } else {
             alert('Error al subir documento ❌')
@@ -88,6 +75,11 @@ export function DocumentUploadPage() {
   return (
     <div className="space-y-6">
 
+      {/* 🔥 BOTÓN VOLVER */}
+      <Button variant="outline" onClick={() => navigate('/documents')}>
+        ← Volver
+      </Button>
+
       <Card>
         <CardHeader>
           <CardTitle>Subir Documento</CardTitle>
@@ -95,7 +87,6 @@ export function DocumentUploadPage() {
 
         <CardContent className="space-y-4">
 
-          {/* 🔥 SELECT LESSON */}
           <div>
             <label>Lección</label>
             <Select onValueChange={(v) => setLessonId(Number(v))}>
@@ -117,20 +108,19 @@ export function DocumentUploadPage() {
             </Select>
           </div>
 
-          {/* 🔥 FILE */}
           <div>
             <label>Archivo</label>
             <Input
+              id="fileInput"
               type="file"
+              accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.zip,.rar"
               onChange={(e) => {
                 const selected = e.target.files?.[0] || null
-                console.log('FILE:', selected)
                 setFile(selected)
               }}
             />
           </div>
 
-          {/* 🔥 TITLE */}
           <div>
             <label>Título</label>
             <Input
@@ -139,15 +129,14 @@ export function DocumentUploadPage() {
             />
           </div>
 
-          {/* 🔥 PAGE COUNT */}
           <div>
             <label>Número de páginas</label>
             <Input
               type="number"
+              min={1}
               onChange={(e) => {
                 const val = Number(e.target.value)
-                console.log('PAGE COUNT:', val)
-                setPageCount(val)
+                setPageCount(val > 0 ? val : undefined)
               }}
             />
           </div>
@@ -158,7 +147,6 @@ export function DocumentUploadPage() {
 
         </CardContent>
       </Card>
-
     </div>
   )
 }

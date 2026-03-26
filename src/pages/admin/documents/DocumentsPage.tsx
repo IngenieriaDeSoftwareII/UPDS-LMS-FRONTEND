@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -5,8 +6,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 
 export function DocumentsPage() {
-  const { useDocumentsList, useDeleteDocument } = useDocumentContents()
+  const navigate = useNavigate()
 
+  const { useDocumentsList, useDeleteDocument } = useDocumentContents()
   const { data, isLoading, error } = useDocumentsList()
   const { mutate: deleteDocument } = useDeleteDocument()
 
@@ -16,13 +18,46 @@ export function DocumentsPage() {
     }
   }
 
-  const handleOpen = (url?: string) => {
-    if (!url) return
-    window.open(url, '_blank')
+  const handleOpen = async (contentId: number) => {
+    console.log('🔵 ID:', contentId)
+
+    try {
+      const res = await fetch(
+        `http://localhost:5024/api/DocumentContents/GetSasUrl/${contentId}`
+      )
+
+      if (!res.ok) {
+        const text = await res.text()
+        console.error('🔴 BACKEND ERROR:', text)
+        alert('Error backend: ' + text)
+        return
+      }
+
+      const data = await res.json()
+
+      console.log('🟢 SAS URL:', data)
+
+      if (!data?.url) {
+        alert('No se recibió URL válida')
+        return
+      }
+
+      window.open(data.url, '_blank')
+    } catch (err) {
+      console.error('🔴 ERROR COMPLETO:', err)
+      alert('No se pudo abrir el documento')
+    }
   }
 
   return (
     <div className="space-y-6">
+
+      {/* 🔥 BOTÓN CORREGIDO */}
+      <div className="flex justify-end">
+        <Button onClick={() => navigate('/uploaddocuments')}>
+          + Subir Documento
+        </Button>
+      </div>
 
       <Card>
         <CardHeader>
@@ -30,7 +65,6 @@ export function DocumentsPage() {
         </CardHeader>
 
         <CardContent>
-
           {error ? (
             <p className="text-red-500">Error al cargar documentos</p>
           ) : (
@@ -64,9 +98,8 @@ export function DocumentsPage() {
                     <TableRow key={doc.contentId}>
                       <TableCell>{doc.contentId}</TableCell>
 
-                      {/* Nombre del archivo */}
                       <TableCell>
-                        {doc.fileUrl ? doc.fileUrl.split('/').pop() : 'Sin archivo'}
+                        {doc.fileUrl || 'Sin archivo'}
                       </TableCell>
 
                       <TableCell>{doc.format}</TableCell>
@@ -74,10 +107,10 @@ export function DocumentsPage() {
                       <TableCell>{doc.pageCount}</TableCell>
 
                       <TableCell className="flex gap-2">
-                        {/* Abrir */}
-                        <Button onClick={() => handleOpen(doc.fileUrl)}>Ver</Button>
+                        <Button onClick={() => handleOpen(doc.contentId)}>
+                          Ver
+                        </Button>
 
-                        {/* Eliminar */}
                         <Button
                           variant="destructive"
                           onClick={() => handleDelete(doc.contentId)}
@@ -91,10 +124,8 @@ export function DocumentsPage() {
               </TableBody>
             </Table>
           )}
-
         </CardContent>
       </Card>
-
     </div>
   )
 }
