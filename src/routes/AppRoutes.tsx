@@ -7,6 +7,8 @@ import { TeacherRoutes } from '@/routes/TeacherRoutes'
 import { StudentRoutes } from '@/routes/StudentRoutes'
 import { LessonsPage } from '@/pages/admin/lessons/LessonsPage'
 import { ContentsPage } from '@/pages/admin/contents/ContentsPage'
+import { DocumentUploadPage } from '@/pages/admin/documents/DocumentUploadPage'
+import { DocumentsPage } from '@/pages/admin/documents/DocumentsPage'
 
 export function AppRoutes() {
   return (
@@ -33,6 +35,10 @@ export function AppRoutes() {
         <Route path="/lessons" element={<LessonsPage />} />
         {/* Content */}
         <Route path="/contents" element={<ContentsPage />} />
+
+        {/* DocumentContent */}
+        <Route path="/documents" element={<DocumentsPage />} />
+        <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
 
       </Route>
 
