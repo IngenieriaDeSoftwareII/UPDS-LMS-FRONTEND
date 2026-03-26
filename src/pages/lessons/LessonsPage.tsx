@@ -10,14 +10,12 @@ import { Skeleton } from '@/components/ui/skeleton'
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -32,12 +30,13 @@ import {
 } from '@/components/ui/table'
 
 import { useLessons } from '@/hooks/useLessons'
+import type { Lesson } from '@/hooks/useLessons' // ✅ FIX
 
-// 🔹 Schema
+// 🔥 Schema
 const formSchema = z.object({
-  moduleId: z.number(),
+  courseId: z.number(),
   title: z.string().min(1, 'Requerido'),
-  description: z.string().min(1, 'Requerido'),
+  description: z.string().optional(),
   order: z.number(),
 })
 
@@ -45,7 +44,7 @@ type FormValues = z.infer<typeof formSchema>
 
 export function LessonsPage() {
   const [open, setOpen] = useState(false)
-  const [editingLesson, setEditingLesson] = useState<any | null>(null)
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
 
   const {
     useLessonsList,
@@ -55,27 +54,26 @@ export function LessonsPage() {
   } = useLessons()
 
   const { data: lessons, isLoading, error } = useLessonsList()
-  const { mutate: createLesson, isPending: isCreating } = useCreateLesson()
-  const { mutate: updateLesson, isPending: isUpdating } = useUpdateLesson()
-  const { mutate: deleteLesson, isPending: isDeleting } = useDeleteLesson()
+  const { mutate: createLesson } = useCreateLesson() // ✅ limpio
+  const { mutate: updateLesson } = useUpdateLesson()
+  const { mutate: deleteLesson } = useDeleteLesson()
 
   const isEditing = !!editingLesson
 
   const { register, handleSubmit, reset, setValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      moduleId: 1,
+      courseId: 1,
       title: '',
       description: '',
       order: 1,
     },
   })
 
-  // ✅ Crear
   const handleCreate = () => {
     setEditingLesson(null)
     reset({
-      moduleId: 1,
+      courseId: 1,
       title: '',
       description: '',
       order: 1,
@@ -83,26 +81,23 @@ export function LessonsPage() {
     setOpen(true)
   }
 
-  // ✅ Editar
-  const handleEdit = (lesson: any) => {
+  const handleEdit = (lesson: Lesson) => {
     setEditingLesson(lesson)
 
-    setValue('moduleId', lesson.moduleId)
+    setValue('courseId', lesson.courseId)
     setValue('title', lesson.title)
-    setValue('description', lesson.description)
+    setValue('description', lesson.description || '')
     setValue('order', lesson.order)
 
     setOpen(true)
   }
 
-  // ✅ Eliminar
   const handleDelete = (id: number) => {
     if (confirm('¿Seguro que deseas eliminar esta lección?')) {
       deleteLesson(id)
     }
   }
 
-  // ✅ Submit
   const onSubmit = (values: FormValues) => {
     if (isEditing && editingLesson) {
       updateLesson(
@@ -128,7 +123,6 @@ export function LessonsPage() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">Lecciones</h1>
 
@@ -138,43 +132,37 @@ export function LessonsPage() {
         </Button>
       </div>
 
-      {/* Dialog */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {isEditing ? 'Editar Lección' : 'Nueva Lección'}
             </DialogTitle>
-            <DialogDescription>
-              {isEditing
-                ? 'Modifica la lección'
-                : 'Registra una nueva lección'}
-            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Module ID</label>
+            <div>
+              <label>Course ID</label>
               <Input
                 type="number"
-                {...register('moduleId', { valueAsNumber: true })}
+                {...register('courseId', { valueAsNumber: true })}
                 disabled={isEditing}
               />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Título</label>
+            <div>
+              <label>Título</label>
               <Input {...register('title')} />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Descripción</label>
+            <div>
+              <label>Descripción</label>
               <Input {...register('description')} />
             </div>
 
-            <div className="space-y-1">
-              <label className="text-sm font-medium">Orden</label>
+            <div>
+              <label>Orden</label>
               <Input
                 type="number"
                 {...register('order', { valueAsNumber: true })}
@@ -182,15 +170,11 @@ export function LessonsPage() {
             </div>
 
             <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setOpen(false)}
-              >
+              <Button type="button" onClick={() => setOpen(false)}>
                 Cancelar
               </Button>
 
-              <Button type="submit" disabled={isCreating || isUpdating}>
+              <Button type="submit">
                 {isEditing ? 'Actualizar' : 'Guardar'}
               </Button>
             </DialogFooter>
@@ -198,77 +182,51 @@ export function LessonsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Table */}
       <Card>
         <CardHeader>
           <CardTitle>Listado de lecciones</CardTitle>
-          <CardDescription>Gestión de lecciones del sistema</CardDescription>
         </CardHeader>
 
         <CardContent>
           {error ? (
-            <p className="text-destructive">Error al cargar datos</p>
+            <p>Error al cargar</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Id Módulo</TableHead>
+                  <TableHead>Curso</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead>Orden</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {isLoading ? (
-                  Array.from({ length: 4 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <TableCell key={j}>
-                          <Skeleton className="h-4 w-full" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : lessons?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6">
-                      No hay lecciones
+                    <TableCell colSpan={6}>
+                      <Skeleton className="h-4 w-full" />
                     </TableCell>
                   </TableRow>
                 ) : (
-                  lessons?.map((lesson: any) => (
+                  lessons?.map((lesson) => (
                     <TableRow key={lesson.id}>
                       <TableCell>{lesson.id}</TableCell>
-                      <TableCell>{lesson.moduleId}</TableCell>
+                      <TableCell>{lesson.courseId}</TableCell>
                       <TableCell>{lesson.title}</TableCell>
                       <TableCell>{lesson.description}</TableCell>
                       <TableCell>{lesson.order}</TableCell>
 
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell>
+                        <Button onClick={() => handleEdit(lesson)}>
+                          <Pencil />
+                        </Button>
 
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleEdit(lesson)}
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive"
-                            onClick={() => handleDelete(lesson.id)}
-                            disabled={isDeleting}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-
-                        </div>
+                        <Button onClick={() => handleDelete(lesson.id)}>
+                          <Trash2 />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))

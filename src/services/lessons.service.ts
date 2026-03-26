@@ -2,16 +2,20 @@ import { createService } from './base.service'
 
 export interface Lesson {
   id: number
-  moduleId: number
+  courseId: number
   title: string
-  description: string
+  description?: string
   order: number
+  entityStatus: number
+  createdAt: string
+  updatedAt: string
+  deletedAt?: string | null
 }
 
 export interface LessonDto {
-  moduleId: number
+  courseId: number
   title: string
-  description: string
+  description?: string
   order: number
 }
 
