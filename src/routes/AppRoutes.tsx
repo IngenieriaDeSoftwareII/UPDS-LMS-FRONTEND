@@ -9,6 +9,7 @@ import { LessonsPage } from '@/pages/admin/lessons/LessonsPage'
 import { ContentsPage } from '@/pages/admin/contents/ContentsPage'
 import { DocumentUploadPage } from '@/pages/admin/documents/DocumentUploadPage'
 import { DocumentsPage } from '@/pages/admin/documents/DocumentsPage'
+import { DocumentEditPage } from '@/pages/admin/documents/DocumentEditPage'
 
 export function AppRoutes() {
   return (
@@ -39,6 +40,7 @@ export function AppRoutes() {
         {/* DocumentContent */}
         <Route path="/documents" element={<DocumentsPage />} />
         <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
+        <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
 
       </Route>
 

@@ -28,10 +28,24 @@ export const useDocumentContents = () => {
         queryClient.invalidateQueries({ queryKey: ['documents'] })
       },
     })
+  const useUpdateDocument = () => {
+    return useMutation({
+      mutationFn: ({ id, data }: { id: number, data: FormData | { title: string, order: number, pageCount?: number } }) =>
+        documentContentsService.update(id, data),
+    })
+  }
 
+  const useDocumentById = (id: number) =>
+  useQuery({
+    queryKey: ['document', id],
+    queryFn: () => documentContentsService.getById(id),
+    enabled: !!id,
+  })
   return {
     useDocumentsList,
     useUploadDocument,
     useDeleteDocument,
+    useUpdateDocument,
+    useDocumentById
   }
 }

@@ -25,7 +25,9 @@ export function DocumentUploadPage() {
 
   const [file, setFile] = useState<File | null>(null)
   const [lessonId, setLessonId] = useState<number | null>(null)
+  const [title, setTitle] = useState('')
   const [pageCount, setPageCount] = useState<number | undefined>()
+  const [order, setOrder] = useState<number>(1)
 
   const { useUploadDocument } = useDocumentContents()
   const { useLessonsList } = useLessons()
@@ -44,17 +46,22 @@ export function DocumentUploadPage() {
       return
     }
 
+    if (!title.trim()) {
+      alert('Ingresa un título')
+      return
+    }
+
     upload(
       {
         file,
         lessonId,
+        title, 
         pageCount,
+        order 
       },
       {
         onSuccess: () => {
           alert('Documento subido correctamente ✅')
-
-          // 🔥 REDIRECCIÓN AUTOMÁTICA
           navigate('/documents')
         },
         onError: (err: any) => {
@@ -73,7 +80,7 @@ export function DocumentUploadPage() {
   return (
     <div className="space-y-6">
 
-      {/* 🔥 BOTÓN VOLVER */}
+      {/* BOTÓN VOLVER */}
       <Button variant="outline" onClick={() => navigate('/documents')}>
         ← Volver
       </Button>
@@ -85,6 +92,7 @@ export function DocumentUploadPage() {
 
         <CardContent className="space-y-4">
 
+          {/*  LECCIÓN */}
           <div>
             <label>Lección</label>
             <Select onValueChange={(v) => setLessonId(Number(v))}>
@@ -106,6 +114,28 @@ export function DocumentUploadPage() {
             </Select>
           </div>
 
+          {/* TÍTULO */}
+          <div>
+            <label>Título del documento</label>
+            <Input
+              type="text"
+              placeholder="Ej: Tema 1 - Introducción"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+          {/* ORDER */}
+          <div>
+            <label>Orden</label>
+            <Input
+              type="number"
+              min={1}
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+            />
+          </div>
+
+          {/*  ARCHIVO */}
           <div>
             <label>Archivo</label>
             <Input
@@ -115,10 +145,15 @@ export function DocumentUploadPage() {
               onChange={(e) => {
                 const selected = e.target.files?.[0] || null
                 setFile(selected)
+
+                if (selected && !title) {
+                  setTitle(selected.name)
+                }
               }}
             />
           </div>
 
+          {/*  PÁGINAS */}
           <div>
             <label>Número de páginas</label>
             <Input
@@ -131,6 +166,7 @@ export function DocumentUploadPage() {
             />
           </div>
 
+          {/*  BOTÓN */}
           <Button onClick={handleUpload} disabled={isPending}>
             {isPending ? 'Subiendo...' : 'Subir Documento'}
           </Button>

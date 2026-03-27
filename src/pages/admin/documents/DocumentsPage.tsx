@@ -19,8 +19,6 @@ export function DocumentsPage() {
   }
 
   const handleOpen = async (contentId: number) => {
-    console.log('🔵 ID:', contentId)
-
     try {
       const res = await fetch(
         `http://localhost:5024/api/DocumentContents/GetSasUrl/${contentId}`
@@ -28,14 +26,11 @@ export function DocumentsPage() {
 
       if (!res.ok) {
         const text = await res.text()
-        console.error('🔴 BACKEND ERROR:', text)
         alert('Error backend: ' + text)
         return
       }
 
       const data = await res.json()
-
-      console.log('🟢 SAS URL:', data)
 
       if (!data?.url) {
         alert('No se recibió URL válida')
@@ -44,7 +39,6 @@ export function DocumentsPage() {
 
       window.open(data.url, '_blank')
     } catch (err) {
-      console.error('🔴 ERROR COMPLETO:', err)
       alert('No se pudo abrir el documento')
     }
   }
@@ -52,7 +46,7 @@ export function DocumentsPage() {
   return (
     <div className="space-y-6">
 
-      {/* 🔥 BOTÓN CORREGIDO */}
+      {/* BOTÓN SUBIR */}
       <div className="flex justify-end">
         <Button onClick={() => navigate('/uploaddocuments')}>
           + Subir Documento
@@ -71,7 +65,10 @@ export function DocumentsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
+                  <TableHead>ID Doc</TableHead>
+                  <TableHead>ID Content</TableHead>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Orden</TableHead>
                   <TableHead>Archivo</TableHead>
                   <TableHead>Formato</TableHead>
                   <TableHead>Tamaño (KB)</TableHead>
@@ -83,32 +80,63 @@ export function DocumentsPage() {
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6}>
+                    <TableCell colSpan={9}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   </TableRow>
                 ) : data?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center">
+                    <TableCell colSpan={8} className="text-center">
                       No hay documentos
                     </TableCell>
                   </TableRow>
                 ) : (
                   data?.map((doc) => (
                     <TableRow key={doc.contentId}>
+
+                      {/* ID DocumentContent */}
                       <TableCell>{doc.contentId}</TableCell>
 
+                      {/* ID Content */}
+                      <TableCell>{doc.content?.id}</TableCell>
+
+                      {/* TÍTULO */}
+                      <TableCell>
+                        {doc.content?.title || 'Sin título'}
+                      </TableCell>
+                      {/* ORDER */}
+                      <TableCell>
+                        {doc.content?.order ?? '—'}
+                      </TableCell>
+
+                      {/* ARCHIVO */}
                       <TableCell>
                         {doc.fileUrl || 'Sin archivo'}
                       </TableCell>
 
+                      {/* FORMATO */}
                       <TableCell>{doc.format}</TableCell>
-                      <TableCell>{doc.sizeKb}</TableCell>
-                      <TableCell>{doc.pageCount}</TableCell>
 
+                      {/* TAMAÑO */}
+                      <TableCell>
+                        {doc.sizeKb ? `${doc.sizeKb} KB` : '—'}
+                      </TableCell>
+
+                      {/* PÁGINAS */}
+                      <TableCell>
+                        {doc.pageCount ?? '—'}
+                      </TableCell>
+
+                      {/* ACCIONES */}
                       <TableCell className="flex gap-2">
                         <Button onClick={() => handleOpen(doc.contentId)}>
                           Ver
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => navigate(`/documents/edit/${doc.contentId}`)}
+                        >
+                          Editar
                         </Button>
 
                         <Button
@@ -118,6 +146,7 @@ export function DocumentsPage() {
                           Eliminar
                         </Button>
                       </TableCell>
+
                     </TableRow>
                   ))
                 )}
