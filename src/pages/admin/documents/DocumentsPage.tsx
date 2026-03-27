@@ -12,9 +12,13 @@ export function DocumentsPage() {
   const { data, isLoading, error } = useDocumentsList()
   const { mutate: deleteDocument } = useDeleteDocument()
 
-  const handleDelete = (id: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este documento?')) {
-      deleteDocument(id)
+  const handleDelete = (contentId: number) => {
+    if (
+      window.confirm(
+        '¿Estás seguro de que deseas eliminar este documento y su contenido?'
+      )
+    ) {
+      deleteDocument(contentId)
     }
   }
 
@@ -86,7 +90,7 @@ export function DocumentsPage() {
                   </TableRow>
                 ) : data?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="text-center">
+                    <TableCell colSpan={9} className="text-center">
                       No hay documentos
                     </TableCell>
                   </TableRow>
@@ -98,12 +102,13 @@ export function DocumentsPage() {
                       <TableCell>{doc.contentId}</TableCell>
 
                       {/* ID Content */}
-                      <TableCell>{doc.content?.id}</TableCell>
+                      <TableCell>{doc.content?.id ?? '—'}</TableCell>
 
                       {/* TÍTULO */}
                       <TableCell>
                         {doc.content?.title || 'Sin título'}
                       </TableCell>
+
                       {/* ORDER */}
                       <TableCell>
                         {doc.content?.order ?? '—'}
@@ -134,7 +139,9 @@ export function DocumentsPage() {
                         </Button>
                         <Button
                           variant="outline"
-                          onClick={() => navigate(`/documents/edit/${doc.contentId}`)}
+                          onClick={() =>
+                            navigate(`/documents/edit/${doc.contentId}`)
+                          }
                         >
                           Editar
                         </Button>

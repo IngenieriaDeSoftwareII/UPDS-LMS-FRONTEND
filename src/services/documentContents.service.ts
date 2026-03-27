@@ -40,7 +40,8 @@ export const documentContentsService = {
 
   // DELETE
   delete: (id: number) =>
-    http.delete(`/DocumentContents/Delete/${id}`),
+  http.delete(`/DocumentContents/Delete/${id}`)
+    .then(r => r.data),
 
   // UPLOAD FILE (FORMDATA)
   upload: (data: UploadDocumentDto) => {
