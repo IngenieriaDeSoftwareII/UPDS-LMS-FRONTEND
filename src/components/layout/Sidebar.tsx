@@ -1,6 +1,10 @@
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard,
+  ClipboardList,
+  BarChart3,
+  BookOpenCheck,
+  GraduationCap,
   Menu, ChevronLeft
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
@@ -21,9 +25,13 @@ const navItems: NavItem[] = [
   
   // Teacher routes
   { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['teacher'] },
+  { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['teacher'] },
+  { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['teacher'] },
   
   // Student routes
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['student'] },
+  { label: 'Evaluaciones', path: '/student/evaluations', icon: BookOpenCheck, roles: ['student'] },
+  { label: 'Mis notas', path: '/student/evaluations/my-grades', icon: GraduationCap, roles: ['student'] },
 ];
 
 interface SidebarProps {
