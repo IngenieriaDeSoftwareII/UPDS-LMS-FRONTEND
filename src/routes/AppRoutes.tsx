@@ -10,6 +10,11 @@ import { ContentsPage } from '@/pages/admin/contents/ContentsPage'
 import { DocumentUploadPage } from '@/pages/admin/documents/DocumentUploadPage'
 import { DocumentsPage } from '@/pages/admin/documents/DocumentsPage'
 import { DocumentEditPage } from '@/pages/admin/documents/DocumentEditPage'
+import { TeacherLessonsPage } from '@/pages/teacher/Lessons/TeacherLessonsPage'
+import { LessonDetailPage } from '@/pages/teacher/Lessons/LessonDetailPage'
+import { TeacherDocumentUploadPage } from '@/pages/teacher/Lessons/TeacherDocumentUploadPage'
+import { TeacherDocumentEditPage } from '@/pages/teacher/Lessons/TeacherDocumentEditPage'
+import { StudentDocumentsPage } from '@/pages/student/documents/StudentDocumentsPage'
 
 export function AppRoutes() {
   return (
@@ -42,6 +47,14 @@ export function AppRoutes() {
         <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
         <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
 
+        {/* Teacher */}
+        <Route path="/teacher/lessons" element={<TeacherLessonsPage />} />
+        <Route path="/teacher/lessons/:id" element={<LessonDetailPage />} />
+        <Route path="/teacher/documents/upload" element={<TeacherDocumentUploadPage />} />
+        <Route path="/teacher/documents/edit/:id" element={<TeacherDocumentEditPage />} />
+
+        {/* Student */}
+        <Route path="/student/documents" element={<StudentDocumentsPage />} />
       </Route>
 
       {/* Redirecciones */}
