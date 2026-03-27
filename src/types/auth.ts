@@ -1,20 +1,22 @@
-export type UserRole = 'admin' | 'teacher' | 'student'
+export type UserRole = 'Admin' | 'Docente' | 'Estudiante'
 
-export interface User {
-  id: number
-  firstName: string
-  lastName: string
-  email: string
-  role: UserRole
-  avatar?: string
-}
-
+// POST /api/auth/login — request body
 export interface LoginDto {
-  email: string
-  password: string
+  Email: string
+  Password: string
 }
 
-export interface LoginResponse {
-  user: User
-  token: string
+// POST /api/auth/login | /api/auth/refresh — response
+export interface AuthResponse {
+  accessToken: string
+  refreshToken: string
+  role: UserRole
+  redirectTo: string
+}
+
+// POST /api/auth/change-password — request body
+export interface ChangePasswordDto {
+  CurrentPassword: string
+  NewPassword: string
+  ConfirmNewPassword: string
 }
