@@ -25,7 +25,6 @@ export function DocumentUploadPage() {
 
   const [file, setFile] = useState<File | null>(null)
   const [lessonId, setLessonId] = useState<number | null>(null)
-  const [title, setTitle] = useState('')
   const [pageCount, setPageCount] = useState<number | undefined>()
 
   const { useUploadDocument } = useDocumentContents()
@@ -49,7 +48,6 @@ export function DocumentUploadPage() {
       {
         file,
         lessonId,
-        title: title || undefined,
         pageCount,
       },
       {
@@ -118,14 +116,6 @@ export function DocumentUploadPage() {
                 const selected = e.target.files?.[0] || null
                 setFile(selected)
               }}
-            />
-          </div>
-
-          <div>
-            <label>Título</label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
             />
           </div>
 

@@ -7,15 +7,24 @@ export interface DocumentContent {
   format: string
   sizeKb?: number
   pageCount?: number
+
+  content: {
+    id: number
+    lessonId: number
+    type: string
+    order: number
+    entityStatus: number
+    createdAt: string
+    updatedAt: string
+    deletedAt?: string
+  }
 }
 
 // 🔥 DTO upload
 export interface UploadDocumentDto {
   file: File
   lessonId: number
-  title?: string
   format?: string
-  sizeKb?: number
   pageCount?: number
 }
 
@@ -37,9 +46,7 @@ export const documentContentsService = {
     formData.append('File', data.file)
     formData.append('LessonId', String(data.lessonId))
 
-    if (data.title) formData.append('Title', data.title)
     if (data.format) formData.append('Format', data.format)
-    if (data.sizeKb) formData.append('SizeKb', String(data.sizeKb))
     if (data.pageCount) formData.append('PageCount', String(data.pageCount))
 
     return http.post('/DocumentContents/Upload', formData, {
