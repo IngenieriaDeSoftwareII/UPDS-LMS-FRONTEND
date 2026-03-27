@@ -18,10 +18,3 @@ export interface LoginResponse {
   user: User
   token: string
 }
-
-export interface BackendAuthResponse {
-  accessToken: string
-  refreshToken: string
-  role: string
-  redirectTo: string
-}

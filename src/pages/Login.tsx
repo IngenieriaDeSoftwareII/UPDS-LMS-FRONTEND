@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
-import { AxiosError } from 'axios';
 import { useLogin } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,11 +55,7 @@ export function Login() {
           };
           navigate(redirects[user.role]);
         },
-        onError: (error) => {
-          const axiosError = error as AxiosError<{ errors?: string[] }>;
-          const messages = axiosError.response?.data?.errors;
-          setError(Array.isArray(messages) && messages.length > 0 ? messages[0] : 'Error al iniciar sesión');
-        },
+        onError: () => setError('Error al iniciar sesión'),
       }
     );
   };
