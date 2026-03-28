@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, UserCog,
-  Menu, ChevronLeft, X
+  Menu, ChevronLeft, X, ClipboardList,
+  BarChart3, BookOpenCheck, GraduationCap
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserRole } from '@/types';
@@ -21,11 +22,15 @@ const navItems: NavItem[] = [
   { label: 'Personas', path: '/admin/persons', icon: Users, roles: ['Admin'] },
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
 
-  // Teacher routes
+  // Docente (rutas bajo /teacher/*)
   { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['Docente'] },
+  { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
+  { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
 
-  // Student routes
+  // Estudiante (rutas bajo /student/*)
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['Estudiante'] },
+  { label: 'Evaluaciones', path: '/student/evaluations', icon: BookOpenCheck, roles: ['Estudiante'] },
+  { label: 'Mis notas', path: '/student/evaluations/my-grades', icon: GraduationCap, roles: ['Estudiante'] },
 ];
 
 interface SidebarProps {
