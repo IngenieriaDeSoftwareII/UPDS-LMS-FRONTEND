@@ -1,12 +1,16 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { User, UserRole } from '@/types/auth'
+import type { AuthResponse, UserRole } from '@/types/auth'
+import type { ProfileDto } from '@/types/profile'
 
 interface AuthState {
-  user: User | null
-  token: string | null
+  accessToken: string | null
+  refreshToken: string | null
+  role: UserRole | null
+  profile: ProfileDto | null
   isAuthenticated: boolean
-  setAuth: (user: User, token: string) => void
+  setAuth: (response: AuthResponse) => void
+  setProfile: (profile: ProfileDto) => void
   logout: () => void
   hasRole: (roles: UserRole[]) => boolean
 }
@@ -14,18 +18,24 @@ interface AuthState {
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
-      user: null,
-      token: null,
+      accessToken: null,
+      refreshToken: null,
+      role: null,
+      profile: null,
       isAuthenticated: false,
 
-      setAuth: (user, token) => set({ user, token, isAuthenticated: true }),
+      setAuth: ({ accessToken, refreshToken, role }) =>
+        set({ accessToken, refreshToken, role, isAuthenticated: true }),
 
-      logout: () => set({ user: null, token: null, isAuthenticated: false }),
+      setProfile: (profile) => set({ profile }),
+
+      logout: () =>
+        set({ accessToken: null, refreshToken: null, role: null, profile: null, isAuthenticated: false }),
 
       hasRole: (roles) => {
-        const { user } = get()
-        if (!user) return false
-        return roles.includes(user.role)
+        const { role } = get()
+        if (!role) return false
+        return roles.includes(role)
       },
     }),
     { name: 'auth' }

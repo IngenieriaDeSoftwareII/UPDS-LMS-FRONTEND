@@ -1,6 +1,9 @@
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 export function StudentDashboard() {
+  const navigate = useNavigate();
+
   useEffect(() => {
     document.title = "Panel del Estudiante";
   }, []);
