@@ -25,3 +25,18 @@ export interface CreatePersonDto {
   phoneNumber?: string
   address?: string
 }
+
+export interface UpdatePersonDto {
+  firstName?: string
+  lastName?: string
+  motherLastName?: string
+  dateOfBirth?: string
+  gender?: Gender
+  nationalId?: string
+  nationalIdExpedition?: string
+  phoneNumber?: string
+  address?: string
+}
+
+export const DEPARTAMENTOS = ['LP', 'CB', 'SC', 'OR', 'PT', 'TJ', 'BN', 'PD', 'CH'] as const
+export type Departamento = typeof DEPARTAMENTOS[number]
