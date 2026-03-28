@@ -2,7 +2,7 @@ import { useCrud } from './useCrud'
 
 export interface Lesson {
   id: number
-  courseId: number
+  moduleId: number
   title: string
   description?: string
   order: number
@@ -14,7 +14,7 @@ export interface Lesson {
 
 export interface LessonDto {
   id?: number
-  courseId: number
+  moduleId: number
   title: string
   description?: string
   order: number

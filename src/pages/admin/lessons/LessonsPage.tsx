@@ -34,7 +34,7 @@ import type { Lesson } from '@/hooks/useLessons' // ✅ FIX
 
 // 🔥 Schema
 const formSchema = z.object({
-  courseId: z.number(),
+  moduleId: z.number(),
   title: z.string().min(1, 'Requerido'),
   description: z.string().optional(),
   order: z.number(),
@@ -63,7 +63,7 @@ export function LessonsPage() {
   const { register, handleSubmit, reset, setValue } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      courseId: 1,
+      moduleId: 1,
       title: '',
       description: '',
       order: 1,
@@ -73,7 +73,7 @@ export function LessonsPage() {
   const handleCreate = () => {
     setEditingLesson(null)
     reset({
-      courseId: 1,
+      moduleId: 1,
       title: '',
       description: '',
       order: 1,
@@ -84,7 +84,7 @@ export function LessonsPage() {
   const handleEdit = (lesson: Lesson) => {
     setEditingLesson(lesson)
 
-    setValue('courseId', lesson.courseId)
+    setValue('moduleId', lesson.moduleId)
     setValue('title', lesson.title)
     setValue('description', lesson.description || '')
     setValue('order', lesson.order)
@@ -143,10 +143,10 @@ export function LessonsPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
             <div>
-              <label>Course ID</label>
+              <label>Módulo ID</label>
               <Input
                 type="number"
-                {...register('courseId', { valueAsNumber: true })}
+                {...register('moduleId', { valueAsNumber: true })}
                 disabled={isEditing}
               />
             </div>
@@ -195,7 +195,7 @@ export function LessonsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Curso</TableHead>
+                  <TableHead>Módulo</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Descripción</TableHead>
                   <TableHead>Orden</TableHead>
@@ -214,7 +214,7 @@ export function LessonsPage() {
                   lessons?.map((lesson) => (
                     <TableRow key={lesson.id}>
                       <TableCell>{lesson.id}</TableCell>
-                      <TableCell>{lesson.courseId}</TableCell>
+                      <TableCell>{lesson.moduleId}</TableCell>
                       <TableCell>{lesson.title}</TableCell>
                       <TableCell>{lesson.description}</TableCell>
                       <TableCell>{lesson.order}</TableCell>
