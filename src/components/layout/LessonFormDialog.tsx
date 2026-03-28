@@ -46,7 +46,7 @@ export function LessonFormDialog({ open, onClose, lesson }: any) {
   const onSubmit = (data: LessonForm) => {
     const payload = {
       ...data,
-      courseId: lesson?.courseId || 1 // ⚠️ IMPORTANTE
+      moduleId: lesson?.moduleId || 1 // ⚠️ IMPORTANTE
     }
 
     if (lesson) {

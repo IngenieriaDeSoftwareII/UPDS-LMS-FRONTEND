@@ -18,9 +18,6 @@ import { StudentDocumentsPage } from '@/pages/student/documents/StudentDocuments
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicRoute } from './PublicRoute'
-import { AdminRoutes } from './AdminRoutes'
-import { TeacherRoutes } from './TeacherRoutes'
-import { StudentRoutes } from './StudentRoutes'
 
 export function AppRoutes() {
   return (
@@ -47,32 +44,30 @@ export function AppRoutes() {
         </Route>
       </Route>
 
-        {/* Página de ejemplo */}
-        <Route path="/example/persons" element={<PersonsPage />} />
+      {/* Página de ejemplo */}
+      <Route path="/example/persons" element={<PersonsPage />} />
 
-        {/* Leccion */}
-        <Route path="/lessons" element={<LessonsPage />} />
-        {/* Content */}
-        <Route path="/contents" element={<ContentsPage />} />
+      {/* Leccion */}
+      <Route path="/lessons" element={<LessonsPage />} />
+      {/* Content */}
+      <Route path="/contents" element={<ContentsPage />} />
 
-        {/* DocumentContent */}
-        <Route path="/documents" element={<DocumentsPage />} />
-        <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
-        <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
+      {/* DocumentContent */}
+      <Route path="/documents" element={<DocumentsPage />} />
+      <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
+      <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
 
-        {/* Teacher */}
-        <Route path="/teacher/lessons" element={<TeacherLessonsPage />} />
-        <Route path="/teacher/lessons/:id" element={<LessonDetailPage />} />
-        <Route path="/teacher/documents/upload" element={<TeacherDocumentUploadPage />} />
-        <Route path="/teacher/documents/edit/:id" element={<TeacherDocumentEditPage />} />
+      {/* Teacher */}
+      <Route path="/teacher/lessons" element={<TeacherLessonsPage />} />
+      <Route path="/teacher/lessons/:id" element={<LessonDetailPage />} />
+      <Route path="/teacher/documents/upload" element={<TeacherDocumentUploadPage />} />
+      <Route path="/teacher/documents/edit/:id" element={<TeacherDocumentEditPage />} />
 
-        {/* Student */}
-        <Route path="/student/documents" element={<StudentDocumentsPage />} />
-      </Route>
-
+      {/* Student */}
+      <Route path="/student/documents" element={<StudentDocumentsPage />} />
       {/* Redirecciones */}
       <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-    </Routes>
+    </Routes >
   )
 }

@@ -6,7 +6,7 @@ export function TeacherRoutes() {
   return (
     <Routes>
       <Route path="dashboard" element={<TeacherDashboard />} />
-      
+
     </Routes>
   )
 }
