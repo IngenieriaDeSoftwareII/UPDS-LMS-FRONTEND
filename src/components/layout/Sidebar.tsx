@@ -22,15 +22,15 @@ const navItems: NavItem[] = [
   { label: 'Personas', path: '/admin/persons', icon: Users, roles: ['Admin'] },
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
 
-  // Teacher routes
-  { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['teacher'] },
-  { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['teacher'] },
-  { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['teacher'] },
-  
-  // Student routes
-  { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['student'] },
-  { label: 'Evaluaciones', path: '/student/evaluations', icon: BookOpenCheck, roles: ['student'] },
-  { label: 'Mis notas', path: '/student/evaluations/my-grades', icon: GraduationCap, roles: ['student'] },
+  // Docente (rutas bajo /teacher/*)
+  { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['Docente'] },
+  { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
+  { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
+
+  // Estudiante (rutas bajo /student/*)
+  { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['Estudiante'] },
+  { label: 'Evaluaciones', path: '/student/evaluations', icon: BookOpenCheck, roles: ['Estudiante'] },
+  { label: 'Mis notas', path: '/student/evaluations/my-grades', icon: GraduationCap, roles: ['Estudiante'] },
 ];
 
 interface SidebarProps {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Controller, useForm } from 'react-hook-form'
+import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ClipboardList, PlusCircle, Trash2 } from 'lucide-react'
@@ -74,12 +74,12 @@ export function EvaluationManagementPage() {
   const addQuestion = useAddEvaluationQuestion()
 
   const createForm = useForm<CreateFormValues>({
-    resolver: zodResolver(createSchema),
+    resolver: zodResolver(createSchema) as Resolver<CreateFormValues>,
     defaultValues: { tipo: 'multiple_opcion', intentosPermitidos: 1 },
   })
 
   const questionForm = useForm<QuestionFormValues>({
-    resolver: zodResolver(questionSchema),
+    resolver: zodResolver(questionSchema) as Resolver<QuestionFormValues>,
     defaultValues: { tipo: 'opcion_unica', puntos: 1, orden: 1, correcta: 'A' },
   })
 

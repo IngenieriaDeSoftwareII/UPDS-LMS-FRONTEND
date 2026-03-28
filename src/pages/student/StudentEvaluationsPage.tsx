@@ -15,12 +15,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 export function StudentEvaluationsPage() {
   const [courseId, setCourseId] = useState('')
   const navigate = useNavigate()
-  const user = useAuthStore(state => state.user)
+  const isAuthenticated = useAuthStore(state => state.isAuthenticated)
 
   const profileQuery = useQuery({
     queryKey: ['profile', 'me'],
     queryFn: () => http.get<{ personId: number }>('/Profile/me').then(res => res.data),
-    enabled: Boolean(user),
+    enabled: isAuthenticated,
   })
 
   const myCoursesQuery = useQuery({
