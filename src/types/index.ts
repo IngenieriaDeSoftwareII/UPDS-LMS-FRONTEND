@@ -1,4 +1,5 @@
 export * from './auth'
 export * from './person'
+export * from './evaluation'
 export * from './profile'
 export * from './user'
