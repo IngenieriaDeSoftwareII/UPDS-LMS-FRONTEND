@@ -19,6 +19,9 @@ import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicRoute } from './PublicRoute'
 import ModulesPage from '@/pages/admin/modules/ModulesPage'
+import { ImagesPage } from '@/pages/admin/images/ImagesPage'
+import { ImageUploadPage } from '@/pages/admin/images/ImageUploadPage'
+import { ImageEditPage } from '@/pages/admin/images/ImageEditPage'
 
 export function AppRoutes() {
   return (
@@ -67,6 +70,11 @@ export function AppRoutes() {
 
       {/* Student */}
       <Route path="/student/documents" element={<StudentDocumentsPage />} />
+
+      {/* ImageContent */}
+      <Route path="/images" element={<ImagesPage />} />
+      <Route path="/uploadimage" element={<ImageUploadPage />} />
+      <Route path="/images/edit/:id" element={<ImageEditPage />} />
 
 
       {/* Modules */}
