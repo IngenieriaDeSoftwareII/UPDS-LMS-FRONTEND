@@ -4,7 +4,7 @@ import { PlusCircle, Pencil, Trash2, FileText } from 'lucide-react'
 import { useLessons } from '@/hooks/useLessons'
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useState, useEffect } from 'react'
-import { LessonFormDialog } from '@/components/layout/LessonFormDialog'
+import { LessonFormDialog } from '@/components/LessonFormDialog'
 import { useNavigate } from 'react-router-dom'
 
 export function TeacherLessonsPage() {

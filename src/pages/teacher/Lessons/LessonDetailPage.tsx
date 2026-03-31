@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useLessons } from '@/hooks/useLessons'
-import { DocumentsTable } from '@/components/layout/DocumentsTable'
+import { DocumentsTable } from '@/components/DocumentsTable'
 
 export function LessonDetailPage() {
   const { id } = useParams()
@@ -26,24 +26,24 @@ export function LessonDetailPage() {
 
         <div className="grid grid-cols-3 gap-4">
 
-            <div>
+          <div>
             <p className="text-sm text-gray-400">TÍTULO</p>
             <p className="font-semibold">{lesson?.title}</p>
-            </div>
+          </div>
 
-            <div>
+          <div>
             <p className="text-sm text-gray-400">DESCRIPCIÓN</p>
             <p>{lesson?.description}</p>
-            </div>
+          </div>
 
-            <div>
+          <div>
             <p className="text-sm text-gray-400">ORDEN</p>
             <p>{lesson?.order}</p>
-            </div>
+          </div>
 
         </div>
 
-        </div>
+      </div>
 
       {/* 🔹 Tabla de documentos */}
       <div>

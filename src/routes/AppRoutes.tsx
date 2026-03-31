@@ -22,8 +22,9 @@ import { PublicRoute } from './PublicRoute'
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Login público */}
-      <Route path="/login" element={<Login />} />
+      <Route element={<PublicRoute />}>
+        <Route path="/login" element={<Login />} />
+      </Route>
 
       <Route element={<ProtectedRoute />}>
         <Route element={<Layout />}>
