@@ -35,7 +35,6 @@ export function ImagesPage() {
   return (
     <div className="space-y-6">
 
-      {/* BOTÓN SUBIR */}
       <div className="flex justify-between">
         <h2 className="text-xl font-semibold">Gestión de Imágenes</h2>
 
@@ -44,7 +43,6 @@ export function ImagesPage() {
         </Button>
       </div>
 
-      {/* CARD */}
       <Card>
         <CardHeader>
           <CardTitle>Listado de Imágenes</CardTitle>
@@ -53,29 +51,29 @@ export function ImagesPage() {
         <CardContent>
           <Table>
 
-            {/* HEADER */}
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
+                <TableHead>Lesson</TableHead> {/* 🔥 NUEVO */}
                 <TableHead>Título</TableHead>
                 <TableHead>Imagen</TableHead>
                 <TableHead>Formato</TableHead>
                 <TableHead>Tamaño</TableHead>
+                <TableHead>Orden</TableHead> {/* 🔥 NUEVO */}
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
 
-            {/* BODY */}
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={6}>
+                  <TableCell colSpan={8}>
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                 </TableRow>
               ) : data?.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center">
+                  <TableCell colSpan={8} className="text-center">
                     No hay imágenes registradas
                   </TableCell>
                 </TableRow>
@@ -86,8 +84,15 @@ export function ImagesPage() {
                     {/* ID */}
                     <TableCell>{img.contentId}</TableCell>
 
-                    {/* TÍTULO */}
-                    <TableCell>{img.altText}</TableCell>
+                    {/* 🔥 LESSON ID */}
+                    <TableCell>
+                      {img.content?.lessonId ?? '—'}
+                    </TableCell>
+
+                    {/* 🔥 TÍTULO REAL DESDE CONTENT */}
+                    <TableCell>
+                      {img.content?.title ?? img.altText}
+                    </TableCell>
 
                     {/* IMAGEN */}
                     <TableCell>
@@ -110,10 +115,13 @@ export function ImagesPage() {
                       {img.sizeKb ? `${img.sizeKb} KB` : '—'}
                     </TableCell>
 
-                    {/* ACCIONES */}
+                    {/* 🔥 ORDEN */}
+                    <TableCell>
+                      {img.content?.order ?? '—'}
+                    </TableCell>
+
                     <TableCell className="text-right space-x-2">
 
-                      {/* EDITAR */}
                       <Button
                         variant="outline"
                         onClick={() =>
@@ -123,7 +131,6 @@ export function ImagesPage() {
                         Editar
                       </Button>
 
-                      {/* ELIMINAR */}
                       <Button
                         variant="destructive"
                         onClick={() => handleDelete(img.contentId)}

@@ -25,6 +25,8 @@ import { ImageEditPage } from '@/pages/admin/images/ImageEditPage'
 import { TeacherModulesPage } from '@/pages/teacher/Lessons/TeacherModulesPage'
 import { StudentModulesPage } from '@/pages/student/Lessons/StudentModulesPage'
 import { StudentLessonsPage } from '@/pages/student/Lessons/StudentLessonsPage'
+import { TeacherImageUploadPage } from '@/pages/teacher/Lessons/TeacherImageUploadPage'
+import { TeacherImageEditPage } from '@/pages/teacher/Lessons/TeacherImageEditPage'
 
 export function AppRoutes() {
   return (
@@ -72,6 +74,8 @@ export function AppRoutes() {
       <Route path="/teacher/lessons/:id" element={<LessonDetailPage />} />
       <Route path="/teacher/documents/upload" element={<TeacherDocumentUploadPage />} />
       <Route path="/teacher/documents/edit/:id" element={<TeacherDocumentEditPage />} />
+      <Route path="/teacher/images/upload" element={<TeacherImageUploadPage />} />
+      <Route path="/teacher/images/edit/:id" element={<TeacherImageEditPage />} />
 
 
       {/* Student */}

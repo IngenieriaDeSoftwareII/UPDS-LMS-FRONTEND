@@ -1,0 +1,162 @@
+import { useState, useEffect } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+
+import { useImageContents } from '@/hooks/useImageContents'
+
+export function TeacherImageUploadPage() {
+  const navigate = useNavigate()
+  const [params] = useSearchParams()
+
+  // 🔥 VALIDACIÓN SEGURA (IGUAL QUE DOCUMENT)
+  const lessonIdFromUrl = Number(params.get('lessonId'))
+  const moduleIdFromUrl = Number(params.get('moduleId'))
+
+  const lessonId = isNaN(lessonIdFromUrl) ? null : lessonIdFromUrl
+  const moduleId = isNaN(moduleIdFromUrl) ? null : moduleIdFromUrl
+
+  const [file, setFile] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string | null>(null)
+  const [title, setTitle] = useState('')
+  const [order, setOrder] = useState(1)
+  const [error, setError] = useState<string | null>(null)
+
+  const { useUploadImage } = useImageContents()
+  const { mutate: upload, isPending } = useUploadImage()
+
+  // 🔥 PREVIEW
+  useEffect(() => {
+    if (!file) {
+      setPreview(null)
+      return
+    }
+
+    const url = URL.createObjectURL(file)
+    setPreview(url)
+
+    return () => URL.revokeObjectURL(url)
+  }, [file])
+
+  // 🔙 VOLVER (IGUAL QUE DOCUMENT)
+  const goBack = () => {
+    if (moduleId) {
+      navigate(`/teacher/modules/${moduleId}/lessons`)
+    } else {
+      navigate('/teacher/modules')
+    }
+  }
+
+  const handleUpload = () => {
+    setError(null)
+
+    if (!file) return setError('Selecciona una imagen')
+    if (!lessonId) return setError('Error: lessonId inválido')
+
+    const formData = new FormData()
+    formData.append('lessonId', String(lessonId))
+    formData.append('title', title.trim() || file.name)
+    formData.append('order', String(order))
+    formData.append('file', file)
+
+    upload(formData, {
+      onSuccess: () => {
+        alert('Imagen subida correctamente ✅')
+        goBack()
+      },
+      onError: () => {
+        setError('Error al subir la imagen ❌')
+      },
+    })
+  }
+
+  return (
+    <div className="space-y-6 max-w-xl mx-auto">
+
+      {/* 🔙 VOLVER */}
+      <Button variant="outline" onClick={goBack}>
+        ← Volver
+      </Button>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Subir Imagen</CardTitle>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+
+          {/* ERROR */}
+          {error && (
+            <div className="text-red-500 text-sm">{error}</div>
+          )}
+
+          {/* PREVIEW */}
+          {preview && (
+            <img
+              src={preview}
+              alt="preview"
+              className="w-40 h-40 object-cover mx-auto rounded"
+            />
+          )}
+
+          {/* TÍTULO */}
+          <div>
+            <label className="text-sm font-medium">Título</label>
+            <Input
+              placeholder="Ej: Imagen explicativa"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          {/* ORDEN */}
+          <div>
+            <label className="text-sm font-medium">Orden</label>
+            <Input
+              type="number"
+              min={1}
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+            />
+          </div>
+
+          {/* ARCHIVO */}
+          <div>
+            <label className="text-sm font-medium">Imagen</label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (!f) return
+
+                if (!f.type.startsWith('image/')) {
+                  setError('Solo se permiten imágenes')
+                  return
+                }
+
+                setFile(f)
+
+                // 🔥 AUTO TITLE (IGUAL QUE DOCUMENT)
+                if (!title) setTitle(f.name)
+              }}
+            />
+          </div>
+
+          {/* BOTÓN */}
+          <Button onClick={handleUpload} disabled={isPending}>
+            {isPending ? 'Subiendo...' : 'Subir Imagen'}
+          </Button>
+
+        </CardContent>
+      </Card>
+    </div>
+  )
+}

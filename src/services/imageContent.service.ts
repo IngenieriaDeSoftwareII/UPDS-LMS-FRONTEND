@@ -1,5 +1,18 @@
 import http from '@/lib/http'
+export interface ImageContent {
+  contentId: number
+  imageUrl: string
+  format: string
+  sizeKb?: number
+  altText: string
 
+  content: {
+    id: number
+    lessonId: number
+    title: string
+    order: number
+  }
+}
 export const imageContentService = {
   getAll: () =>
     http.get('/ImageContents/GetAll').then(r => r.data),
