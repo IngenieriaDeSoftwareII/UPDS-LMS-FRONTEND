@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import { inscriptionService } from "@/services/inscriptionService"
+import { inscriptionService } from "@/services/inscription.service"
 import type { Course } from "@/types/course"
 
 const mockCourses: Course[] = [

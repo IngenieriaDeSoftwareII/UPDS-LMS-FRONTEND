@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation } from 'react-router-dom'
-import { inscriptionService } from '@/services/inscriptionService'
-import type { MyCourseInscriptionDto } from '@/services/inscriptionService'
+import { inscriptionService } from '@/services/inscription.service'
+import type { MyCourseInscriptionDto } from '@/services/inscription.service'
 
 export function MyCourses() {
   const location = useLocation()
