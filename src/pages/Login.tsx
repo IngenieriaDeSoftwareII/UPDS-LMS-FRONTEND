@@ -37,8 +37,21 @@ export function Login() {
     }
 
     login(
-      { Email: email, Password: password },
-      { onError: () => setError('Credenciales inválidas. Verifica tu correo y contraseña.') }
+      { email, password },
+      {
+        onSuccess: ({ user }) => {
+          const redirects = {
+            admin: '/admin/dashboard',
+            teacher: '/teacher/dashboard',
+            student: '/student/dashboard',
+          };
+          navigate(redirects[user.role]);
+        },
+        onError: (err: any) => {
+          console.log(err);
+          setError(err?.response?.data?.message || 'Error al iniciar sesión');
+        },
+      }
     );
   };
 
