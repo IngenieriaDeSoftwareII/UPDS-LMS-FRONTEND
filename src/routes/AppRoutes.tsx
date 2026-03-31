@@ -18,6 +18,7 @@ import { StudentDocumentsPage } from '@/pages/student/documents/StudentDocuments
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicRoute } from './PublicRoute'
+import ModulesPage from '@/pages/admin/modules/ModulesPage'
 
 export function AppRoutes() {
   return (
@@ -66,6 +67,11 @@ export function AppRoutes() {
 
       {/* Student */}
       <Route path="/student/documents" element={<StudentDocumentsPage />} />
+
+
+      {/* Modules */}
+      <Route path="modules" element={<ModulesPage />} />
+      
       {/* Redirecciones */}
       <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

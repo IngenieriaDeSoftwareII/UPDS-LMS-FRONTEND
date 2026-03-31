@@ -30,7 +30,9 @@ import {
 } from '@/components/ui/table'
 
 import { useLessons } from '@/hooks/useLessons'
-import type { Lesson } from '@/hooks/useLessons' // ✅ FIX
+import { useModules } from '@/hooks/useModules' // 🔥 NUEVO
+
+import type { Lesson } from '@/hooks/useLessons'
 
 // 🔥 Schema
 const formSchema = z.object({
@@ -54,7 +56,11 @@ export function LessonsPage() {
   } = useLessons()
 
   const { data: lessons, isLoading, error } = useLessonsList()
-  const { mutate: createLesson } = useCreateLesson() // ✅ limpio
+
+  // 🔥 módulos reales
+  const { data: modules = [], isLoading: loadingModules } = useModules()
+
+  const { mutate: createLesson } = useCreateLesson()
   const { mutate: updateLesson } = useUpdateLesson()
   const { mutate: deleteLesson } = useDeleteLesson()
 
@@ -73,7 +79,7 @@ export function LessonsPage() {
   const handleCreate = () => {
     setEditingLesson(null)
     reset({
-      moduleId: 1,
+      moduleId: modules[0]?.id || 1, // 🔥 primer módulo automático
       title: '',
       description: '',
       order: 1,
@@ -120,6 +126,15 @@ export function LessonsPage() {
     }
   }
 
+  if (isLoading || loadingModules) {
+    return (
+      <div className="p-6">
+        <Skeleton className="h-6 w-40 mb-4" />
+        <Skeleton className="h-40 w-full" />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
 
@@ -132,6 +147,7 @@ export function LessonsPage() {
         </Button>
       </div>
 
+      {/* MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -142,13 +158,20 @@ export function LessonsPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
+            {/* 🔥 SELECT MODULOS */}
             <div>
-              <label>Módulo ID</label>
-              <Input
-                type="number"
+              <label>Módulo</label>
+              <select
+                className="w-full border rounded p-2"
                 {...register('moduleId', { valueAsNumber: true })}
                 disabled={isEditing}
-              />
+              >
+                {modules.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.titulo}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div>
@@ -182,6 +205,7 @@ export function LessonsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Listado de lecciones</CardTitle>
@@ -204,17 +228,13 @@ export function LessonsPage() {
               </TableHeader>
 
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6}>
-                      <Skeleton className="h-4 w-full" />
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  lessons?.map((lesson) => (
+                {lessons?.map((lesson) => {
+                  const module = modules.find(m => m.id === lesson.moduleId)
+
+                  return (
                     <TableRow key={lesson.id}>
                       <TableCell>{lesson.id}</TableCell>
-                      <TableCell>{lesson.moduleId}</TableCell>
+                      <TableCell>{module?.titulo ?? 'N/A'}</TableCell>
                       <TableCell>{lesson.title}</TableCell>
                       <TableCell>{lesson.description}</TableCell>
                       <TableCell>{lesson.order}</TableCell>
@@ -229,8 +249,8 @@ export function LessonsPage() {
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
+                  )
+                })}
               </TableBody>
             </Table>
           )}
