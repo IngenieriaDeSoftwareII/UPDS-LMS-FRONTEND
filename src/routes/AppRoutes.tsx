@@ -14,7 +14,7 @@ import { TeacherLessonsPage } from '@/pages/teacher/Lessons/TeacherLessonsPage'
 import { LessonDetailPage } from '@/pages/teacher/Lessons/LessonDetailPage'
 import { TeacherDocumentUploadPage } from '@/pages/teacher/Lessons/TeacherDocumentUploadPage'
 import { TeacherDocumentEditPage } from '@/pages/teacher/Lessons/TeacherDocumentEditPage'
-import { StudentDocumentsPage } from '@/pages/student/documents/StudentDocumentsPage'
+
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicRoute } from './PublicRoute'
@@ -22,6 +22,9 @@ import ModulesPage from '@/pages/admin/modules/ModulesPage'
 import { ImagesPage } from '@/pages/admin/images/ImagesPage'
 import { ImageUploadPage } from '@/pages/admin/images/ImageUploadPage'
 import { ImageEditPage } from '@/pages/admin/images/ImageEditPage'
+import { TeacherModulesPage } from '@/pages/teacher/Lessons/TeacherModulesPage'
+import { StudentModulesPage } from '@/pages/student/Lessons/StudentModulesPage'
+import { StudentLessonsPage } from '@/pages/student/Lessons/StudentLessonsPage'
 
 export function AppRoutes() {
   return (
@@ -62,14 +65,18 @@ export function AppRoutes() {
       <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
       <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
 
-      {/* Teacher */}
-      <Route path="/teacher/lessons" element={<TeacherLessonsPage />} />
+      {/* Teacher Modulos,leciones y contenidos*/}
+      {/* <Route path="/teacher/lessons" element={<TeacherLessonsPage />} /> */}
+      <Route path="/teacher/modules" element={<TeacherModulesPage />} />
+      <Route path="/teacher/modules/:moduleId/lessons" element={<TeacherLessonsPage />} />
       <Route path="/teacher/lessons/:id" element={<LessonDetailPage />} />
       <Route path="/teacher/documents/upload" element={<TeacherDocumentUploadPage />} />
       <Route path="/teacher/documents/edit/:id" element={<TeacherDocumentEditPage />} />
 
+
       {/* Student */}
-      <Route path="/student/documents" element={<StudentDocumentsPage />} />
+      <Route path="/student/modules" element={<StudentModulesPage />} />
+      <Route path="/student/modules/:moduleId/lessons" element={<StudentLessonsPage />} />
 
       {/* ImageContent */}
       <Route path="/images" element={<ImagesPage />} />

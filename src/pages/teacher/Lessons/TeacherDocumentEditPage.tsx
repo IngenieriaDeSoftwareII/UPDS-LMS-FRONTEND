@@ -1,23 +1,50 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+
 import { useDocumentContents } from '@/hooks/useDocumentContents'
+import { useLessons } from '@/hooks/useLessons'
 
 export function TeacherDocumentEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
+  // 🔥 VALIDACIÓN ID
+  const documentId = Number(id)
+  const isValidId = !isNaN(documentId)
+
   const { useDocumentById, useUpdateDocument } = useDocumentContents()
-  const { data: doc, isLoading, isError } = useDocumentById(Number(id))
+  const { data: doc, isLoading, isError } = useDocumentById(
+    isValidId ? documentId : 0
+  )
+
   const { mutate: update, isPending } = useUpdateDocument()
 
+  // 🔥 TRAER LESSON PARA SACAR moduleId
+  const { useLessonsList } = useLessons()
+  const { data: lessons } = useLessonsList()
+
+  const lesson = lessons?.find(
+    (l) => l.id === doc?.content?.lessonId
+  )
+
+  const moduleId = lesson?.moduleId
+
+  // 🔹 state
   const [title, setTitle] = useState('')
   const [order, setOrder] = useState(1)
   const [pageCount, setPageCount] = useState<number | undefined>()
   const [file, setFile] = useState<File | null>(null)
 
+  // 🔹 cargar datos
   useEffect(() => {
     if (doc) {
       setTitle(doc.content?.title || '')
@@ -26,7 +53,14 @@ export function TeacherDocumentEditPage() {
     }
   }, [doc])
 
-  const goBack = () => navigate('/teacher/lessons')
+  // 🔙 volver seguro
+  const goBack = () => {
+    if (moduleId) {
+      navigate(`/teacher/modules/${moduleId}/lessons`)
+    } else {
+      navigate('/teacher/modules') // fallback
+    }
+  }
 
   const handleUpdate = () => {
     if (!title.trim()) {
@@ -37,7 +71,10 @@ export function TeacherDocumentEditPage() {
     // 🔹 SOLO METADATA
     if (!file) {
       update(
-        { id: Number(id), data: { title, order, pageCount } },
+        {
+          id: documentId,
+          data: { title, order, pageCount }
+        },
         {
           onSuccess: () => {
             alert('Documento actualizado ✅')
@@ -51,15 +88,23 @@ export function TeacherDocumentEditPage() {
     // 🔹 CON ARCHIVO
     const lessonId = doc?.content?.lessonId
 
+    if (!lessonId) {
+      alert('Error: lessonId no encontrado')
+      return
+    }
+
     const formData = new FormData()
     formData.append('File', file)
     formData.append('Title', title)
     formData.append('Order', String(order))
     formData.append('LessonId', String(lessonId))
-    if (pageCount) formData.append('PageCount', String(pageCount))
+
+    if (pageCount) {
+      formData.append('PageCount', String(pageCount))
+    }
 
     update(
-      { id: Number(id), data: formData },
+      { id: documentId, data: formData },
       {
         onSuccess: () => {
           alert('Archivo actualizado ✅')
@@ -69,13 +114,23 @@ export function TeacherDocumentEditPage() {
     )
   }
 
-  if (isLoading) return <p>Cargando...</p>
-  if (isError) return <p>Error</p>
+  // 🔹 estados
+  if (!isValidId) {
+    return <p className="p-6 text-red-500">ID inválido</p>
+  }
+
+  if (isLoading) {
+    return <p className="p-6">Cargando...</p>
+  }
+
+  if (isError || !doc) {
+    return <p className="p-6 text-red-500">Error al cargar</p>
+  }
 
   return (
     <div className="space-y-6 max-w-xl mx-auto">
 
-      {/* VOLVER */}
+      {/* 🔙 VOLVER */}
       <Button variant="outline" onClick={goBack}>
         ← Volver
       </Button>
@@ -109,7 +164,9 @@ export function TeacherDocumentEditPage() {
 
           {/* PÁGINAS */}
           <div>
-            <label className="text-sm font-medium">Número de páginas</label>
+            <label className="text-sm font-medium">
+              Número de páginas
+            </label>
             <Input
               type="number"
               min={1}
@@ -123,14 +180,15 @@ export function TeacherDocumentEditPage() {
 
           {/* ARCHIVO */}
           <div>
-            <label className="text-sm font-medium">Reemplazar archivo</label>
+            <label className="text-sm font-medium">
+              Reemplazar archivo
+            </label>
             <Input
               type="file"
               onChange={(e) => {
                 const selected = e.target.files?.[0] || null
                 setFile(selected)
 
-                // 🔥 opcional: actualizar título automáticamente
                 if (selected && !title) {
                   setTitle(selected.name)
                 }
