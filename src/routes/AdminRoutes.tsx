@@ -2,6 +2,8 @@ import { Route, Routes } from 'react-router-dom'
 import { AdminDashboard } from '@/pages/admin/Dashboard'
 import { PersonsPage } from '@/pages/admin/PersonsPage'
 import { UsersPage } from '@/pages/admin/UsersPage'
+import { AdminCourseReportsPage } from '@/pages/admin/reports/AdminCourseReportsPage'
+import { AdminTeacherReportsPage } from '@/pages/admin/reports/AdminTeacherReportsPage'
 import { CoursesPage } from '@/pages/admin/CoursesPage'
 import { CategoriesPage } from '@/pages/admin/CategoriesPage'
 import { CatalogsPage } from '@/pages/admin/CatalogsPage'
@@ -13,6 +15,8 @@ export function AdminRoutes() {
       <Route path="dashboard" element={<AdminDashboard />} />
       <Route path="persons" element={<PersonsPage />} />
       <Route path="users" element={<UsersPage />} />
+      <Route path="reports/courses" element={<AdminCourseReportsPage />} />
+      <Route path="reports/teachers" element={<AdminTeacherReportsPage />} />
       <Route path="courses" element={<CoursesPage />} />
       <Route path="categories" element={<CategoriesPage />} />
       <Route path="catalogs" element={<CatalogsPage />} />

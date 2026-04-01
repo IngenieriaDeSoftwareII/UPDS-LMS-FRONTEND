@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GraduationCap, Eye, EyeOff, Lock, Mail, AlertCircle, Sun, Moon, Monitor } from 'lucide-react';
 import { useLogin } from '@/hooks/useAuth';
 import { useTheme } from '@/components/theme-provider';
@@ -16,6 +17,7 @@ const themeConfig: Record<Theme, { next: Theme; icon: typeof Sun; label: string 
 };
 
 export function Login() {
+  const navigate = useNavigate()
   const { mutate: login, isPending: isLoading } = useLogin();
   const { theme, setTheme } = useTheme();
   const [email, setEmail] = useState(() => localStorage.getItem('rememberedEmail') ?? '');
@@ -37,15 +39,10 @@ export function Login() {
     }
 
     login(
-      { email, password },
+      { Email: email, Password: password },
       {
-        onSuccess: ({ user }) => {
-          const redirects = {
-            admin: '/admin/dashboard',
-            teacher: '/teacher/dashboard',
-            student: '/student/dashboard',
-          };
-          navigate(redirects[user.role]);
+        onSuccess: ({ redirectTo }) => {
+          navigate(redirectTo);
         },
         onError: (err: any) => {
           console.log(err);
