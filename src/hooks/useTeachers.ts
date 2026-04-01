@@ -31,7 +31,7 @@ export function useUpdateTeacher() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: TeacherUpdateDTO }) => teacherService.update(id, data),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['teachers'] });
       queryClient.invalidateQueries({ queryKey: ['teachers', variables.id] });
     },

@@ -108,12 +108,9 @@ export default function CourseCatalog() {
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map(course => {
                 // 🔥 SOPORTE PARA AMBOS FORMATOS
-                const image = resolveImageUrl(
-                  course.imagenUrl || course.imagen_url
-                )
+                const image = resolveImageUrl(course.imagen_url)
 
-                const duration =
-                  course.duracionTotalMin ?? course.duracion_total_min ?? 0
+                const duration = course.duracion_total_min ?? 0
 
                 const showImage = image && !brokenImages[String(course.id)]
 

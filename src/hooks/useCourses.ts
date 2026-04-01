@@ -16,7 +16,7 @@ export function useTeacherCourses(teacherId: number | undefined) {
     queryKey: ['teacher-courses', teacherId],
     queryFn: () => {
       if (!teacherId) return Promise.resolve([]);
-      return courseService.getCoursesByTeacher(teacherId);
+      return courseService.getByTeacher(teacherId);
     },
     enabled: !!teacherId, // Solo ejecuta si tenemos teacherId
   });
@@ -44,7 +44,7 @@ export function useUpdateCourse() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: CourseUpdateDTO }) => courseService.update(id, data),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       // Invalida ambas queries para mantener consistencia
       queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['courses', variables.id] });
