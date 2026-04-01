@@ -16,7 +16,6 @@ export function TeacherImageUploadPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
 
-  // 🔥 VALIDACIÓN SEGURA (IGUAL QUE DOCUMENT)
   const lessonIdFromUrl = Number(params.get('lessonId'))
   const moduleIdFromUrl = Number(params.get('moduleId'))
 
@@ -26,13 +25,12 @@ export function TeacherImageUploadPage() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [title, setTitle] = useState('')
-  const [order, setOrder] = useState(1)
+  const [order, setOrder] = useState<number>(1)
   const [error, setError] = useState<string | null>(null)
 
   const { useUploadImage } = useImageContents()
   const { mutate: upload, isPending } = useUploadImage()
 
-  // 🔥 PREVIEW
   useEffect(() => {
     if (!file) {
       setPreview(null)
@@ -45,7 +43,6 @@ export function TeacherImageUploadPage() {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
-  // 🔙 VOLVER (IGUAL QUE DOCUMENT)
   const goBack = () => {
     if (moduleId) {
       navigate(`/teacher/modules/${moduleId}/lessons`)
@@ -60,10 +57,14 @@ export function TeacherImageUploadPage() {
     if (!file) return setError('Selecciona una imagen')
     if (!lessonId) return setError('Error: lessonId inválido')
 
+    if (!order || order < 1) {
+      return setError('El orden debe ser mayor a 0')
+    }
+
     const formData = new FormData()
     formData.append('lessonId', String(lessonId))
     formData.append('title', title.trim() || file.name)
-    formData.append('order', String(order))
+    formData.append('order', String(order)) 
     formData.append('file', file)
 
     upload(formData, {
@@ -80,7 +81,6 @@ export function TeacherImageUploadPage() {
   return (
     <div className="space-y-6 max-w-xl mx-auto">
 
-      {/* 🔙 VOLVER */}
       <Button variant="outline" onClick={goBack}>
         ← Volver
       </Button>
@@ -94,7 +94,9 @@ export function TeacherImageUploadPage() {
 
           {/* ERROR */}
           {error && (
-            <div className="text-red-500 text-sm">{error}</div>
+            <div className="text-red-500 text-sm border border-red-300 bg-red-50 p-2 rounded">
+              {error}
+            </div>
           )}
 
           {/* PREVIEW */}
@@ -116,14 +118,22 @@ export function TeacherImageUploadPage() {
             />
           </div>
 
-          {/* ORDEN */}
+          {/* ORDEN*/}
           <div>
             <label className="text-sm font-medium">Orden</label>
             <Input
               type="number"
               min={1}
               value={order}
-              onChange={(e) => setOrder(Number(e.target.value))}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+
+                if (isNaN(val)) {
+                  setOrder(1)
+                } else {
+                  setOrder(val)
+                }
+              }}
             />
           </div>
 
@@ -142,15 +152,14 @@ export function TeacherImageUploadPage() {
                   return
                 }
 
+                setError(null)
                 setFile(f)
 
-                // 🔥 AUTO TITLE (IGUAL QUE DOCUMENT)
                 if (!title) setTitle(f.name)
               }}
             />
           </div>
 
-          {/* BOTÓN */}
           <Button onClick={handleUpload} disabled={isPending}>
             {isPending ? 'Subiendo...' : 'Subir Imagen'}
           </Button>

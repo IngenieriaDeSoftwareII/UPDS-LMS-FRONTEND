@@ -1,4 +1,4 @@
-import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 
 import { Button } from '@/components/ui/button'
@@ -11,36 +11,53 @@ import {
 } from '@/components/ui/card'
 
 import { useImageContents } from '@/hooks/useImageContents'
+import { useLessons } from '@/hooks/useLessons'
 
 type ImageItem = {
   contentId: number
   imageUrl: string
   altText: string
-  lessonId: number
+  content?: {
+    lessonId: number
+    title?: string
+    order?: number
+  }
 }
 
 export function TeacherImageEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const [params] = useSearchParams()
 
-  const moduleId = Number(params.get('moduleId'))
+  const imageId = Number(id)
 
   const { useImagesList, useUpdateImage } = useImageContents()
-
-  const { data } = useImagesList()
+  const { data: images } = useImagesList()
   const { mutate: update, isPending } = useUpdateImage()
 
-  const image = (data as ImageItem[] | undefined)?.find(
-    (i) => i.contentId === Number(id)
+  const { useLessonsList } = useLessons()
+  const { data: lessons } = useLessonsList()
+
+  const image = (images as ImageItem[] | undefined)?.find(
+    (i) => i.contentId === imageId
   )
 
+  const lessonId = image?.content?.lessonId
+  const lesson = lessons?.find((l) => l.id === lessonId)
+  const moduleId = lesson?.moduleId
+
+  // STATES
   const [title, setTitle] = useState('')
+  const [order, setOrder] = useState<number>(1)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
+  // CARGAR DATOS
   useEffect(() => {
-    if (image) setTitle(image.altText)
+    if (image) {
+      setTitle(image.content?.title || image.altText)
+      setOrder(image.content?.order || 1)
+    }
   }, [image])
 
   useEffect(() => {
@@ -59,16 +76,35 @@ export function TeacherImageEditPage() {
   }
 
   const handleUpdate = () => {
+    setError(null)
+
+    if (!title.trim()) {
+      return setError('El título es obligatorio')
+    }
+
+    if (!order || order < 1 || isNaN(order)) {
+      return setError('El orden debe ser un número mayor a 0')
+    }
+
     const formData = new FormData()
     formData.append('altText', title)
+    formData.append('order', String(order)) 
 
     if (file) {
+      if (!file.type.startsWith('image/')) {
+        return setError('Solo se permiten imágenes')
+      }
+
+      if (file.size > 5 * 1024 * 1024) {
+        return setError('La imagen supera los 5MB')
+      }
+
       formData.append('file', file)
     }
 
     update(
       {
-        id: Number(id),
+        id: imageId,
         formData,
       },
       {
@@ -76,6 +112,9 @@ export function TeacherImageEditPage() {
           alert('Actualizado ✅')
           goBack()
         },
+        onError: () => {
+          setError('Error al actualizar la imagen ❌')
+        }
       }
     )
   }
@@ -98,28 +137,78 @@ export function TeacherImageEditPage() {
 
         <CardContent className="space-y-4">
 
+          {/* ERROR */}
+          {error && (
+            <div className="text-red-500 text-sm border border-red-300 bg-red-50 p-2 rounded">
+              {error}
+            </div>
+          )}
+
+          {/* INFO */}
+          <div className="text-sm text-gray-500 space-y-1">
+            <p><strong>Lesson:</strong> {lessonId}</p>
+            <p><strong>Módulo:</strong> {moduleId ?? '—'}</p>
+          </div>
+
+          {/* PREVIEW */}
           <img
             src={preview || image.imageUrl}
             className="w-40 h-40 object-cover mx-auto rounded"
           />
 
-          <Input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          {/* TÍTULO */}
+          <div>
+            <label className="text-sm font-medium">Título</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
 
-          <Input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (!f) return
-              setFile(f)
-            }}
-          />
+          {/* ORDEN */}
+          <div>
+            <label className="text-sm font-medium">Orden</label>
+            <Input
+              type="number"
+              min={1}
+              value={order}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+
+                if (isNaN(val)) {
+                  setOrder(1)
+                } else {
+                  setOrder(val)
+                }
+              }}
+            />
+          </div>
+
+          {/* ARCHIVO */}
+          <div>
+            <label className="text-sm font-medium">
+              Reemplazar imagen
+            </label>
+            <Input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (!f) return
+
+                if (!f.type.startsWith('image/')) {
+                  setError('Solo se permiten imágenes')
+                  return
+                }
+
+                setError(null)
+                setFile(f)
+              }}
+            />
+          </div>
 
           <Button onClick={handleUpdate} disabled={isPending}>
-            Guardar cambios
+            {isPending ? 'Guardando...' : 'Guardar cambios'}
           </Button>
 
         </CardContent>

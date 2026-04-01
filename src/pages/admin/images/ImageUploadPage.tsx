@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/select'
 
 import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 import { useImageContents } from '@/hooks/useImageContents'
 
 export function ImageUploadPage() {
@@ -30,10 +32,14 @@ export function ImageUploadPage() {
   const [title, setTitle] = useState('')
   const [error, setError] = useState<string | null>(null)
 
+  // 🔥 HOOKS
   const { useLessonsList } = useLessons()
-  const { useUploadImage } = useImageContents()
-
   const { data: lessons, isLoading } = useLessonsList()
+
+  const { data: modules } = useModules()
+  const { data: courses } = useCoursesPrueba()
+
+  const { useUploadImage } = useImageContents()
   const { mutate: upload, isPending } = useUploadImage()
 
   // 🔥 PREVIEW
@@ -48,6 +54,14 @@ export function ImageUploadPage() {
 
     return () => URL.revokeObjectURL(objectUrl)
   }, [file])
+
+  // 🔥 FORMATEAR TEXTO DEL COMBO
+  const getLessonLabel = (lesson: any) => {
+    const module = modules?.find(m => m.id === lesson.moduleId)
+    const course = courses?.find(c => c.id === module?.cursoId)
+
+    return `${course?.titulo || 'Curso?'} > ${module?.titulo || 'Módulo?'} > ${lesson.title}`
+  }
 
   const handleUpload = () => {
     setError(null)
@@ -128,7 +142,7 @@ export function ImageUploadPage() {
                 ) : (
                   lessons?.map((l) => (
                     <SelectItem key={l.id} value={String(l.id)}>
-                      {l.title}
+                      {getLessonLabel(l)}
                     </SelectItem>
                   ))
                 )}
@@ -157,7 +171,6 @@ export function ImageUploadPage() {
 
                 if (!f) return
 
-                // 🔥 validación
                 if (!f.type.startsWith('image/')) {
                   setError('Solo se permiten imágenes')
                   return

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { PlusCircle, Pencil, ArrowLeft, Image } from 'lucide-react'
+import { PlusCircle, Pencil, ArrowLeft } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -24,7 +24,7 @@ import { AddContentModal } from '@/components/common/AddContentModal'
 
 import http from '@/lib/http'
 
-// ✅ TIPOS
+// TIPOS
 type Lesson = {
   id: number
   title: string
@@ -47,9 +47,9 @@ type ImageItem = {
   lessonId?: number
   imageUrl: string
   altText: string
-  order?: number
   content?: {
     lessonId: number
+    order?: number
   }
 }
 
@@ -77,9 +77,18 @@ export function TeacherLessonsPage() {
   const [openContentModal, setOpenContentModal] = useState(false)
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null)
 
+  // 🔥 NUEVO: control de toggle por lección
+  const [openLessons, setOpenLessons] = useState<Record<number, boolean>>({})
+
+  const toggleLesson = (lessonId: number) => {
+    setOpenLessons(prev => ({
+      ...prev,
+      [lessonId]: !prev[lessonId]
+    }))
+  }
+
   const parsedModuleId = Number(moduleId)
 
-  // ✅ FILTRAR LECCIONES
   const filteredLessons = (lessons as Lesson[] | undefined)
     ?.filter((l) => Number(l.moduleId) === parsedModuleId)
     ?.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
@@ -146,9 +155,9 @@ export function TeacherLessonsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-8xl mx-auto px-6 mt-8 space-y-4">
 
-      <Button
+      <Button className='mt-4'
         variant="outline"
         onClick={() => navigate('/teacher/modules')}
       >
@@ -168,26 +177,26 @@ export function TeacherLessonsPage() {
 
       {filteredLessons?.map((lesson) => {
 
-        // 📄 DOCUMENTOS
-        const lessonDocs: DocumentItem[] =
+        const lessonDocs =
           (documents as DocumentItem[] | undefined)
-            ?.filter((d) => d.content.lessonId === lesson.id)
-            ?.sort((a, b) => (a.content?.order ?? 0) - (b.content?.order ?? 0)) ?? []
+            ?.filter((d) => d.content.lessonId === lesson.id) ?? []
 
-        // 🖼️ IMÁGENES (FIX REAL)
-        const lessonImages: ImageItem[] =
+        const lessonImages =
           (images as ImageItem[] | undefined)
             ?.map((img) => ({
               ...img,
-              lessonId: img.lessonId ?? img.content?.lessonId, // 🔥 NORMALIZA
+              lessonId: img.lessonId ?? img.content?.lessonId,
             }))
-            ?.filter((img) => img.lessonId === lesson.id)
-            ?.sort((a, b) => (a.order ?? 0) - (b.order ?? 0)) ?? []
+            ?.filter((img) => img.lessonId === lesson.id) ?? []
 
         return (
           <Card key={lesson.id}>
 
-            <CardHeader className="flex justify-between items-center">
+            {/* 🔥 HEADER CLICKEABLE */}
+            <CardHeader
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleLesson(lesson.id)}
+            >
               <div>
                 <CardTitle>{lesson.title}</CardTitle>
                 <p className="text-sm text-gray-500">
@@ -195,7 +204,11 @@ export function TeacherLessonsPage() {
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              {/* 🔥 evitar que botones cierren */}
+              <div
+                className="flex gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
 
                 <Button
                   onClick={() => {
@@ -223,72 +236,85 @@ export function TeacherLessonsPage() {
               </div>
             </CardHeader>
 
-            <CardContent className="space-y-4">
+            {/* 🔥 TOGGLE (abierto por defecto) */}
+            {openLessons[lesson.id] !== false && (
+              <CardContent className="space-y-2">
 
-              {/* 📄 DOCUMENTOS */}
-              <div>
-                <h3 className="font-semibold mb-2">Documentos</h3>
+                {(() => {
 
-                {lessonDocs.length === 0 ? (
-                  <p className="text-gray-400 text-sm">
-                    No hay documentos
-                  </p>
-                ) : (
-                  lessonDocs.map((doc) => (
-                    <div
-                      key={doc.contentId}
-                      className="flex justify-between items-center border p-3 rounded"
-                    >
-                      <div
-                        className="cursor-pointer"
-                        onClick={() => handleOpenDoc(doc.contentId)}
-                      >
-                        {doc.content?.title}
-                      </div>
+                  const combined = [
+                    ...lessonDocs.map(doc => ({
+                      type: 'document',
+                      id: doc.contentId,
+                      title: doc.content?.title || 'Documento',
+                      order: doc.content?.order ?? 0,
+                      data: doc
+                    })),
 
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            navigate(`/teacher/documents/edit/${doc.contentId}`)
-                          }
+                    ...lessonImages.map(img => ({
+                      type: 'image',
+                      id: img.contentId,
+                      title: img.altText || 'Imagen',
+                      order: img.content?.order ?? 0,
+                      data: img
+                    }))
+                  ].sort((a, b) => a.order - b.order)
+
+                  if (combined.length === 0) {
+                    return (
+                      <p className="text-gray-400 text-sm">
+                        No hay contenido
+                      </p>
+                    )
+                  }
+
+                  return combined.map(item => {
+
+                    if (item.type === 'document') {
+                      const doc = item.data as DocumentItem
+
+                      return (
+                        <div
+                          key={`doc-${item.id}`}
+                          className="flex justify-between items-center border p-3 rounded hover:bg-gray-50"
                         >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                          <div
+                            className="cursor-pointer flex items-center gap-2"
+                            onClick={() => handleOpenDoc(doc.contentId)}
+                          >
+                            📄 {item.title}
+                          </div>
 
-                        <ConfirmDeleteButton
-                          onConfirm={() => handleDeleteDoc(doc.contentId)}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                navigate(`/teacher/documents/edit/${doc.contentId}`)
+                              }
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
 
-              {/* 🖼️ IMÁGENES */}
-              <div>
-                <h3 className="font-semibold mb-2 flex items-center gap-2">
-                  <Image className="w-4 h-4" />
-                  Imágenes
-                </h3>
+                            <ConfirmDeleteButton
+                              onConfirm={() => handleDeleteDoc(doc.contentId)}
+                            />
+                          </div>
+                        </div>
+                      )
+                    }
 
-                {lessonImages.length === 0 ? (
-                  <p className="text-gray-400 text-sm">
-                    No hay imágenes
-                  </p>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    const img = item.data as ImageItem
 
-                    {lessonImages.map((img) => (
+                    return (
                       <div
-                        key={img.contentId}
-                        className="border rounded p-2 space-y-2"
+                        key={`img-${item.id}`}
+                        className="border p-3 rounded space-y-2 hover:bg-gray-50"
                       >
                         <img
                           src={img.imageUrl}
                           alt={img.altText}
-                          className="w-full h-32 object-cover rounded cursor-pointer"
+                          className="w-full max-h-64 object-contain rounded cursor-pointer"
                           onClick={() => handleOpenImage(img.imageUrl)}
                           onError={(e) => {
                             e.currentTarget.src =
@@ -296,35 +322,35 @@ export function TeacherLessonsPage() {
                           }}
                         />
 
-                        <p className="text-sm text-center">
-                          {img.altText}
-                        </p>
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm">{item.title}</p>
 
-                        <div className="flex justify-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() =>
-                              navigate(`/teacher/images/edit/${img.contentId}`)
-                            }
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                navigate(`/teacher/images/edit/${img.contentId}`)
+                              }
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
 
-                          <ConfirmDeleteButton
-                            onConfirm={() =>
-                              handleDeleteImage(img.contentId)
-                            }
-                          />
+                            <ConfirmDeleteButton
+                              onConfirm={() =>
+                                handleDeleteImage(img.contentId)
+                              }
+                            />
+                          </div>
                         </div>
                       </div>
-                    ))}
+                    )
+                  })
 
-                  </div>
-                )}
-              </div>
+                })()}
 
-            </CardContent>
+              </CardContent>
+            )}
           </Card>
         )
       })}

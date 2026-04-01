@@ -75,7 +75,7 @@ export function TeacherDocumentUploadPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Subir Documento</CardTitle>
+          <CardTitle>Subir Archivo</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">

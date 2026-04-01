@@ -41,17 +41,14 @@ export function TeacherModulesPage() {
   const updateModule = useUpdateModule()
   const deleteModule = useDeleteModule()
 
-  // 🔹 modal state
   const [open, setOpen] = useState(false)
 
-  // 🔹 form state
   const [titulo, setTitulo] = useState('')
   const [cursoId, setCursoId] = useState<number | ''>('')
 
   const [editingModule, setEditingModule] = useState<any | null>(null)
   const isEditing = !!editingModule
 
-  // 🔹 abrir crear
   const handleOpen = () => {
     setEditingModule(null)
     setTitulo('')
@@ -59,7 +56,6 @@ export function TeacherModulesPage() {
     setOpen(true)
   }
 
-  // 🔹 editar
   const handleEdit = (module: any) => {
     setEditingModule(module)
     setTitulo(module.titulo)
@@ -67,7 +63,6 @@ export function TeacherModulesPage() {
     setOpen(true)
   }
 
-  // 🔹 reset
   const resetForm = () => {
     setTitulo('')
     setCursoId('')
@@ -75,7 +70,6 @@ export function TeacherModulesPage() {
     setOpen(false)
   }
 
-  // 🔹 submit
   const handleSubmit = () => {
     if (!cursoId) {
       alert('Selecciona un curso')
@@ -113,12 +107,10 @@ export function TeacherModulesPage() {
     }
   }
 
-  // 🔹 delete
   const handleDelete = (id: number) => {
     deleteModule.mutate(id)
   }
 
-  // 🔹 loading
   if (isLoading || loadingCourses) {
     return (
       <div className="p-6 space-y-4">
@@ -128,7 +120,6 @@ export function TeacherModulesPage() {
     )
   }
 
-  // 🔹 error
   if (error) {
     return (
       <div className="p-6 text-red-500">
@@ -138,7 +129,7 @@ export function TeacherModulesPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-4">
 
       {/* HEADER */}
       <PageHeader
@@ -150,71 +141,79 @@ export function TeacherModulesPage() {
 
       {/* LISTA */}
       {modules?.length === 0 ? (
-        <p className="text-gray-500">No hay módulos</p>
+        <div className="text-center text-gray-500 py-10 border rounded-lg">
+          No hay módulos creados
+        </div>
       ) : (
-        modules?.map((module) => {
-          const curso = courses.find(c => c.id === module.cursoId)
+        <div className="grid gap-4">
 
-          return (
-            <Card
-              key={module.id}
-              className="cursor-pointer hover:shadow-md transition"
-              onClick={() =>
-                navigate(`/teacher/modules/${module.id}/lessons`)
-              }
-            >
-              <CardHeader className="flex justify-between items-center">
+          {modules?.map((module) => {
+            const curso = courses.find(c => c.id === module.cursoId)
 
-                <div>
-                  <CardTitle>{module.titulo}</CardTitle>
-                  <p className="text-sm text-gray-500">
-                    {curso?.titulo || 'Sin curso'}
-                  </p>
-                </div>
+            return (
+              <Card
+                key={module.id}
+                className="group cursor-pointer transition-all duration-200 hover:shadow-lg hover:-translate-y-1 border"
+                onClick={() =>
+                  navigate(`/teacher/modules/${module.id}/lessons`)
+                }
+              >
+                <CardHeader className="flex flex-row justify-between items-center">
 
-                {/* ACTIONS */}
-                <div
-                  className="flex gap-2"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {/* EDIT */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(module)}
+                  {/* INFO */}
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg group-hover:text-primary transition">
+                      {module.titulo}
+                    </CardTitle>
+
+                    <p className="text-sm text-gray-500">
+                      {curso?.titulo || 'Sin curso'}
+                    </p>
+                  </div>
+
+                  {/* ACTIONS */}
+                  <div
+                    className="flex gap-2 opacity-80 group-hover:opacity-100 transition"
+                    onClick={(e) => e.stopPropagation()}
                   >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEdit(module)}
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </Button>
 
-                  {/* DELETE */}
-                  <ConfirmDeleteButton
-                    onConfirm={() => handleDelete(module.id)}
-                  />
-                </div>
+                    <ConfirmDeleteButton
+                      onConfirm={() => handleDelete(module.id)}
+                    />
+                  </div>
 
-              </CardHeader>
-            </Card>
-          )
-        })
+                </CardHeader>
+              </Card>
+            )
+          })}
+
+        </div>
       )}
 
       {/* MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent>
+        <DialogContent className="max-w-md">
 
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="text-xl">
               {isEditing ? 'Editar Módulo' : 'Nuevo Módulo'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4">
+          <div className="space-y-5 py-2">
 
             {/* CURSO */}
-            <div>
+            <div className="space-y-1">
               <label className="text-sm font-medium">Curso</label>
               <select
-                className="w-full border rounded p-2"
+                className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={cursoId}
                 onChange={(e) =>
                   setCursoId(Number(e.target.value))
@@ -231,9 +230,10 @@ export function TeacherModulesPage() {
             </div>
 
             {/* TÍTULO */}
-            <div>
+            <div className="space-y-1">
               <label className="text-sm font-medium">Título</label>
               <Input
+                placeholder="Ej: Introducción al curso"
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
               />
@@ -241,7 +241,7 @@ export function TeacherModulesPage() {
 
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-4">
             <Button variant="outline" onClick={resetForm}>
               Cancelar
             </Button>
