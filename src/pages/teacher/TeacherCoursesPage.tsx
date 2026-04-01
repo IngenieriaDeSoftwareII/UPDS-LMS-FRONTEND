@@ -59,7 +59,7 @@ const useCurrentTeacherId = () => {
 // ─── Validación para DOCENTE (solo campos permitidos) ─────────────────────────
 const teacherCourseSchema = z.object({
   descripcion: z.string().optional(),
-  publicado: z.boolean().default(false),
+  publicado: z.boolean(),
 })
 
 type FormValues = z.infer<typeof teacherCourseSchema>
@@ -163,7 +163,7 @@ function EditCourseDialog({ course }: { course: Course }) {
           setOpen(false)
         },
         onError: (err) => {
-          toast.error(getApiErrorMessage(err) || 'Error al actualizar el curso')
+          toast.error(getApiErrorMessage(err, 'Error al actualizar el curso'))
         },
       }
     )
@@ -200,7 +200,7 @@ export function TeacherCoursesPage() {
     if (!searchTerm) return courses
     const term = searchTerm.toLowerCase()
     return courses.filter(
-      (c) =>
+      (c: Course) =>
         c.titulo.toLowerCase().includes(term) ||
         c.descripcion?.toLowerCase().includes(term)
     )
@@ -243,7 +243,7 @@ export function TeacherCoursesPage() {
               <ServerCrash className="h-4 w-4" />
               <AlertTitle>Error al cargar registros</AlertTitle>
               <AlertDescription className="flex items-center gap-2 flex-wrap">
-                {getApiErrorMessage(error) || 'Ocurrió un error al cargar los cursos'}
+                {getApiErrorMessage(error, 'Ocurrió un error al cargar los cursos')}
                 <Button variant="link" onClick={() => refetch()} className="px-2">
                   Reintentar
                 </Button>
@@ -286,7 +286,7 @@ export function TeacherCoursesPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map((course) => (
+                    filtered.map((course: Course) => (
                       <TableRow key={course.id}>
                         <TableCell className="font-medium">{course.titulo}</TableCell>
                         <TableCell>{course.nivel}</TableCell>

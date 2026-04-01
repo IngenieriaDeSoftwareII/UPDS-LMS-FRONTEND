@@ -31,7 +31,7 @@ export function useUpdateCatalog() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: ({ id, data }: { id: number; data: CatalogUpdateDTO }) => catalogService.update(id, data),
-    onSuccess: (data, variables) => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['catalogs'] });
       queryClient.invalidateQueries({ queryKey: ['catalogs', variables.id] });
     },
