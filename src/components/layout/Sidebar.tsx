@@ -2,7 +2,9 @@ import { NavLink } from 'react-router-dom';
 import {
   LayoutDashboard, Users, UserCog,
   Menu, ChevronLeft, X, ClipboardList,
-  BarChart3, BookOpenCheck, GraduationCap
+  BarChart3, BookOpenCheck, GraduationCap,
+  BookOpen, Tags, Library, LibraryBig,
+  Contact
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserRole } from '@/types';
@@ -23,15 +25,22 @@ const navItems: NavItem[] = [
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
   { label: 'Reportes (Cursos)', path: '/admin/reports/courses', icon: BarChart3, roles: ['Admin'] },
   { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
+  { label: 'Docentes', path: '/admin/teachers', icon: Contact, roles: ['Admin'] },
+  { label: 'Cursos', path: '/admin/courses', icon: BookOpen, roles: ['Admin'] },
+  { label: 'Categorías', path: '/admin/categories', icon: Tags, roles: ['Admin'] },
+  { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] },
 
   // Docente (rutas bajo /teacher/*)
   { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['Docente'] },
+  { label: 'Mis Cursos', path: '/teacher/courses', icon: BookOpen, roles: ['Docente'] },
   { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
   { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
   { label: 'Reportes', path: '/teacher/reports', icon: BarChart3, roles: ['Docente'] },
 
   // Estudiante (rutas bajo /student/*)
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['Estudiante'] },
+  { label: 'Catálogo de Cursos', path: '/student/courses', icon: Library, roles: ['Estudiante'] },
+  { label: 'Mis Cursos', path: '/student/mycourses', icon: BookOpen, roles: ['Estudiante'] },
   { label: 'Evaluaciones', path: '/student/evaluations', icon: BookOpenCheck, roles: ['Estudiante'] },
   { label: 'Mis notas', path: '/student/evaluations/my-grades', icon: GraduationCap, roles: ['Estudiante'] },
 ];

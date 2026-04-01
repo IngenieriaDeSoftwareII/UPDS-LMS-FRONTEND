@@ -4,11 +4,13 @@ import { EvaluationManagementPage } from '@/pages/teacher/EvaluationManagementPa
 import { EvaluationGradesPage } from '@/pages/teacher/EvaluationGradesPage'
 import { TeacherReportsPage } from '@/pages/teacher/reports/TeacherReportsPage'
 import { TeacherCourseReportPage } from '@/pages/teacher/reports/TeacherCourseReportPage'
+import { TeacherCoursesPage } from '@/pages/teacher/TeacherCoursesPage'
 
 export function TeacherRoutes() {
   return (
     <Routes>
       <Route path="dashboard" element={<TeacherDashboard />} />
+      <Route path="courses" element={<TeacherCoursesPage />} />
       <Route path="evaluations" element={<EvaluationManagementPage />} />
       <Route path="evaluations/grades" element={<EvaluationGradesPage />} />
       <Route path="reports" element={<TeacherReportsPage />} />

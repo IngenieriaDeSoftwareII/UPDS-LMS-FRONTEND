@@ -1,4 +1,6 @@
 import http from '@/lib/http'
+import { createService } from './base.service'
+import type { Course, CourseCreateDTO, CourseUpdateDTO } from '@/types/course'
 
 export interface CourseDto {
   id: number
@@ -11,7 +13,11 @@ export interface CourseDto {
   maxEstudiantes?: number | null
 }
 
+const baseService = createService<CourseCreateDTO, CourseUpdateDTO, Course>('/courses')
+
 export const courseService = {
+  ...baseService,
+
   getAll: (): Promise<CourseDto[]> =>
     http.get<CourseDto[]>('/Courses').then(res => res.data),
 
