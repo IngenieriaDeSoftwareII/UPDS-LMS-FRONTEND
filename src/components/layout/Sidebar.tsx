@@ -21,11 +21,14 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { label: 'Personas', path: '/admin/persons', icon: Users, roles: ['Admin'] },
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
+  { label: 'Reportes (Cursos)', path: '/admin/reports/courses', icon: BarChart3, roles: ['Admin'] },
+  { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
 
   // Docente (rutas bajo /teacher/*)
   { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['Docente'] },
   { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
   { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
+  { label: 'Reportes', path: '/teacher/reports', icon: BarChart3, roles: ['Docente'] },
 
   // Estudiante (rutas bajo /student/*)
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['Estudiante'] },

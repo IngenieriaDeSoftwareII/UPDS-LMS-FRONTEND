@@ -1,20 +1,9 @@
-import { useEffect, useState } from "react";
-import type { Course } from "@/types/course";
-import { getCoursesMock } from "@/services/course.service";
+import { useQuery } from '@tanstack/react-query'
+import { courseService } from '@/services/course.service'
 
 export function useCourses() {
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    getCoursesMock().then((data) => {
-      setCourses(data);
-      setLoading(false);
-    });
-  }, []);
-
-  return {
-    courses,
-    loading,
-  };
+  return useQuery({
+    queryKey: ['courses'],
+    queryFn: () => courseService.getAll(),
+  })
 }

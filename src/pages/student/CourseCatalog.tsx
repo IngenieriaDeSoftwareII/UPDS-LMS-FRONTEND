@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
 
 export default function CourseCatalog() {
-  const { courses, loading } = useCourses();
+  const { data: courses, isLoading: loading } = useCourses();
   const navigate = useNavigate();
 
   if (loading) {
@@ -23,14 +23,14 @@ export default function CourseCatalog() {
 
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-        {courses.map((course) => (
+        {(courses || []).map((course) => (
           <Card
             key={course.id}
             className="cursor-pointer hover:shadow-lg transition"
             onClick={() => navigate(`/student/courses/${course.id}`)}
           >
             <img
-              src={course.imagen_url}
+              src={course.imagenUrl || ''}
               alt={course.titulo}
               className="h-40 w-full object-cover rounded-t-lg"
             />
@@ -46,7 +46,7 @@ export default function CourseCatalog() {
               </h2>
 
               <p className="text-xs text-gray-400">
-                ⏱ {Math.floor(course.duracion_total_min / 60)}h
+                ⏱ {course.duracionTotalMin ? Math.floor(course.duracionTotalMin / 60) : 0}h
               </p>
 
             </CardContent>

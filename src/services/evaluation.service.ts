@@ -1,4 +1,5 @@
 import http from '@/lib/http'
+import type { CourseDto } from '@/services/course.service'
 import type {
   AddEvaluationQuestionDto,
   CreateEvaluationDto,
@@ -19,6 +20,9 @@ export const evaluationService = {
 
   getByCourseId: (cursoId: number) =>
     http.get<Evaluation>(`/Evaluations/by-course/${cursoId}`).then(res => res.data),
+
+  getAvailable: () =>
+    http.get<CourseDto[]>('/Evaluations/available').then(res => res.data),
 
   submit: (data: SubmitEvaluationDto) =>
     http.post<EvaluationSubmissionResult>('/Evaluations/submit', data).then(res => res.data),

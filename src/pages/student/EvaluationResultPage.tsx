@@ -1,8 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom'
+import { ArrowLeft, Home } from 'lucide-react'
 import type { EvaluationSubmissionResult } from '@/types'
+import { ResultVisualization } from '@/components/evaluations/ResultVisualization'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 interface LocationState {
   result?: EvaluationSubmissionResult
@@ -16,29 +17,50 @@ export function EvaluationResultPage() {
 
   if (!result) {
     return (
-      <Alert>
-        <AlertTitle>Resultado no disponible</AlertTitle>
-        <AlertDescription>Primero debes rendir una evaluación para ver este resumen.</AlertDescription>
-      </Alert>
+      <div className="space-y-6">
+        <Alert>
+          <AlertTitle>Resultado no disponible</AlertTitle>
+          <AlertDescription>
+            Primero debes rendir una evaluación para ver este resumen.
+          </AlertDescription>
+        </Alert>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => navigate('/student/evaluations')}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Volver a mis evaluaciones
+          </Button>
+        </div>
+      </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Resultado del intento #{result.numeroIntento}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p><strong>Evaluación:</strong> {result.evaluacionId}</p>
-          <p><strong>Puntaje:</strong> {result.puntajeObtenido} / {result.puntajeMaximo}</p>
-          <p><strong>Estado:</strong> {result.aprobado ? 'Aprobado' : 'Reprobado'}</p>
-          <div className="flex gap-2 pt-2">
-            <Button onClick={() => navigate('/student/evaluations/my-grades')}>Ver historial de notas</Button>
-            <Button variant="outline" onClick={() => navigate('/student/evaluations')}>Volver</Button>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Resultado de tu evaluación</h1>
+          <p className="text-muted-foreground mt-1">Intento #{result.numeroIntento}</p>
+        </div>
+        <div className="text-right text-sm text-muted-foreground">
+          <p>Evaluación ID: {result.evaluacionId}</p>
+        </div>
+      </div>
+
+      <ResultVisualization result={result} />
+
+      <div className="flex gap-2 pt-4">
+        <Button onClick={() => navigate('/student/evaluations/my-grades')} className="flex-1">
+          Ver mi historial completo
+        </Button>
+        <Button
+          variant="outline"
+          onClick={() => navigate('/student/evaluations')}
+          className="flex-1"
+        >
+          <Home className="w-4 h-4 mr-2" />
+          Volver a mis evaluaciones
+        </Button>
+      </div>
     </div>
   )
 }
