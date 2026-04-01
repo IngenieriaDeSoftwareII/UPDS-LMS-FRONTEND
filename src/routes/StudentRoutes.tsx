@@ -8,12 +8,18 @@ import { StudentEvaluationsPage } from '@/pages/student/StudentEvaluationsPage'
 import { SubmitEvaluationPage } from '@/pages/student/SubmitEvaluationPage'
 import { EvaluationResultPage } from '@/pages/student/EvaluationResultPage'
 import { MyEvaluationGradesPage } from '@/pages/student/MyEvaluationGradesPage'
+import { StudentCategoriesPage } from '@/pages/student/StudentCategoriesPage'
+import { StudentCoursesPage } from '@/pages/student/StudentCoursesPage'
+import { StudentCatalogsPage } from '@/pages/student/StudentCatalogsPage'
 
 export function StudentRoutes() {
   return (
     <Routes>
       <Route path="dashboard" element={<StudentDashboard />} />
       <Route path="courses" element={<CourseCatalog />} />
+      <Route path="courses-list" element={<StudentCoursesPage />} />
+      <Route path="categories-list" element={<StudentCategoriesPage />} />
+      <Route path="catalogs-list" element={<StudentCatalogsPage />} />
       <Route path="courses/:id" element={<CourseDetail />} />
       <Route path="mycourses" element={<MyCourses />} />
       <Route path="evaluations" element={<StudentEvaluationsPage />} />
