@@ -5,6 +5,10 @@ export const createService = <TCreate, TUpdate, TResponse>(endpoint: string) => 
   getAll: () =>
     http.get<TResponse[]>(`${endpoint}`).then(r => r.data),
 
+  // GET BY ID
+  getById: (id: number) =>
+    http.get<TResponse>(`${endpoint}/${id}`).then(r => r.data),
+
   // CREATE
   create: (data: TCreate) =>
     http.post<TResponse>(`${endpoint}`, data).then(r => r.data),
