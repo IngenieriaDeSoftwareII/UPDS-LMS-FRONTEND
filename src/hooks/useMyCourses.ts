@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { inscriptionService } from '@/services/inscriptionService'
+import { inscriptionService } from '@/services/inscription.service'
 import { courseService } from '@/services/course.service'
 import { useCurrentProfile } from './useCurrentProfile'
 import { useTeacherProfile } from './useTeacherProfile'
