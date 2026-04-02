@@ -23,13 +23,19 @@ const resolveImageUrl = (image?: string) => {
 export default function CourseCatalog() {
   const navigate = useNavigate()
   const { data: courses = [], isLoading, isError, error, refetch } = useCourses()
+
   const [search, setSearch] = useState('')
   const [brokenImages, setBrokenImages] = useState<Record<string, boolean>>({})
 
-  const published = useMemo(() => courses.filter(course => course.publicado), [courses])
+  const published = useMemo(
+    () => courses.filter(course => course.publicado),
+    [courses]
+  )
+
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase()
     if (!term) return published
+
     return published.filter(course => {
       const title = course.titulo?.toLowerCase() || ''
       const desc = course.descripcion?.toLowerCase() || ''
@@ -47,9 +53,12 @@ export default function CourseCatalog() {
           <div>
             <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Catálogo</p>
             <h1 className="text-2xl font-bold">Cursos disponibles</h1>
-            <p className="text-sm text-muted-foreground">{filtered.length} resultado(s) • {published.length} publicados</p>
+            <p className="text-sm text-muted-foreground">
+              {filtered.length} resultado(s) • {published.length} publicados
+            </p>
           </div>
         </div>
+
         <div className="relative w-full sm:w-80">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -64,8 +73,11 @@ export default function CourseCatalog() {
       <Card>
         <CardHeader className="flex flex-col gap-2 border-b border-border bg-muted/40">
           <CardTitle className="text-lg">Explora y elige</CardTitle>
-          <CardDescription>Haz clic en un curso para ver sus detalles y gestionar tu inscripción.</CardDescription>
+          <CardDescription>
+            Haz clic en un curso para ver sus detalles y gestionar tu inscripción.
+          </CardDescription>
         </CardHeader>
+
         <CardContent className="p-6">
           {isError ? (
             <Alert variant="destructive" className="mb-4">
@@ -73,13 +85,15 @@ export default function CourseCatalog() {
               <AlertTitle>Error al cargar cursos</AlertTitle>
               <AlertDescription className="flex items-center gap-2">
                 {getApiErrorMessage(error, 'No se pudo cargar cursos')}
-                <Button variant="link" size="sm" onClick={() => refetch()}>Reintentar</Button>
+                <Button variant="link" size="sm" onClick={() => refetch()}>
+                  Reintentar
+                </Button>
               </AlertDescription>
             </Alert>
           ) : isLoading ? (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="rounded-2xl border border-border bg-muted/40 p-4 space-y-3">
+                <div key={i} className="rounded-2xl border p-4 space-y-3">
                   <Skeleton className="h-36 w-full" />
                   <Skeleton className="h-5 w-40" />
                   <Skeleton className="h-4 w-32" />
@@ -87,39 +101,56 @@ export default function CourseCatalog() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border p-10 text-center text-muted-foreground">
-              No se encontraron cursos con ese criterio.
+            <div className="text-center text-muted-foreground p-10">
+              No se encontraron cursos.
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filtered.map(course => {
-                const image = resolveImageUrl(course.imagen_url)
+                // 🔥 SOPORTE PARA AMBOS FORMATOS
+                const image = resolveImageUrl(
+                  course.imagenUrl || course.imagen_url
+                )
+
+                const duration =
+                  course.duracionTotalMin ?? course.duracion_total_min ?? 0
+
                 const showImage = image && !brokenImages[String(course.id)]
 
                 return (
                   <Card
                     key={course.id}
-                    className="group cursor-pointer overflow-hidden border border-border bg-card/80 shadow-sm transition hover:-translate-y-0.5 hover:shadow-lg"
+                    className="cursor-pointer hover:shadow-lg transition"
                     onClick={() => navigate(`/student/courses/${course.id}`)}
                   >
-                    <div className="h-40 w-full overflow-hidden bg-linear-to-br from-muted to-muted/80">
+                    <div className="h-40 w-full bg-muted">
                       {showImage ? (
                         <img
                           src={image}
                           alt={course.titulo}
-                          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                          onError={() => setBrokenImages(prev => ({ ...prev, [String(course.id)]: true }))}
+                          className="h-full w-full object-cover"
+                          onError={() =>
+                            setBrokenImages(prev => ({
+                              ...prev,
+                              [String(course.id)]: true,
+                            }))
+                          }
                         />
                       ) : (
-                        <div className="flex h-full w-full items-center justify-center gap-2 text-sm text-muted-foreground">
-                          <ImageOff className="h-5 w-5" /> Sin imagen
+                        <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                          <ImageOff /> Sin imagen
                         </div>
                       )}
                     </div>
-                    <CardContent className="space-y-2 p-4">
-                      <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">{course.nivel}</span>
-                      <h2 className="font-semibold text-lg leading-tight">{course.titulo}</h2>
-                      <p className="text-xs text-muted-foreground">⏱ {Math.floor(course.duracion_total_min / 60)} h</p>
+
+                    <CardContent className="p-4 space-y-2">
+                      <span className="text-xs bg-primary/10 px-2 py-1 rounded">
+                        {course.nivel}
+                      </span>
+                      <h2 className="font-semibold">{course.titulo}</h2>
+                      <p className="text-xs text-muted-foreground">
+                        ⏱ {Math.floor(duration / 60)} h
+                      </p>
                     </CardContent>
                   </Card>
                 )
@@ -128,9 +159,6 @@ export default function CourseCatalog() {
           )}
         </CardContent>
       </Card>
-
-      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-      </div>
     </div>
   )
 }

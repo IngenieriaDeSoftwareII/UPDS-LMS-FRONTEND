@@ -2,7 +2,7 @@ import http from '@/lib/http'
 import { createService } from './base.service'
 import type { Course, CourseCreateDTO, CourseUpdateDTO } from '@/types/course'
 
-const base = createService<CourseCreateDTO, CourseUpdateDTO, Course>('/courses')
+const base = createService<CourseCreateDTO, CourseUpdateDTO, Course>('/Courses')
 
 function normalizeCourse(raw: Record<string, unknown>): Course {
   return {
@@ -29,17 +29,27 @@ export const courseService = {
   ...base,
 
   getAll: async () => {
-    const { data } = await http.get<Record<string, unknown>[]>('/courses')
+    const { data } = await http.get<Record<string, unknown>[]>('/Courses')
     return (Array.isArray(data) ? data : []).map(normalizeCourse)
   },
 
   getById: async (id: number) => {
-    const { data } = await http.get<Record<string, unknown>>(`/courses/${id}`)
+    const { data } = await http.get<Record<string, unknown>>(`/Courses/${id}`)
     return normalizeCourse(data)
   },
 
   getCoursesByTeacher: async (teacherId: number) => {
     const all = await courseService.getAll()
     return all.filter(c => c.docenteId === teacherId)
+  },
+
+  getByTeacher: async (teacherId: number) => {
+    const { data } = await http.get<Record<string, unknown>[]>(`/Courses/teacher/${teacherId}`)
+    return (Array.isArray(data) ? data : []).map(normalizeCourse)
+  },
+
+  getByTeacherWithoutEvaluation: async (teacherId: number) => {
+    const { data } = await http.get<Record<string, unknown>[]>(`/Courses/teacher/${teacherId}/without-evaluation`)
+    return (Array.isArray(data) ? data : []).map(normalizeCourse)
   },
 }

@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { ClipboardList, PlusCircle, Trash2 } from 'lucide-react'
+import { ClipboardList, PlusCircle, Trash2, ArrowRight } from 'lucide-react'
 import { useAddEvaluationQuestion, useCreateEvaluation, getApiErrorMessages } from '@/hooks/useEvaluations'
+import { useCoursesWithoutEvaluation } from '@/hooks/useCoursesWithoutEvaluation'
 import type { AddAnswerOptionDto, AddEvaluationQuestionDto, CreateEvaluationDto } from '@/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -12,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const optionalPositiveNumber = z.preprocess(
   value => (value === '' || value === null || value === undefined ? undefined : value),
@@ -67,9 +68,11 @@ const buildOptions = (values: QuestionFormValues): AddAnswerOptionDto[] => {
 
 export function EvaluationManagementPage() {
   const [evaluationId, setEvaluationId] = useState<number | null>(null)
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null)
   const [savedQuestions, setSavedQuestions] = useState<AddEvaluationQuestionDto[]>([])
   const [backendErrors, setBackendErrors] = useState<string[]>([])
 
+  const coursesWithoutEvaluationQuery = useCoursesWithoutEvaluation()
   const createEvaluation = useCreateEvaluation()
   const addQuestion = useAddEvaluationQuestion()
 
@@ -136,6 +139,12 @@ export function EvaluationManagementPage() {
     })
   }
 
+  const handleSelectCourse = (cursoId: number, courseName: string) => {
+    setSelectedCourseId(cursoId)
+    createForm.setValue('cursoId', cursoId)
+    createForm.setValue('titulo', `Evaluación: ${courseName}`)
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -143,201 +152,404 @@ export function EvaluationManagementPage() {
           <ClipboardList className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Evaluación final</h1>
-          <p className="text-sm text-muted-foreground">Crea la evaluación, agrega preguntas y publícala en tu curso.</p>
+          <h1 className="text-2xl font-bold tracking-tight">Crear evaluaciones</h1>
+          <p className="text-sm text-muted-foreground">Crea evaluaciones para tus cursos de forma rápida y sencilla.</p>
         </div>
       </div>
 
       {backendErrors.length > 0 && (
         <Alert variant="destructive">
-          <AlertTitle>No se pudo completar la acción</AlertTitle>
+          <AlertTitle>Error al procesar</AlertTitle>
           <AlertDescription>{backendErrors.join(' ')}</AlertDescription>
         </Alert>
       )}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Paso 1 - Crear evaluación</CardTitle>
-          <CardDescription>Completa los datos obligatorios para generar el ID de evaluación.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={createForm.handleSubmit(onCreateEvaluation)} className="space-y-4">
-            <FieldGroup>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Controller
-                  name="cursoId"
-                  control={createForm.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Curso ID</FieldLabel>
-                      <Input type="number" {...field} />
-                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
-                <Controller
-                  name="titulo"
-                  control={createForm.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Título</FieldLabel>
-                      <Input placeholder="Evaluación final" {...field} />
-                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
-                <Controller
-                  name="tipo"
-                  control={createForm.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Tipo</FieldLabel>
-                      <Input placeholder="multiple_opcion" {...field} />
-                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
+      {/* Selección de Curso */}
+      {!selectedCourseId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Paso 1 - Selecciona un curso</CardTitle>
+            <CardDescription>Elige el curso para el cual deseas crear la evaluación.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {coursesWithoutEvaluationQuery.isLoading ? (
+              <p className="text-center text-muted-foreground py-8">Cargando tus cursos...</p>
+            ) : coursesWithoutEvaluationQuery.isError ? (
+              <Alert variant="destructive">
+                <AlertTitle>Error al cargar cursos</AlertTitle>
+                <AlertDescription>No se pudieron cargar tus cursos. Intenta nuevamente.</AlertDescription>
+              </Alert>
+            ) : (coursesWithoutEvaluationQuery.data?.length ?? 0) === 0 ? (
+              <Alert>
+                <AlertTitle>Sin cursos</AlertTitle>
+                <AlertDescription>No tienes cursos para crear evaluaciones.</AlertDescription>
+              </Alert>
+            ) : (
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {coursesWithoutEvaluationQuery.data?.map(course => (
+                  <Card
+                    key={course.id}
+                    className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-primary"
+                    onClick={() => handleSelectCourse(course.id, course.titulo)}
+                  >
+                    <CardHeader>
+                      <CardTitle className="line-clamp-2 text-base">
+                        {course.titulo}
+                      </CardTitle>
+                      <CardDescription className="line-clamp-2 text-xs">
+                        {course.descripcion || 'Sin descripción'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <Button className="w-full">
+                        Seleccionar
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <Controller name="puntajeMaximo" control={createForm.control} render={({ field }) => <Input type="number" placeholder="Puntaje máximo" {...field} />} />
-                <Controller name="puntajeMinimoAprobacion" control={createForm.control} render={({ field }) => <Input type="number" placeholder="Puntaje mínimo aprobación" {...field} />} />
-                <Controller
-                  name="intentosPermitidos"
-                  control={createForm.control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel>Intentos permitidos</FieldLabel>
-                      <Input type="number" {...field} />
-                      {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
-                />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Controller name="tiempoLimiteMax" control={createForm.control} render={({ field }) => <Input type="number" placeholder="Tiempo límite (min)" {...field} />} />
-                <Controller name="descripcion" control={createForm.control} render={({ field }) => <Input placeholder="Descripción (opcional)" {...field} />} />
-              </div>
-            </FieldGroup>
-            <Button type="submit" disabled={createEvaluation.isPending}>
-              <PlusCircle className="w-4 h-4 mr-2" />
-              {createEvaluation.isPending ? 'Creando...' : 'Crear evaluación'}
-            </Button>
-            {evaluationId && <Badge>Evaluación creada con ID: {evaluationId}</Badge>}
-          </form>
-        </CardContent>
-      </Card>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      <Card className={!evaluationId ? 'opacity-60' : ''}>
-        <CardHeader>
-          <CardTitle>Paso 2 - Agregar preguntas</CardTitle>
-          <CardDescription>Debes agregar al menos 2 opciones y exactamente 1 correcta.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={questionForm.handleSubmit(onAddQuestion)} className="space-y-4">
-            <FieldGroup>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Controller name="enunciado" control={questionForm.control} render={({ field, fieldState }) => (
-                  <Field className="md:col-span-2" data-invalid={fieldState.invalid}>
-                    <FieldLabel>Enunciado</FieldLabel>
-                    <Input {...field} />
-                    {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )} />
-                <Controller name="tipo" control={questionForm.control} render={({ field }) => <Input placeholder="opcion_unica" {...field} />} />
-                <Controller name="puntos" control={questionForm.control} render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Puntos</FieldLabel>
-                    <Input type="number" {...field} />
-                    {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <Controller name="orden" control={questionForm.control} render={({ field }) => <Input type="number" placeholder="Orden" {...field} />} />
-                <Controller
-                  name="correcta"
-                  control={questionForm.control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Respuesta correcta" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A">A</SelectItem>
-                        <SelectItem value="B">B</SelectItem>
-                        <SelectItem value="C">C</SelectItem>
-                        <SelectItem value="D">D</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <Controller name="opcionA" control={questionForm.control} render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Opción A</FieldLabel>
-                    <Input {...field} />
-                    {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )} />
-                <Controller name="opcionB" control={questionForm.control} render={({ field, fieldState }) => (
-                  <Field data-invalid={fieldState.invalid}>
-                    <FieldLabel>Opción B</FieldLabel>
-                    <Input {...field} />
-                    {fieldState.error && <FieldError errors={[fieldState.error]} />}
-                  </Field>
-                )} />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Controller name="opcionC" control={questionForm.control} render={({ field }) => <Input placeholder="Opción C (opcional)" {...field} />} />
-                <Controller name="opcionD" control={questionForm.control} render={({ field }) => <Input placeholder="Opción D (opcional)" {...field} />} />
-              </div>
-            </FieldGroup>
+      {/* Datos y Preguntas */}
+      {selectedCourseId && (
+        <>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedCourseId(null)
+              createForm.reset()
+              setEvaluationId(null)
+              setSavedQuestions([])
+            }}
+          >
+            ← Cambiar curso
+          </Button>
 
-            <Button type="submit" disabled={!evaluationId || addQuestion.isPending}>
-              {addQuestion.isPending ? 'Agregando...' : 'Agregar pregunta'}
-            </Button>
-          </form>
+          <Tabs defaultValue="datos" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="datos">
+                Paso 1: Datos
+                {evaluationId && <Badge variant="default" className="ml-2">✓</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="preguntas" disabled={!evaluationId}>
+                Paso 2: Preguntas
+                {(savedQuestions.length ?? 0) > 0 && <Badge variant="default" className="ml-2">{savedQuestions.length}</Badge>}
+              </TabsTrigger>
+              <TabsTrigger value="resumen" disabled={!evaluationId || (savedQuestions.length ?? 0) === 0}>
+                Paso 3: Resumen
+              </TabsTrigger>
+            </TabsList>
 
-          <div className="mt-6">
-            <h3 className="text-sm font-medium mb-2">Preguntas agregadas</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>#</TableHead>
-                  <TableHead>Enunciado</TableHead>
-                  <TableHead>Puntos</TableHead>
-                  <TableHead>Opciones</TableHead>
-                  <TableHead className="text-right">Acción</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {savedQuestions.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground">Aún no agregaste preguntas.</TableCell>
-                  </TableRow>
-                ) : (
-                  savedQuestions.map((question, index) => (
-                    <TableRow key={`${question.orden}-${index}`}>
-                      <TableCell>{question.orden}</TableCell>
-                      <TableCell>{question.enunciado}</TableCell>
-                      <TableCell>{question.puntos}</TableCell>
-                      <TableCell>{question.opciones.length}</TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setSavedQuestions(prev => prev.filter((_, i) => i !== index))}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
+            {/* Tab: Datos */}
+            <TabsContent value="datos">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Configurar evaluación</CardTitle>
+                  <CardDescription>Define los parámetros principales de tu evaluación.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={createForm.handleSubmit(onCreateEvaluation)} className="space-y-6">
+                    <FieldGroup>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Controller
+                          name="titulo"
+                          control={createForm.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel>Título de la evaluación</FieldLabel>
+                              <Input placeholder="Evaluación final" {...field} />
+                              {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          name="tipo"
+                          control={createForm.control}
+                          render={({ field }) => (
+                            <Field>
+                              <FieldLabel>Tipo</FieldLabel>
+                              <Input placeholder="multiple_opcion" {...field} disabled />
+                            </Field>
+                          )}
+                        />
+                      </div>
+
+                      <Controller
+                        name="descripcion"
+                        control={createForm.control}
+                        render={({ field }) => (
+                          <Field>
+                            <FieldLabel>Descripción (opcional)</FieldLabel>
+                            <Input placeholder="Instrucciones adicionales..." {...field} />
+                          </Field>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Controller
+                          name="puntajeMaximo"
+                          control={createForm.control}
+                          render={({ field }) => (
+                            <Field>
+                              <FieldLabel>Puntaje máximo</FieldLabel>
+                              <Input type="number" step="0.5" placeholder="20" {...field} />
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          name="puntajeMinimoAprobacion"
+                          control={createForm.control}
+                          render={({ field }) => (
+                            <Field>
+                              <FieldLabel>Puntaje mínimo (aprobar)</FieldLabel>
+                              <Input type="number" step="0.5" placeholder="12" {...field} />
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          name="tiempoLimiteMax"
+                          control={createForm.control}
+                          render={({ field }) => (
+                            <Field>
+                              <FieldLabel>Tiempo límite (minutos)</FieldLabel>
+                              <Input type="number" placeholder="60" {...field} />
+                            </Field>
+                          )}
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <Controller
+                          name="intentosPermitidos"
+                          control={createForm.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel>Intentos permitidos</FieldLabel>
+                              <Input type="number" {...field} />
+                              {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                            </Field>
+                          )}
+                        />
+                      </div>
+                    </FieldGroup>
+
+                    <Button type="submit" disabled={createEvaluation.isPending || Boolean(evaluationId)} className="w-full">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      {createEvaluation.isPending ? 'Creando...' : 'Crear evaluación'}
+                    </Button>
+
+                    {evaluationId && (
+                      <Alert>
+                        <AlertTitle>✓ Evaluación creada</AlertTitle>
+                        <AlertDescription>ID: {evaluationId}</AlertDescription>
+                      </Alert>
+                    )}
+                  </form>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tab: Preguntas */}
+            <TabsContent value="preguntas">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Agregar preguntas</CardTitle>
+                  <CardDescription>Crea preguntas de opción múltiple para tu evaluación.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <form onSubmit={questionForm.handleSubmit(onAddQuestion)} className="space-y-4">
+                    <FieldGroup>
+                      <Controller
+                        name="enunciado"
+                        control={questionForm.control}
+                        render={({ field, fieldState }) => (
+                          <Field data-invalid={fieldState.invalid}>
+                            <FieldLabel>Enunciado de la pregunta</FieldLabel>
+                            <Input placeholder="¿Cuál es..." {...field} />
+                            {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                          </Field>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <Controller
+                          name="puntos"
+                          control={questionForm.control}
+                          render={({ field, fieldState }) => (
+                            <Field data-invalid={fieldState.invalid}>
+                              <FieldLabel>Puntos</FieldLabel>
+                              <Input type="number" {...field} />
+                              {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          name="orden"
+                          control={questionForm.control}
+                          render={({ field }) => (
+                            <Field>
+                              <FieldLabel>Orden</FieldLabel>
+                              <Input type="number" {...field} />
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          name="correcta"
+                          control={questionForm.control}
+                          render={({ field }) => (
+                            <Field>
+                              <FieldLabel>Respuesta correcta</FieldLabel>
+                              <Select value={field.value} onValueChange={field.onChange}>
+                                <SelectTrigger>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="A">A</SelectItem>
+                                  <SelectItem value="B">B</SelectItem>
+                                  <SelectItem value="C">C</SelectItem>
+                                  <SelectItem value="D">D</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </Field>
+                          )}
+                        />
+                      </div>
+
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium">Opciones de respuesta</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <Controller
+                            name="opcionA"
+                            control={questionForm.control}
+                            render={({ field, fieldState }) => (
+                              <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel>Opción A</FieldLabel>
+                                <Input {...field} />
+                                {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                              </Field>
+                            )}
+                          />
+                          <Controller
+                            name="opcionB"
+                            control={questionForm.control}
+                            render={({ field, fieldState }) => (
+                              <Field data-invalid={fieldState.invalid}>
+                                <FieldLabel>Opción B</FieldLabel>
+                                <Input {...field} />
+                                {fieldState.error && <FieldError errors={[fieldState.error]} />}
+                              </Field>
+                            )}
+                          />
+                          <Controller
+                            name="opcionC"
+                            control={questionForm.control}
+                            render={({ field }) => (
+                              <Field>
+                                <FieldLabel>Opción C (opcional)</FieldLabel>
+                                <Input {...field} />
+                              </Field>
+                            )}
+                          />
+                          <Controller
+                            name="opcionD"
+                            control={questionForm.control}
+                            render={({ field }) => (
+                              <Field>
+                                <FieldLabel>Opción D (opcional)</FieldLabel>
+                                <Input {...field} />
+                              </Field>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    </FieldGroup>
+
+                    <Button type="submit" disabled={!evaluationId || addQuestion.isPending} className="w-full">
+                      <PlusCircle className="w-4 h-4 mr-2" />
+                      {addQuestion.isPending ? 'Agregando...' : 'Agregar pregunta'}
+                    </Button>
+                  </form>
+
+                  {/* Preguntas Guardadas */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold mb-4">Preguntas agregadas ({savedQuestions.length})</h3>
+                    {savedQuestions.length === 0 ? (
+                      <p className="text-center text-muted-foreground py-8">Aún no has agregado preguntas.</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {savedQuestions.map((question, index) => (
+                          <Card key={`${question.orden}-${index}`}>
+                            <CardHeader>
+                              <div className="flex items-start justify-between">
+                                <div>
+                                  <CardTitle className="text-base">
+                                    P{index + 1}. {question.enunciado}
+                                  </CardTitle>
+                                  <CardDescription>
+                                    {question.puntos} punto(s) · {question.opciones.length} opciones
+                                  </CardDescription>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setSavedQuestions(prev => prev.filter((_, i) => i !== index))}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </CardHeader>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Tab: Resumen */}
+            <TabsContent value="resumen">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Resumen de tu evaluación</CardTitle>
+                  <CardDescription>Revisa los detalles antes de publicar.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="bg-muted p-4 rounded-lg space-y-3">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-xs text-muted-foreground">ID</p>
+                        <p className="font-semibold">{evaluationId}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Total de preguntas</p>
+                        <p className="font-semibold">{savedQuestions.length}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground">Puntaje total</p>
+                        <p className="font-semibold">
+                          {savedQuestions.reduce((sum, q) => sum  + q.puntos, 0)} pts
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Alert>
+                    <AlertTitle>✓ Evaluación lista para usar</AlertTitle>
+                    <AlertDescription>
+                      Tu evaluación está configurada. Los estudiantes que completen el curso podrán responderla.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </>
+      )}
     </div>
   )
 }

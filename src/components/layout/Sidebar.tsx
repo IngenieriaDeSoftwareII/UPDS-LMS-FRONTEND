@@ -23,6 +23,8 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { label: 'Personas', path: '/admin/persons', icon: Users, roles: ['Admin'] },
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
+  { label: 'Reportes (Cursos)', path: '/admin/reports/courses', icon: BarChart3, roles: ['Admin'] },
+  { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
   { label: 'Docentes', path: '/admin/teachers', icon: Contact, roles: ['Admin'] },
   { label: 'Cursos', path: '/admin/courses', icon: BookOpen, roles: ['Admin'] },
   { label: 'Categorías', path: '/admin/categories', icon: Tags, roles: ['Admin'] },
@@ -33,6 +35,7 @@ const navItems: NavItem[] = [
   { label: 'Mis Cursos', path: '/teacher/courses', icon: BookOpen, roles: ['Docente'] },
   { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
   { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
+  { label: 'Reportes', path: '/teacher/reports', icon: BarChart3, roles: ['Docente'] },
 
   // Estudiante (rutas bajo /student/*)
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['Estudiante'] },
