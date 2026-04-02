@@ -4,6 +4,7 @@ export interface Course {
   descripcion?: string;
   nivel: string;
   imagen_url: string;
+  docenteId?: number | null;
   publicado: boolean;
   duracion_total_min: number;
   max_estudiantes?: number | null;
