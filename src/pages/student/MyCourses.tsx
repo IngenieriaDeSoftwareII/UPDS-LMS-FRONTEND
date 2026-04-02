@@ -6,7 +6,7 @@ import { BookOpen, ImageOff, Loader2, ServerCrash, Trash2 } from 'lucide-react'
 import http from '@/lib/http'
 import { inscriptionService } from '@/services/inscription.service'
 import { studentProgressService } from '@/services/student-progress.service'
-import { getApiErrorMessage } from '@/lib/api.error'
+import { getErrorMessage } from '@/lib/api.error'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -107,7 +107,7 @@ export function MyCourses() {
           <ServerCrash className="h-4 w-4" />
           <AlertTitle>Error al cargar</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-2">
-            {getApiErrorMessage(listQuery.error, 'No se pudieron obtener las inscripciones')}
+            {getErrorMessage(listQuery.error, 'No se pudieron obtener las inscripciones')}
             <Button variant="link" size="sm" onClick={() => listQuery.refetch()}>
               Reintentar
             </Button>
@@ -239,7 +239,7 @@ export function MyCourses() {
             <Alert variant="destructive">
               <AlertTitle>Error</AlertTitle>
               <AlertDescription>
-                {getApiErrorMessage(cancelMutation.error, 'No se pudo cancelar')}
+                {getErrorMessage(cancelMutation.error, 'No se pudo cancelar')}
               </AlertDescription>
             </Alert>
           ) : null}

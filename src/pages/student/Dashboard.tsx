@@ -5,7 +5,7 @@ import { BookOpen, GraduationCap, ImageOff, LayoutDashboard, Loader2, ServerCras
 
 import http from '@/lib/http'
 import { studentProgressService } from '@/services/student-progress.service'
-import { getApiErrorMessage } from '@/lib/api.error'
+import { getErrorMessage } from '@/lib/api.error'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -72,7 +72,7 @@ export function StudentDashboard() {
           <ServerCrash className="h-4 w-4" />
           <AlertTitle>No se pudo cargar el resumen</AlertTitle>
           <AlertDescription className="flex flex-wrap items-center gap-2">
-            {getApiErrorMessage(dashboardQuery.error, 'Error al obtener el dashboard')}
+            {getErrorMessage(dashboardQuery.error, 'Error al obtener el dashboard')}
             <Button variant="link" size="sm" onClick={() => dashboardQuery.refetch()}>
               Reintentar
             </Button>
