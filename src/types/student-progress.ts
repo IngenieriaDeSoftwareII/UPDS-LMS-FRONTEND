@@ -27,6 +27,12 @@ export interface StudentCourseLearning {
   leccionesTotales: number
   leccionesCompletadas: number
   progresoPorcentaje: number
+  cursoCompletado?: boolean
+  tieneEvaluacionFinal?: boolean
+  notaEvaluacionSobre100?: number | null
+  aprobadoEvaluacionFinal?: boolean
+  puedeDescargarCertificado?: boolean
+  mensajeCertificado?: string | null
   modulos: StudentModuleLearning[]
 }
 
