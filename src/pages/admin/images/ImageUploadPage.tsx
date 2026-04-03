@@ -84,7 +84,7 @@ export function ImageUploadPage() {
     upload(formData, {
       onSuccess: () => {
         alert('Imagen subida ✅')
-        navigate('/images')
+        navigate('/admin/images')
       },
       onError: () => {
         setError('Error al subir la imagen ❌')
@@ -95,7 +95,7 @@ export function ImageUploadPage() {
   return (
     <div className="space-y-6">
 
-      <Button onClick={() => navigate('/images')}>
+      <Button onClick={() => navigate('/admin/images')}>
         ← Volver
       </Button>
 

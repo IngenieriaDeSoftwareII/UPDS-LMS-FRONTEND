@@ -5,28 +5,9 @@ import { PersonsPage } from '@/pages/admin/PersonsPage'
 import { AdminRoutes } from '@/routes/AdminRoutes'
 import { TeacherRoutes } from '@/routes/TeacherRoutes'
 import { StudentRoutes } from '@/routes/StudentRoutes'
-import { LessonsPage } from '@/pages/admin/lessons/LessonsPage'
-import { ContentsPage } from '@/pages/admin/contents/ContentsPage'
-import { DocumentUploadPage } from '@/pages/admin/documents/DocumentUploadPage'
-import { DocumentsPage } from '@/pages/admin/documents/DocumentsPage'
-import { DocumentEditPage } from '@/pages/admin/documents/DocumentEditPage'
-import { TeacherLessonsPage } from '@/pages/teacher/Lessons/TeacherLessonsPage'
-import { LessonDetailPage } from '@/pages/teacher/Lessons/LessonDetailPage'
-import { TeacherDocumentUploadPage } from '@/pages/teacher/Lessons/TeacherDocumentUploadPage'
-import { TeacherDocumentEditPage } from '@/pages/teacher/Lessons/TeacherDocumentEditPage'
-
 import { ProfilePage } from '@/pages/profile/ProfilePage'
 import { ProtectedRoute } from './ProtectedRoute'
 import { PublicRoute } from './PublicRoute'
-import ModulesPage from '@/pages/admin/modules/ModulesPage'
-import { ImagesPage } from '@/pages/admin/images/ImagesPage'
-import { ImageUploadPage } from '@/pages/admin/images/ImageUploadPage'
-import { ImageEditPage } from '@/pages/admin/images/ImageEditPage'
-import { TeacherModulesPage } from '@/pages/teacher/Lessons/TeacherModulesPage'
-import { StudentModulesPage } from '@/pages/student/Lessons/StudentModulesPage'
-import { StudentLessonsPage } from '@/pages/student/Lessons/StudentLessonsPage'
-import { TeacherImageUploadPage } from '@/pages/teacher/Lessons/TeacherImageUploadPage'
-import { TeacherImageEditPage } from '@/pages/teacher/Lessons/TeacherImageEditPage'
 
 export function AppRoutes() {
   return (
@@ -57,40 +38,6 @@ export function AppRoutes() {
       {/* Página de ejemplo */}
       <Route path="/example/persons" element={<PersonsPage />} />
 
-      {/* Leccion */}
-      <Route path="/lessons" element={<LessonsPage />} />
-      {/* Content */}
-      <Route path="/contents" element={<ContentsPage />} />
-
-      {/* DocumentContent */}
-      <Route path="/documents" element={<DocumentsPage />} />
-      <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
-      <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
-
-      {/* Teacher Modulos,leciones y contenidos*/}
-      {/* <Route path="/teacher/lessons" element={<TeacherLessonsPage />} /> */}
-      <Route path="/teacher/modules" element={<TeacherModulesPage />} />
-      <Route path="/teacher/modules/:moduleId/lessons" element={<TeacherLessonsPage />} />
-      <Route path="/teacher/lessons/:id" element={<LessonDetailPage />} />
-      <Route path="/teacher/documents/upload" element={<TeacherDocumentUploadPage />} />
-      <Route path="/teacher/documents/edit/:id" element={<TeacherDocumentEditPage />} />
-      <Route path="/teacher/images/upload" element={<TeacherImageUploadPage />} />
-      <Route path="/teacher/images/edit/:id" element={<TeacherImageEditPage />} />
-
-
-      {/* Student */}
-      <Route path="/student/modules" element={<StudentModulesPage />} />
-      <Route path="/student/modules/:moduleId/lessons" element={<StudentLessonsPage />} />
-
-      {/* ImageContent */}
-      <Route path="/images" element={<ImagesPage />} />
-      <Route path="/uploadimage" element={<ImageUploadPage />} />
-      <Route path="/images/edit/:id" element={<ImageEditPage />} />
-
-
-      {/* Modules */}
-      <Route path="modules" element={<ModulesPage />} />
-      
       {/* Redirecciones */}
       <Route path="/" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

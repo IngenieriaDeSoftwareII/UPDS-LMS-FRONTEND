@@ -38,7 +38,7 @@ export function ImagesPage() {
       <div className="flex justify-between">
         <h2 className="text-xl font-semibold">Gestión de Imágenes</h2>
 
-        <Button onClick={() => navigate('/uploadimage')}>
+        <Button onClick={() => navigate('/admin/uploadimage')}>
           + Subir Imagen
         </Button>
       </div>
@@ -125,7 +125,7 @@ export function ImagesPage() {
                       <Button
                         variant="outline"
                         onClick={() =>
-                          navigate(`/images/edit/${img.contentId}`)
+                          navigate(`/admin/images/edit/${img.contentId}`)
                         }
                       >
                         Editar

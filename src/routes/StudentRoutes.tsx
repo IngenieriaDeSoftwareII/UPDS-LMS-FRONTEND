@@ -9,6 +9,9 @@ import { SubmitEvaluationPage } from '@/pages/student/SubmitEvaluationPage'
 import { EvaluationResultPage } from '@/pages/student/EvaluationResultPage'
 import { MyEvaluationGradesPage } from '@/pages/student/MyEvaluationGradesPage'
 
+import { StudentModulesPage } from '@/pages/student/Lessons/StudentModulesPage'
+import { StudentLessonsPage } from '@/pages/student/Lessons/StudentLessonsPage'
+
 export function StudentRoutes() {
   return (
     <Routes>
@@ -20,6 +23,9 @@ export function StudentRoutes() {
       <Route path="evaluations/my-grades" element={<MyEvaluationGradesPage />} />
       <Route path="evaluations/:cursoId" element={<SubmitEvaluationPage />} />
       <Route path="evaluations/:cursoId/result" element={<EvaluationResultPage />} />
+      {/* Student */}
+      <Route path="modules" element={<StudentModulesPage />} />
+      <Route path="modules/:moduleId/lessons" element={<StudentLessonsPage />} />
     </Routes>
   )
 }

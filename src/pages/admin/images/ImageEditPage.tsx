@@ -69,7 +69,7 @@ export function ImageEditPage() {
       {
         onSuccess: () => {
           alert('Imagen actualizada correctamente ✅')
-          navigate('/images')
+          navigate('/admin/images')
         },
 
         onError: (err: any) => {
@@ -99,7 +99,7 @@ export function ImageEditPage() {
   return (
     <div className="space-y-6">
 
-      <Button onClick={() => navigate('/images')}>
+      <Button onClick={() => navigate('/admin/images')}>
         ← Volver
       </Button>
 

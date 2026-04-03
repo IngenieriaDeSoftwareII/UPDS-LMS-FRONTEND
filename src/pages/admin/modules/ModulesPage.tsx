@@ -48,36 +48,40 @@ export default function ModulesPage() {
   const [open, setOpen] = useState(false)
 
   const [titulo, setTitulo] = useState('')
+  const [orden, setOrden] = useState<number>(1)
   const [cursoId, setCursoId] = useState<number | ''>('')
 
   const [editingModule, setEditingModule] = useState<any | null>(null)
   const isEditing = !!editingModule
 
-  // 🔹 abrir modal crear
+  // abrir modal crear
   const handleOpen = () => {
     setEditingModule(null)
     setTitulo('')
+    setOrden(1)
     setCursoId('')
     setOpen(true)
   }
 
-  // 🔹 editar
+  // editar
   const handleEdit = (module: any) => {
     setEditingModule(module)
     setTitulo(module.titulo)
+    setOrden(module.orden || 1)
     setCursoId(module.cursoId)
     setOpen(true)
   }
 
-  // 🔹 reset form
+  // reset form
   const resetForm = () => {
     setTitulo('')
+    setOrden(1)
     setCursoId('')
     setEditingModule(null)
     setOpen(false)
   }
 
-  // 🔹 submit
+  // submit
   const handleSubmit = () => {
     if (!cursoId) {
       alert('Selecciona un curso')
@@ -91,11 +95,11 @@ export default function ModulesPage() {
 
     if (isEditing) {
       const payload = {
-        id: editingModule.id, // ✅ FIX TypeScript
+        id: editingModule.id,
         cursoId: Number(cursoId),
         titulo,
         descripcion: 'Test',
-        orden: 1,
+        orden: Number(orden),
       }
 
       updateModule.mutate(
@@ -112,7 +116,7 @@ export default function ModulesPage() {
         cursoId: Number(cursoId),
         titulo,
         descripcion: 'Test',
-        orden: 1,
+        orden: Number(orden),
       }
 
       createModule.mutate(payload, {
@@ -121,7 +125,7 @@ export default function ModulesPage() {
     }
   }
 
-  // 🔹 delete
+  // delete
   const handleDelete = (id: number) => {
     if (confirm('¿Seguro que deseas eliminar este módulo?')) {
       deleteModule.mutate(id)
@@ -183,6 +187,16 @@ export default function ModulesPage() {
               <Input
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
+              />
+            </div>
+            {/* ORDEN */}
+            <div>
+              <label>Orden</label>
+              <Input
+                type="number"
+                min={1}
+                value={orden}
+                onChange={e => setOrden(Number(e.target.value))}
               />
             </div>
 

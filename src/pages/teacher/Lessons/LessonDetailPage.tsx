@@ -1,10 +1,13 @@
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
+import { ArrowLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useLessons } from '@/hooks/useLessons'
 import { DocumentsTable } from '@/components/DocumentsTable'
 
 export function LessonDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
 
   const { useDocumentsList } = useDocumentContents()
   const { data: documents } = useDocumentsList()
@@ -20,6 +23,20 @@ export function LessonDetailPage() {
 
   return (
     <div className="space-y-6">
+      <Button
+        variant="outline"
+        className="mb-4"
+        onClick={() => {
+          if (lesson?.moduleId) {
+            navigate(`/teacher/modules/${lesson.moduleId}/lessons`)
+          } else {
+            navigate(-1)
+          }
+        }}
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Volver a Lecciones
+      </Button>
 
       {/* 🔹 Información de la lección */}
       <div className="bg-white p-6 rounded-2xl shadow border space-y-4">

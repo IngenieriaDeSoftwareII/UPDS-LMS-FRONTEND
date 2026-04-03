@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { PlusCircle, Pencil, ArrowLeft } from 'lucide-react'
+import { PlusCircle, Pencil, ArrowLeft, Info } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -217,6 +217,15 @@ export function TeacherLessonsPage() {
                   }}
                 >
                   <PlusCircle className="w-4 h-4" />
+                </Button>
+
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigate(`/teacher/lessons/${lesson.id}`)
+                  }}
+                >
+                  <Info className="w-4 h-4" />
                 </Button>
 
                 <Button

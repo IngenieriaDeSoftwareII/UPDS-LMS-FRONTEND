@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { documentContentsService } from '@/services/documentContents.service'
-import type { UploadDocumentDto } from '@/services/documentContents.service'
+import type { UploadDocumentDto, UpdateDocumentMetadataDto } from '@/services/documentContents.service'
 
 export const useDocumentContents = () => {
   const queryClient = useQueryClient()
@@ -30,7 +30,7 @@ export const useDocumentContents = () => {
     })
   const useUpdateDocument = () => {
     return useMutation({
-      mutationFn: ({ id, data }: { id: number, data: FormData | { title: string, order: number, pageCount?: number } }) =>
+      mutationFn: ({ id, data }: { id: number, data: FormData | UpdateDocumentMetadataDto }) =>
         documentContentsService.update(id, data),
     })
   }
