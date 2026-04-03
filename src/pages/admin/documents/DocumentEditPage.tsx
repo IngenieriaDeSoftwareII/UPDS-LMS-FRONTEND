@@ -32,14 +32,29 @@ export function DocumentEditPage() {
       return
     }
 
-    // Si NO hay archivo, solo actualizamos metadatos
+    // Obtener lessonId (necesario tanto para metadatos como para archivo)
+    const lessonId = doc?.content?.lessonId
+    if (!lessonId || lessonId <= 0) {
+      alert('Error: La lección asociada no es válida.')
+      return
+    }
+
+    // Caso 1: Solo actualización de metadatos (sin archivo)
     if (!file) {
       update(
-        { id: Number(id), data: { title, order, pageCount } },
+        { 
+          id: Number(id), 
+          data: { 
+            Title: title, 
+            Order: order, 
+            PageCount: pageCount,
+            LessonId: lessonId
+          } 
+        },
         {
           onSuccess: () => {
             alert('Documento actualizado correctamente ✅')
-            navigate('/documents')
+            navigate('/admin/documents')
           },
           onError: (err: any) => {
             console.error(err)
@@ -50,13 +65,7 @@ export function DocumentEditPage() {
       return
     }
 
-    // Si HAY archivo, debemos reemplazar
-    const lessonId = doc?.content?.lessonId
-    if (!lessonId || lessonId <= 0) {
-      alert('Error: La lección asociada no es válida. Revisa el LessonId.')
-      return
-    }
-
+    // Caso 2: Reemplazo de archivo (FormData)
     const formData = new FormData()
     formData.append('File', file)
     formData.append('Title', title)
@@ -69,7 +78,7 @@ export function DocumentEditPage() {
       {
         onSuccess: () => {
           alert('Archivo reemplazado correctamente ✅')
-          navigate('/documents')
+          navigate('/admin/documents')
         },
         onError: (err: any) => {
           console.error(err)
@@ -85,7 +94,7 @@ export function DocumentEditPage() {
 
   return (
     <div className="space-y-6">
-      <Button variant="outline" onClick={() => navigate('/documents')}>
+      <Button variant="outline" onClick={() => navigate('/admin/documents')}>
         ← Volver
       </Button>
 

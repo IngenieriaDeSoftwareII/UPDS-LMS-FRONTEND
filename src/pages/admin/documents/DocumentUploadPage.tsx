@@ -55,14 +55,14 @@ export function DocumentUploadPage() {
       {
         file,
         lessonId,
-        title, 
+        title,
         pageCount,
-        order 
+        order
       },
       {
         onSuccess: () => {
           alert('Documento subido correctamente ✅')
-          navigate('/documents')
+          navigate('/admin/documents')
         },
         onError: (err: any) => {
           console.error(err)
@@ -81,7 +81,7 @@ export function DocumentUploadPage() {
     <div className="space-y-6">
 
       {/* BOTÓN VOLVER */}
-      <Button variant="outline" onClick={() => navigate('/documents')}>
+      <Button variant="outline" onClick={() => navigate('/admin/documents')}>
         ← Volver
       </Button>
 

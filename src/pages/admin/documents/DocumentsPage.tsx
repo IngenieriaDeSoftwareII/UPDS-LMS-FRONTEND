@@ -52,7 +52,7 @@ export function DocumentsPage() {
 
       {/* BOTÓN SUBIR */}
       <div className="flex justify-end">
-        <Button onClick={() => navigate('/uploaddocuments')}>
+        <Button onClick={() => navigate('/admin/uploaddocuments')}>
           + Subir Documento
         </Button>
       </div>
@@ -140,7 +140,7 @@ export function DocumentsPage() {
                         <Button
                           variant="outline"
                           onClick={() =>
-                            navigate(`/documents/edit/${doc.contentId}`)
+                            navigate(`/admin/documents/edit/${doc.contentId}`)
                           }
                         >
                           Editar

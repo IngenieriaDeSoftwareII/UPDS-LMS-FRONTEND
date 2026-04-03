@@ -1,15 +1,27 @@
 import { useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 
 export function TeacherDocumentUploadPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
 
+  // 🔥 VALIDACIÓN SEGURA
   const lessonIdFromUrl = Number(params.get('lessonId'))
+  const moduleIdFromUrl = Number(params.get('moduleId'))
+
+  const lessonId = isNaN(lessonIdFromUrl) ? null : lessonIdFromUrl
+  const moduleId = isNaN(moduleIdFromUrl) ? null : moduleIdFromUrl
 
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -19,17 +31,24 @@ export function TeacherDocumentUploadPage() {
   const { useUploadDocument } = useDocumentContents()
   const { mutate: upload, isPending } = useUploadDocument()
 
-  const goBack = () => navigate('/teacher/lessons')
+  // 🔙 VOLVER CORRECTO
+  const goBack = () => {
+    if (moduleId) {
+      navigate(`/teacher/modules/${moduleId}/lessons`)
+    } else {
+      navigate('/teacher/modules') // fallback
+    }
+  }
 
   const handleUpload = () => {
     if (!file) return alert('Selecciona archivo')
-    if (!lessonIdFromUrl) return alert('Error: lessonId')
+    if (!lessonId) return alert('Error: lessonId inválido')
     if (!title.trim()) return alert('El título es obligatorio')
 
     upload(
       {
         file,
-        lessonId: lessonIdFromUrl,
+        lessonId,
         title,
         pageCount,
         order
@@ -49,14 +68,14 @@ export function TeacherDocumentUploadPage() {
   return (
     <div className="space-y-6 max-w-xl mx-auto">
 
-      {/* VOLVER */}
+      {/* 🔙 VOLVER */}
       <Button variant="outline" onClick={goBack}>
         ← Volver
       </Button>
 
       <Card>
         <CardHeader>
-          <CardTitle>Subir Documento</CardTitle>
+          <CardTitle>Subir Archivo</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -91,7 +110,7 @@ export function TeacherDocumentUploadPage() {
                 const selected = e.target.files?.[0] || null
                 setFile(selected)
 
-                // 🔥 AUTO TÍTULO como plataforma real
+                // 🔥 AUTO TITLE
                 if (selected && !title) {
                   setTitle(selected.name)
                 }
@@ -101,7 +120,9 @@ export function TeacherDocumentUploadPage() {
 
           {/* PÁGINAS */}
           <div>
-            <label className="text-sm font-medium">Número de páginas</label>
+            <label className="text-sm font-medium">
+              Número de páginas
+            </label>
             <Input
               type="number"
               min={1}

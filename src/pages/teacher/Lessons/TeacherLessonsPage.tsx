@@ -1,49 +1,106 @@
+import { useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import { PlusCircle, Pencil, ArrowLeft, Info } from 'lucide-react'
+
 import { Button } from '@/components/ui/button'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
-import { PlusCircle, Pencil, Trash2, FileText } from 'lucide-react'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+
+import { PageHeader } from '@/components/common/PageHeader'
+import { ConfirmDeleteButton } from '@/components/common/ConfirmDeleteButton'
+
 import { useLessons } from '@/hooks/useLessons'
 import { useDocumentContents } from '@/hooks/useDocumentContents'
-import { useState, useEffect } from 'react'
-import { LessonFormDialog } from '@/components/LessonFormDialog'
-import { useNavigate } from 'react-router-dom'
+import { useImageContents } from '@/hooks/useImageContents'
+import { useModules } from '@/hooks/useModules'
+
+import { LessonFormDialog } from '@/components/common/LessonFormDialog'
+import { AddContentModal } from '@/components/common/AddContentModal'
+
+import http from '@/lib/http'
+
+// TIPOS
+type Lesson = {
+  id: number
+  title: string
+  description?: string
+  moduleId: number
+  order?: number
+}
+
+type DocumentItem = {
+  contentId: number
+  content: {
+    lessonId: number
+    title?: string
+    order?: number
+  }
+}
+
+type ImageItem = {
+  contentId: number
+  lessonId?: number
+  imageUrl: string
+  altText: string
+  content?: {
+    lessonId: number
+    order?: number
+  }
+}
 
 export function TeacherLessonsPage() {
+  const navigate = useNavigate()
+  const { moduleId } = useParams()
+
   const { useLessonsList, useDeleteLesson } = useLessons()
-  const { data: lessons } = useLessonsList()
+  const { data: lessons, isLoading, error } = useLessonsList()
   const deleteLesson = useDeleteLesson()
 
   const { useDocumentsList, useDeleteDocument } = useDocumentContents()
   const { data: documents } = useDocumentsList()
   const deleteDocument = useDeleteDocument()
 
+  const { useImagesList, useDeleteImage } = useImageContents()
+  const { data: images } = useImagesList()
+  const deleteImage = useDeleteImage()
+
+  const { data: modules } = useModules()
+
   const [open, setOpen] = useState(false)
-  const [editingLesson, setEditingLesson] = useState<any>(null)
+  const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
 
-  // 🆕 GUÍAS (persistentes)
-  const [guides, setGuides] = useState<{ [key: number]: string }>({})
-  const [editingGuideLessonId, setEditingGuideLessonId] = useState<number | null>(null)
-  const [guideText, setGuideText] = useState('')
+  const [openContentModal, setOpenContentModal] = useState(false)
+  const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null)
 
-  const navigate = useNavigate()
+  // 🔥 NUEVO: control de toggle por lección
+  const [openLessons, setOpenLessons] = useState<Record<number, boolean>>({})
 
-  // 🔥 CARGAR DESDE LOCALSTORAGE
-  useEffect(() => {
-    const saved = localStorage.getItem('guides')
-    if (saved) setGuides(JSON.parse(saved))
-  }, [])
+  const toggleLesson = (lessonId: number) => {
+    setOpenLessons(prev => ({
+      ...prev,
+      [lessonId]: !prev[lessonId]
+    }))
+  }
 
-  // 🔥 GUARDAR EN LOCALSTORAGE
-  const saveGuide = (lessonId: number) => {
-    const updated = {
-      ...guides,
-      [lessonId]: guideText
+  const parsedModuleId = Number(moduleId)
+
+  const filteredLessons = (lessons as Lesson[] | undefined)
+    ?.filter((l) => Number(l.moduleId) === parsedModuleId)
+    ?.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+
+  const handleOpenDoc = async (contentId: number) => {
+    try {
+      const res = await http.get(`/DocumentContents/GetSasUrl/${contentId}`)
+      if (!res.data?.url) return alert('No se encontró el archivo')
+      window.open(res.data.url, '_blank')
+    } catch {
+      alert('No se pudo abrir el documento')
     }
-
-    setGuides(updated)
-    localStorage.setItem('guides', JSON.stringify(updated))
-
-    setEditingGuideLessonId(null)
-    setGuideText('')
   }
 
   const handleDeleteDoc = (id: number) => {
@@ -52,51 +109,94 @@ export function TeacherLessonsPage() {
     }
   }
 
-  const handleOpenDoc = async (contentId: number) => {
-    try {
-      const res = await fetch(
-        `http://localhost:5024/api/DocumentContents/GetSasUrl/${contentId}`
-      )
-
-      const data = await res.json()
-
-      if (!data?.url) {
-        alert('No se encontró el archivo')
-        return
-      }
-
-      window.open(data.url, '_blank', 'noopener,noreferrer')
-    } catch (error) {
-      console.error(error)
-      alert('No se pudo abrir el documento')
+  const handleDeleteImage = (id: number) => {
+    if (confirm('¿Eliminar imagen?')) {
+      deleteImage.mutate(id)
     }
   }
 
-  return (
-    <div className="space-y-6">
+  const handleOpenImage = (url: string) => {
+    window.open(url, '_blank')
+  }
 
-      {/* HEADER */}
-      <div className="flex justify-between">
-        <h1 className="text-2xl font-bold">Mis Lecciones</h1>
+  const handleSelectContentType = (type: 'document' | 'image') => {
+    if (!selectedLessonId) return
 
-        <Button onClick={() => { setEditingLesson(null); setOpen(true) }}>
-          <PlusCircle className="mr-2 w-4 h-4" />
-          Nueva
-        </Button>
+    if (type === 'document') {
+      navigate(
+        `/teacher/documents/upload?lessonId=${selectedLessonId}&moduleId=${parsedModuleId}`
+      )
+    }
+
+    if (type === 'image') {
+      navigate(
+        `/teacher/images/upload?lessonId=${selectedLessonId}&moduleId=${parsedModuleId}`
+      )
+    }
+
+    setOpenContentModal(false)
+  }
+
+  if (isLoading) {
+    return (
+      <div className="p-6 space-y-4">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-40 w-full" />
       </div>
+    )
+  }
 
-      {/* LISTA */}
-      {lessons?.map(lesson => {
+  if (error) {
+    return (
+      <div className="p-6 text-red-500">
+        Error al cargar las lecciones ❌
+      </div>
+    )
+  }
 
-        const lessonDocs = documents
-          ?.filter(d => d.content.lessonId === lesson.id)
-          ?.sort((a, b) => (a.content?.order || 0) - (b.content?.order || 0))
+  return (
+    <div className="max-w-8xl mx-auto px-6 mt-8 space-y-4">
+
+      <Button className='mt-4'
+        variant="outline"
+        onClick={() => navigate('/teacher/modules')}
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Volver a módulos
+      </Button>
+
+      <PageHeader
+        title="Lecciones del módulo"
+        buttonText="Nueva Lección"
+        icon={<PlusCircle className="w-4 h-4 mr-2" />}
+        onClick={() => {
+          setEditingLesson(null)
+          setOpen(true)
+        }}
+      />
+
+      {filteredLessons?.map((lesson) => {
+
+        const lessonDocs =
+          (documents as DocumentItem[] | undefined)
+            ?.filter((d) => d.content.lessonId === lesson.id) ?? []
+
+        const lessonImages =
+          (images as ImageItem[] | undefined)
+            ?.map((img) => ({
+              ...img,
+              lessonId: img.lessonId ?? img.content?.lessonId,
+            }))
+            ?.filter((img) => img.lessonId === lesson.id) ?? []
 
         return (
           <Card key={lesson.id}>
 
-            {/* HEADER */}
-            <CardHeader className="flex justify-between items-center">
+            {/* 🔥 HEADER CLICKEABLE */}
+            <CardHeader
+              className="flex justify-between items-center cursor-pointer"
+              onClick={() => toggleLesson(lesson.id)}
+            >
               <div>
                 <CardTitle>{lesson.title}</CardTitle>
                 <p className="text-sm text-gray-500">
@@ -104,135 +204,162 @@ export function TeacherLessonsPage() {
                 </p>
               </div>
 
-              <div className="flex gap-2">
+              {/* 🔥 evitar que botones cierren */}
+              <div
+                className="flex gap-2"
+                onClick={(e) => e.stopPropagation()}
+              >
+
                 <Button
-                  onClick={() =>
-                    navigate(`/teacher/documents/upload?lessonId=${lesson.id}`)
-                  }
+                  onClick={() => {
+                    setSelectedLessonId(lesson.id)
+                    setOpenContentModal(true)
+                  }}
                 >
-                  <PlusCircle />
+                  <PlusCircle className="w-4 h-4" />
                 </Button>
 
                 <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigate(`/teacher/lessons/${lesson.id}`)
+                  }}
+                >
+                  <Info className="w-4 h-4" />
+                </Button>
+
+                <Button
+                  variant="outline"
                   onClick={() => {
                     setEditingLesson(lesson)
                     setOpen(true)
                   }}
                 >
-                  <Pencil />
+                  <Pencil className="w-4 h-4" />
                 </Button>
 
-                <Button
-                  variant="destructive"
-                  onClick={() => deleteLesson.mutate(lesson.id)}
-                >
-                  <Trash2 />
-                </Button>
+                <ConfirmDeleteButton
+                  onConfirm={() => deleteLesson.mutate(lesson.id)}
+                />
+
               </div>
             </CardHeader>
 
-            <CardContent>
+            {/* 🔥 TOGGLE (abierto por defecto) */}
+            {openLessons[lesson.id] !== false && (
+              <CardContent className="space-y-2">
 
-              {/* 🆕 GUÍA ARRIBA */}
-              <div className="mb-6 border-b pb-4">
+                {(() => {
 
-                <h3 className="font-semibold mb-3">📘 Guía</h3>
+                  const combined = [
+                    ...lessonDocs.map(doc => ({
+                      type: 'document',
+                      id: doc.contentId,
+                      title: doc.content?.title || 'Documento',
+                      order: doc.content?.order ?? 0,
+                      data: doc
+                    })),
 
-                <Button
-                  className="mb-3"
-                  onClick={() => {
-                    setEditingGuideLessonId(lesson.id)
-                    setGuideText(guides[lesson.id] || '')
-                  }}
-                >
-                  Crear guía
-                </Button>
+                    ...lessonImages.map(img => ({
+                      type: 'image',
+                      id: img.contentId,
+                      title: img.altText || 'Imagen',
+                      order: img.content?.order ?? 0,
+                      data: img
+                    }))
+                  ].sort((a, b) => a.order - b.order)
 
-                {/* EDITOR */}
-                {editingGuideLessonId === lesson.id && (
-                  <div className="space-y-2">
-                    <textarea
-                      className="w-full border rounded p-2"
-                      rows={5}
-                      placeholder="Escribe la guía aquí..."
-                      value={guideText}
-                      onChange={(e) => setGuideText(e.target.value)}
-                    />
-
-                    <Button onClick={() => saveGuide(lesson.id)}>
-                      Guardar
-                    </Button>
-                  </div>
-                )}
-
-                {/* MOSTRAR */}
-                {guides[lesson.id] && (
-                  <Card className="mt-3">
-                    <CardContent className="p-3">
-                      <p className="text-sm whitespace-pre-line">
-                        {guides[lesson.id]}
+                  if (combined.length === 0) {
+                    return (
+                      <p className="text-gray-400 text-sm">
+                        No hay contenido
                       </p>
-                    </CardContent>
-                  </Card>
-                )}
+                    )
+                  }
 
-              </div>
+                  return combined.map(item => {
 
-              {/* DOCUMENTOS */}
-              <h3 className="font-semibold mb-2 flex items-center gap-2">
-                <FileText /> Documentos
-              </h3>
+                    if (item.type === 'document') {
+                      const doc = item.data as DocumentItem
 
-              {lessonDocs?.length === 0 ? (
-                <p className="text-gray-400 text-sm">
-                  No hay documentos
-                </p>
-              ) : (
-                <div className="space-y-2">
-                  {lessonDocs?.map(doc => (
-                    <div
-                      key={doc.contentId}
-                      onClick={() => handleOpenDoc(doc.contentId)}
-                      className="flex justify-between items-center border p-3 rounded cursor-pointer hover:bg-gray-100 transition"
-                    >
-                      <div className="flex items-center gap-3">
-                        <FileText className="text-red-500" size={18} />
-                        <div>
-                          <p className="font-medium">
-                            {doc.content.title || 'Sin título'}
-                          </p>
+                      return (
+                        <div
+                          key={`doc-${item.id}`}
+                          className="flex justify-between items-center border p-3 rounded hover:bg-gray-50"
+                        >
+                          <div
+                            className="cursor-pointer flex items-center gap-2"
+                            onClick={() => handleOpenDoc(doc.contentId)}
+                          >
+                            📄 {item.title}
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                navigate(`/teacher/documents/edit/${doc.contentId}`)
+                              }
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <ConfirmDeleteButton
+                              onConfirm={() => handleDeleteDoc(doc.contentId)}
+                            />
+                          </div>
+                        </div>
+                      )
+                    }
+
+                    const img = item.data as ImageItem
+
+                    return (
+                      <div
+                        key={`img-${item.id}`}
+                        className="border p-3 rounded space-y-2 hover:bg-gray-50"
+                      >
+                        <img
+                          src={img.imageUrl}
+                          alt={img.altText}
+                          className="w-full max-h-64 object-contain rounded cursor-pointer"
+                          onClick={() => handleOpenImage(img.imageUrl)}
+                          onError={(e) => {
+                            e.currentTarget.src =
+                              'https://via.placeholder.com/150?text=Error'
+                          }}
+                        />
+
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm">{item.title}</p>
+
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                navigate(`/teacher/images/edit/${img.contentId}`)
+                              }
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <ConfirmDeleteButton
+                              onConfirm={() =>
+                                handleDeleteImage(img.contentId)
+                              }
+                            />
+                          </div>
                         </div>
                       </div>
+                    )
+                  })
 
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate(`/teacher/documents/edit/${doc.contentId}`)
-                          }}
-                        >
-                          <Pencil size={16} />
-                        </Button>
+                })()}
 
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleDeleteDoc(doc.contentId)
-                          }}
-                        >
-                          <Trash2 size={16} />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-            </CardContent>
+              </CardContent>
+            )}
           </Card>
         )
       })}
@@ -241,6 +368,15 @@ export function TeacherLessonsPage() {
         open={open}
         onClose={() => setOpen(false)}
         lesson={editingLesson}
+        modules={modules}
+        moduleId={parsedModuleId}
+      />
+
+      <AddContentModal
+        open={openContentModal}
+        onClose={() => setOpenContentModal(false)}
+        lessonId={selectedLessonId!}
+        onSelect={handleSelectContentType}
       />
 
     </div>
