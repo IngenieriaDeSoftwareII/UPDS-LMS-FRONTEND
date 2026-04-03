@@ -2,6 +2,9 @@ import { Route, Routes } from 'react-router-dom'
 import { TeacherDashboard } from '@/pages/teacher/Dashboard'
 import { EvaluationManagementPage } from '@/pages/teacher/EvaluationManagementPage'
 import { EvaluationGradesPage } from '@/pages/teacher/EvaluationGradesPage'
+import { TeacherReportsPage } from '@/pages/teacher/reports/TeacherReportsPage'
+import { TeacherCourseReportPage } from '@/pages/teacher/reports/TeacherCourseReportPage'
+import { TeacherCoursesPage } from '@/pages/teacher/TeacherCoursesPage'
 
 import { TeacherLessonsPage } from '@/pages/teacher/Lessons/TeacherLessonsPage'
 import { TeacherModulesPage } from '@/pages/teacher/Lessons/TeacherModulesPage'
@@ -15,6 +18,7 @@ export function TeacherRoutes() {
   return (
     <Routes>
       <Route path="dashboard" element={<TeacherDashboard />} />
+      <Route path="courses" element={<TeacherCoursesPage />} />
       <Route path="evaluations" element={<EvaluationManagementPage />} />
       <Route path="evaluations/grades" element={<EvaluationGradesPage />} />
       {/* Teacher Modulos,leciones y contenidos*/}
@@ -25,6 +29,8 @@ export function TeacherRoutes() {
       <Route path="documents/edit/:id" element={<TeacherDocumentEditPage />} />
       <Route path="images/upload" element={<TeacherImageUploadPage />} />
       <Route path="images/edit/:id" element={<TeacherImageEditPage />} />
+      <Route path="reports" element={<TeacherReportsPage />} />
+      <Route path="reports/courses/:courseId" element={<TeacherCourseReportPage />} />
     </Routes>
   )
 }

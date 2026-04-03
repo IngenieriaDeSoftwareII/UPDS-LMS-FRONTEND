@@ -1,37 +1,54 @@
-import type { Course } from "@/types/course";
+import http from '@/lib/http'
+import { createService } from './base.service'
+import type { Course, CourseCreateDTO, CourseUpdateDTO } from '@/types/course'
 
-export const mockCourses: Course[] = [
-  {
-    id: 1,
-    titulo: "React desde cero",
-    descripcion: "Aprende React moderno con hooks",
-    nivel: "Intermedio",
-    imagen_url: "https://edteam-media.s3.amazonaws.com/courses/original/ff432ae3-00a6-4102-b6a4-aa7194564967.png",
-    publicado: true,
-    duracion_total_min: 1200,
-    max_estudiantes: 50,
-    entity_status: 1,
-    created_at: "2025-01-01",
-    updated_at: "2025-01-01",
+const baseService = createService<CourseCreateDTO, CourseUpdateDTO, Course>('/Courses')
+
+function normalizeCourse(raw: Record<string, unknown>): Course {
+  return {
+    id: Number(raw.id),
+    titulo: String(raw.titulo ?? ''),
+    descripcion: raw.descripcion as string | undefined,
+    nivel: String(raw.nivel ?? ''),
+    imagen_url: String((raw.imagenUrl ?? raw.imagen_url) ?? ''),
+    publicado: Boolean(raw.publicado),
+    duracion_total_min: Number((raw.duracionTotalMin ?? raw.duracion_total_min) ?? 0),
+    max_estudiantes: (raw.maxEstudiantes ?? raw.max_estudiantes) as number | null | undefined,
+    entity_status: Number(raw.entityStatus ?? raw.entity_status ?? 1),
+    created_at: String(raw.createdAt ?? raw.created_at ?? ''),
+    updated_at: String(raw.updatedAt ?? raw.updated_at ?? ''),
+    deleted_at: (raw.deletedAt ?? raw.deleted_at) as string | null | undefined,
+    docenteId:
+      raw.docenteId != null || raw.docente_id != null
+        ? Number(raw.docenteId ?? raw.docente_id)
+        : undefined,
+  }
+}
+
+export const courseService = {
+  ...baseService,
+
+  getAll: (): Promise<Course[]> =>
+    http.get<Course[]>('/Courses').then(res => res.data),
+
+  getByTeacher: (teacherId: number): Promise<Course[]> =>
+    http.get<Course[]>(`/Courses/teacher/${teacherId}`).then(res => res.data),
+
+  getByTeacherWithoutEvaluation: (teacherId: number): Promise<Course[]> =>
+    http.get<Course[]>(`/Courses/teacher/${teacherId}/without-evaluation`).then(res => res.data),
+
+  getAllNormalized: async () => {
+    const { data } = await http.get<Record<string, unknown>[]>('/Courses')
+    return (Array.isArray(data) ? data : []).map(normalizeCourse)
   },
 
-  {
-    id: 2,
-    titulo: "SQL Server Profesional",
-    descripcion: "Domina bases de datos",
-    nivel: "Básico",
-    imagen_url: "https://edteam-media.s3.amazonaws.com/courses/original/ee2d8a6e-b1df-4f4d-8fca-47d0ffe135dc.jpeg",
-    publicado: true,
-    duracion_total_min: 800,
-    max_estudiantes: 40,
-    entity_status: 1,
-    created_at: "2025-01-01",
-    updated_at: "2025-01-01",
-    },
-];
+  getById: async (id: number) => {
+    const { data } = await http.get<Record<string, unknown>>(`/Courses/${id}`)
+    return normalizeCourse(data)
+  },
 
-export const getCoursesMock = async (): Promise<Course[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(mockCourses), 500);
-  });
-};
+  getCoursesByTeacher: async (teacherId: number) => {
+    const all = await courseService.getAllNormalized()
+    return all.filter(c => c.docenteId === teacherId)
+  },
+}
