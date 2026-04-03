@@ -27,7 +27,6 @@ function estadoCursoClass(raw: string | undefined | null): string {
   return 'text-amber-700 dark:text-amber-500'
 }
 
-/** Alineado con el backend: curso terminado (inscripción completada). */
 function puedeRendirEvaluacion(learning: StudentCourseLearning | undefined, queryLoading: boolean): boolean {
   if (queryLoading || !learning) return false
   if (!learning.inscrito) return false
