@@ -1,11 +1,39 @@
+import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useQueries } from '@tanstack/react-query'
 import { BookOpenCheck, ArrowRight, Clock } from 'lucide-react'
 import { useMyEvaluationGrades } from '@/hooks/useEvaluations'
 import { useAvailableEvaluations } from '@/hooks/useAvailableEvaluations'
+import { studentProgressService } from '@/services/student-progress.service'
+import type { StudentCourseLearning } from '@/types/student-progress'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+
+function labelInscripcionEstado(raw: string | undefined | null): string {
+  const e = (raw ?? '').trim().toLowerCase()
+  if (e === 'activo') return 'Inscripción activa'
+  if (e === 'progreso') return 'En curso'
+  if (e === 'terminado') return 'Completado'
+  if (e === 'cancelado') return 'Cancelada'
+  return raw?.trim() || '—'
+}
+
+function estadoCursoClass(raw: string | undefined | null): string {
+  const e = (raw ?? '').toLowerCase()
+  if (e === 'terminado') return 'text-green-600'
+  if (e === 'cancelado') return 'text-destructive'
+  return 'text-amber-700 dark:text-amber-500'
+}
+
+/** Alineado con el backend: curso terminado (inscripción completada). */
+function puedeRendirEvaluacion(learning: StudentCourseLearning | undefined, queryLoading: boolean): boolean {
+  if (queryLoading || !learning) return false
+  if (!learning.inscrito) return false
+  const e = (learning.estadoInscripcion ?? '').toLowerCase()
+  return e === 'terminado' || learning.cursoCompletado === true
+}
 
 export function StudentEvaluationsPage() {
   const navigate = useNavigate()
@@ -14,6 +42,35 @@ export function StudentEvaluationsPage() {
   const myGradesQuery = useMyEvaluationGrades()
 
   const hasAvailableEvaluations = (availableEvaluationsQuery.data?.length ?? 0) > 0
+
+  const courseIds = useMemo(
+    () => [...new Set(availableEvaluationsQuery.data?.map(i => i.curso.id) ?? [])],
+    [availableEvaluationsQuery.data],
+  )
+
+  const learningQueries = useQueries({
+    queries: courseIds.map(cursoId => ({
+      queryKey: ['student-learning', cursoId],
+      queryFn: () => studentProgressService.getCourseLearning(cursoId),
+      enabled: hasAvailableEvaluations && courseIds.length > 0,
+      staleTime: 30_000,
+    })),
+  })
+
+  const learningByCursoId = useMemo(() => {
+    const map = new Map<number, StudentCourseLearning>()
+    courseIds.forEach((id, idx) => {
+      const row = learningQueries[idx]?.data
+      if (row) map.set(id, row)
+    })
+    return map
+  }, [courseIds, learningQueries])
+
+  const queryIndexByCursoId = useMemo(() => {
+    const m = new Map<number, number>()
+    courseIds.forEach((id, idx) => m.set(id, idx))
+    return m
+  }, [courseIds])
 
   return (
     <div className="space-y-6">
@@ -47,38 +104,70 @@ export function StudentEvaluationsPage() {
           </Alert>
         ) : (
           <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-            {availableEvaluationsQuery.data?.map(inscription => (
-              <Card key={inscription.id} className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardHeader>
-                  <CardTitle className="line-clamp-2 text-base">
-                    {inscription.curso.titulo}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-2">
-                    {inscription.curso.descripcion || 'Sin descripción'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground text-xs">Nivel</p>
-                      <p className="font-medium">{inscription.curso.nivel}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-muted-foreground text-xs">Estado</p>
-                      <p className="font-medium text-green-600">Completado</p>
-                    </div>
-                  </div>
+            {availableEvaluationsQuery.data?.map(inscription => {
+              const idx = queryIndexByCursoId.get(inscription.curso.id) ?? -1
+              const lq = idx >= 0 ? learningQueries[idx] : undefined
+              const learning = learningByCursoId.get(inscription.curso.id)
+              const learningPending = Boolean(lq?.isPending || lq?.isFetching)
+              const learningError = Boolean(lq?.isError)
+              const puedeRendir = puedeRendirEvaluacion(learning, learningPending)
 
-                  <Button
-                    onClick={() => navigate(`/student/evaluations/${inscription.curso.id}`)}
-                    className="w-full"
-                  >
-                    Rendir evaluación
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+              const estadoTexto = learningError
+                ? 'No se pudo cargar'
+                : learningPending
+                  ? 'Cargando…'
+                  : labelInscripcionEstado(learning?.estadoInscripcion)
+
+              return (
+                <Card
+                  key={`${inscription.curso.id}-${inscription.id}`}
+                  className="hover:shadow-lg transition-shadow"
+                >
+                  <CardHeader>
+                    <CardTitle className="line-clamp-2 text-base">
+                      {inscription.curso.titulo}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2">
+                      {inscription.curso.descripcion || 'Sin descripción'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">Nivel</p>
+                        <p className="font-medium">{inscription.curso.nivel}</p>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-muted-foreground text-xs">Estado del curso</p>
+                        <p className={`font-medium ${learningError ? 'text-destructive' : estadoCursoClass(learning?.estadoInscripcion)}`}>
+                          {estadoTexto}
+                        </p>
+                      </div>
+                    </div>
+
+                    {!learningPending && learning && !puedeRendir ? (
+                      <p className="text-xs text-muted-foreground">
+                        Completa el curso (todas las lecciones) para habilitar la evaluación final.
+                      </p>
+                    ) : null}
+
+                    <Button
+                      onClick={() => navigate(`/student/evaluations/${inscription.curso.id}`)}
+                      className="w-full"
+                      disabled={!puedeRendir || learningError}
+                      title={
+                        !puedeRendir && !learningError && !learningPending
+                          ? 'Debes completar el curso antes de rendir la evaluación'
+                          : undefined
+                      }
+                    >
+                      Rendir evaluación
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>

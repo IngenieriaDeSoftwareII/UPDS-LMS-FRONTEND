@@ -137,6 +137,12 @@ export function CourseDetail() {
   const estadoInscripcion = (learning?.estadoInscripcion ?? '').toLowerCase()
   const yaInscrito = Boolean(learning?.inscrito)
   const terminado = estadoInscripcion === 'terminado'
+  const puedeCertificado =
+    learning?.puedeDescargarCertificado !== undefined
+      ? Boolean(learning.puedeDescargarCertificado)
+      : terminado
+  const tieneEval = Boolean(learning?.tieneEvaluacionFinal)
+  const notaExam = learning?.notaEvaluacionSobre100
 
   if (!id || !Number.isFinite(cursoId) || cursoId <= 0) {
     return (
@@ -345,13 +351,15 @@ export function CourseDetail() {
             </div>
           </div>
 
-          {learning && yaInscrito && terminado ? (
+          {learning && yaInscrito && terminado && puedeCertificado ? (
             <div className="flex flex-wrap gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4">
               <Award className="h-6 w-6 shrink-0 text-primary" />
               <div className="flex-1 space-y-2">
                 <p className="font-semibold">Certificado disponible</p>
                 <p className="text-sm text-muted-foreground">
-                  Descarga tu constancia en PDF con nombre, curso y fecha de finalización.
+                  Evaluación final aprobada
+                  {notaExam != null ? ` (${notaExam.toFixed(0)}/100)` : ''}. Descarga tu constancia en PDF con nombre,
+                  curso y fecha de finalización.
                 </p>
                 <Button
                   variant="secondary"
@@ -371,6 +379,25 @@ export function CourseDetail() {
                 ) : null}
               </div>
             </div>
+          ) : null}
+
+          {learning && yaInscrito && terminado && !puedeCertificado && learning.mensajeCertificado ? (
+            <Alert>
+              <AlertTitle>Certificado no disponible</AlertTitle>
+              <AlertDescription className="space-y-3">
+                <p>{learning.mensajeCertificado}</p>
+                {tieneEval ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate(`/student/evaluations/${cursoId}`)}
+                  >
+                    Ir a la evaluación final
+                  </Button>
+                ) : null}
+              </AlertDescription>
+            </Alert>
           ) : null}
 
           {learning && yaInscrito && moduleGradesQuery.data && moduleGradesQuery.data.length > 0 ? (
