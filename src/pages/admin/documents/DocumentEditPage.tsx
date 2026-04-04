@@ -12,6 +12,8 @@ import {
 
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
 export function DocumentEditPage() {
   const { id } = useParams()
@@ -27,18 +29,21 @@ export function DocumentEditPage() {
 
   const { mutate: update, isPending } = useUpdateDocument()
 
-  // 🔥 TRAER LECCIONES
+  // DATA RELACIONAL
   const { useLessonsList } = useLessons()
   const { data: lessons } = useLessonsList()
 
-  // 🔹 state
+  const { data: modules } = useModules()
+  const { data: courses } = useCoursesPrueba()
+
+  // state
   const [title, setTitle] = useState('')
   const [order, setOrder] = useState(1)
   const [pageCount, setPageCount] = useState<number | undefined>()
   const [lessonId, setLessonId] = useState<number | undefined>()
   const [file, setFile] = useState<File | null>(null)
 
-  // 🔹 cargar datos
+  //  cargar datos
   useEffect(() => {
     if (doc) {
       setTitle(doc.content?.title || '')
@@ -59,7 +64,7 @@ export function DocumentEditPage() {
       return
     }
 
-    // 🔹 SOLO METADATA
+    //  METADATA
     if (!file) {
       update(
         {
@@ -68,28 +73,26 @@ export function DocumentEditPage() {
             title,
             order,
             pageCount,
-            lessonId 
+            lessonId
           }
         },
         {
           onSuccess: () => {
             alert('Documento actualizado ✅')
             navigate('/admin/documents')
-          },
-          onError: (err: any) => {
-            alert('Error ❌\n' + (err?.response?.data || err.message))
           }
         }
       )
       return
     }
 
-    // 🔹 CON ARCHIVO
+    //  CON ARCHIVO
     const formData = new FormData()
     formData.append('File', file)
     formData.append('Title', title)
     formData.append('Order', String(order))
-    formData.append('LessonId', String(lessonId)) // 🔥 IMPORTANTE
+    formData.append('LessonId', String(lessonId))
+
     if (pageCount) {
       formData.append('PageCount', String(pageCount))
     }
@@ -100,15 +103,12 @@ export function DocumentEditPage() {
         onSuccess: () => {
           alert('Archivo actualizado ✅')
           navigate('/admin/documents')
-        },
-        onError: (err: any) => {
-          alert('Error ❌\n' + (err?.response?.data || err.message))
         }
       }
     )
   }
 
-  // 🔹 estados
+  //  estados
   if (!isValidId) {
     return <p className="p-6 text-red-500">ID inválido</p>
   }
@@ -144,20 +144,26 @@ export function DocumentEditPage() {
             />
           </div>
 
-          {/* LECCIÓN 🔥 NUEVO */}
+          {/*  LECCIÓN CON CURSO + MÓDULO */}
           <div>
             <label className="text-sm font-medium">Lección</label>
             <select
               className="w-full border rounded p-2"
-              value={lessonId}
+              value={lessonId ?? ''}
               onChange={(e) => setLessonId(Number(e.target.value))}
             >
               <option value="">Seleccionar</option>
-              {lessons?.map(l => (
-                <option key={l.id} value={l.id}>
-                  {l.title}
-                </option>
-              ))}
+
+              {lessons?.map(l => {
+                const module = modules?.find(m => m.id === l.moduleId)
+                const course = courses?.find(c => c.id === module?.cursoId)
+
+                return (
+                  <option key={l.id} value={l.id}>
+                    {`Curso: ${course?.titulo || '—'} • Módulo: ${module?.titulo || '—'} • Lección: ${l.title}`}
+                  </option>
+                )
+              })}
             </select>
           </div>
 

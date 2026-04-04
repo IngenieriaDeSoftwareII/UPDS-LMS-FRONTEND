@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +12,8 @@ import {
 
 import { useImageContents } from '@/hooks/useImageContents'
 import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
 type ImageItem = {
   contentId: number
@@ -37,29 +39,31 @@ export function TeacherImageEditPage() {
   const { useLessonsList } = useLessons()
   const { data: lessons } = useLessonsList()
 
+  const { data: modules } = useModules()
+  const { data: courses } = useCoursesPrueba()
+
   const image = (images as ImageItem[] | undefined)?.find(
     (i) => i.contentId === imageId
   )
 
-  const lessonId = image?.content?.lessonId
-  const lesson = lessons?.find((l) => l.id === lessonId)
-  const moduleId = lesson?.moduleId
-
-  // STATES
+  //  STATES
+  const [lessonId, setLessonId] = useState<number | undefined>()
   const [title, setTitle] = useState('')
   const [order, setOrder] = useState<number>(1)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  // CARGAR DATOS
+  // 🔹 cargar datos
   useEffect(() => {
     if (image) {
       setTitle(image.content?.title || image.altText)
       setOrder(image.content?.order || 1)
+      setLessonId(image.content?.lessonId)
     }
   }, [image])
 
+  // 🔹 preview
   useEffect(() => {
     if (!file) return
     const url = URL.createObjectURL(file)
@@ -67,12 +71,24 @@ export function TeacherImageEditPage() {
     return () => URL.revokeObjectURL(url)
   }, [file])
 
+  // DERIVADOS 
+  const selectedLesson = useMemo(
+    () => lessons?.find(l => l.id === lessonId),
+    [lessonId, lessons]
+  )
+
+  const selectedModule = useMemo(
+    () => modules?.find(m => m.id === selectedLesson?.moduleId),
+    [selectedLesson, modules]
+  )
+
+  const selectedCourse = useMemo(
+    () => courses?.find(c => c.id === selectedModule?.cursoId),
+    [selectedModule, courses]
+  )
+
   const goBack = () => {
-    if (moduleId) {
-      navigate(`/teacher/modules/${moduleId}/lessons`)
-    } else {
-      navigate('/teacher/modules')
-    }
+    navigate('/teacher/lessons')
   }
 
   const handleUpdate = () => {
@@ -82,13 +98,18 @@ export function TeacherImageEditPage() {
       return setError('El título es obligatorio')
     }
 
+    if (!lessonId) {
+      return setError('Debes seleccionar una lección')
+    }
+
     if (!order || order < 1 || isNaN(order)) {
-      return setError('El orden debe ser un número mayor a 0')
+      return setError('El orden debe ser mayor a 0')
     }
 
     const formData = new FormData()
     formData.append('altText', title)
-    formData.append('order', String(order)) 
+    formData.append('order', String(order))
+    formData.append('lessonId', String(lessonId))
 
     if (file) {
       if (!file.type.startsWith('image/')) {
@@ -103,17 +124,14 @@ export function TeacherImageEditPage() {
     }
 
     update(
-      {
-        id: imageId,
-        formData,
-      },
+      { id: imageId, formData },
       {
         onSuccess: () => {
-          alert('Actualizado ✅')
+          alert('Imagen actualizada ✅')
           goBack()
         },
         onError: () => {
-          setError('Error al actualizar la imagen ❌')
+          setError('Error al actualizar ❌')
         }
       }
     )
@@ -139,15 +157,16 @@ export function TeacherImageEditPage() {
 
           {/* ERROR */}
           {error && (
-            <div className="text-red-500 text-sm border border-red-300 bg-red-50 p-2 rounded">
+            <div className="text-red-500 text-sm border bg-red-50 p-2 rounded">
               {error}
             </div>
           )}
 
-          {/* INFO */}
-          <div className="text-sm text-gray-500 space-y-1">
-            <p><strong>Lesson:</strong> {lessonId}</p>
-            <p><strong>Módulo:</strong> {moduleId ?? '—'}</p>
+          {/*  INFO  */}
+          <div className="text-sm bg-gray-50 p-3 rounded space-y-1">
+            <p><strong>Curso:</strong> {selectedCourse?.titulo || '—'}</p>
+            <p><strong>Módulo:</strong> {selectedModule?.titulo || '—'}</p>
+            <p><strong>Lección:</strong> {selectedLesson?.title || '—'}</p>
           </div>
 
           {/* PREVIEW */}
@@ -165,6 +184,32 @@ export function TeacherImageEditPage() {
             />
           </div>
 
+          {/*  LECCIÓN */}
+          <div>
+            <label className="text-sm font-medium">Lección</label>
+
+            <select
+              className="w-full border rounded p-2"
+              value={lessonId ?? ''}
+              onChange={(e) =>
+                setLessonId(Number(e.target.value))
+              }
+            >
+              <option value="">Seleccionar</option>
+
+              {lessons?.map(l => {
+                const module = modules?.find(m => m.id === l.moduleId)
+                const course = courses?.find(c => c.id === module?.cursoId)
+
+                return (
+                  <option key={l.id} value={l.id}>
+                    {`Curso: ${course?.titulo || '—'} | Módulo: ${module?.titulo || '—'} | Lección: ${l.title}`}
+                  </option>
+                )
+              })}
+            </select>
+          </div>
+
           {/* ORDEN */}
           <div>
             <label className="text-sm font-medium">Orden</label>
@@ -172,19 +217,11 @@ export function TeacherImageEditPage() {
               type="number"
               min={1}
               value={order}
-              onChange={(e) => {
-                const val = Number(e.target.value)
-
-                if (isNaN(val)) {
-                  setOrder(1)
-                } else {
-                  setOrder(val)
-                }
-              }}
+              onChange={(e) => setOrder(Number(e.target.value))}
             />
           </div>
 
-          {/* ARCHIVO */}
+          {/* FILE */}
           <div>
             <label className="text-sm font-medium">
               Reemplazar imagen
@@ -197,7 +234,7 @@ export function TeacherImageEditPage() {
                 if (!f) return
 
                 if (!f.type.startsWith('image/')) {
-                  setError('Solo se permiten imágenes')
+                  setError('Solo imágenes')
                   return
                 }
 

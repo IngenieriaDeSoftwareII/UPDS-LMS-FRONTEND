@@ -12,6 +12,8 @@ import {
 
 import { useImageContents } from '@/hooks/useImageContents'
 import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
 export function ImageEditPage() {
   const { id } = useParams()
@@ -22,23 +24,29 @@ export function ImageEditPage() {
 
   const { data, isLoading } = useImagesList()
   const { data: lessons } = useLessonsList()
+
+  const { data: modules } = useModules()
+  const { data: courses } = useCoursesPrueba()
+
   const { mutate: update, isPending } = useUpdateImage()
 
   const [title, setTitle] = useState('')
-  const [lessonId, setLessonId] = useState<number | undefined>() 
+  const [lessonId, setLessonId] = useState<number | undefined>()
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   const image = data?.find((i: any) => i.contentId === Number(id))
 
+  //  cargar datos
   useEffect(() => {
     if (image) {
       setTitle(image.altText)
-      setLessonId(image.content?.lessonId) // CARGAR ACTUAL
+      setLessonId(image.content?.lessonId)
     }
   }, [image])
 
+  //  preview
   useEffect(() => {
     if (!file) {
       setPreview(null)
@@ -66,7 +74,7 @@ export function ImageEditPage() {
 
     const formData = new FormData()
     formData.append('altText', title)
-    formData.append('lessonId', String(lessonId)) 
+    formData.append('lessonId', String(lessonId))
 
     if (file) {
       formData.append('file', file)
@@ -82,7 +90,6 @@ export function ImageEditPage() {
           alert('Imagen actualizada correctamente ✅')
           navigate('/admin/images')
         },
-
         onError: (err: any) => {
           const message =
             err?.response?.data?.errors?.[0] ||
@@ -181,7 +188,7 @@ export function ImageEditPage() {
             />
           </div>
 
-          {/* LECCIÓN */}
+          {/*  LECCIÓN CON CURSO + MÓDULO */}
           <div>
             <label className="block text-sm font-medium">
               Lección
@@ -189,15 +196,21 @@ export function ImageEditPage() {
 
             <select
               className="w-full border rounded p-2"
-              value={lessonId}
+              value={lessonId ?? ''}
               onChange={(e) => setLessonId(Number(e.target.value))}
             >
               <option value="">Seleccionar</option>
-              {lessons?.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.title}
-                </option>
-              ))}
+
+              {lessons?.map((l) => {
+                const module = modules?.find(m => m.id === l.moduleId)
+                const course = courses?.find(c => c.id === module?.cursoId)
+
+                return (
+                  <option key={l.id} value={l.id}>
+                    {`Curso: ${course?.titulo || '—'} • Módulo: ${module?.titulo || '—'} • Lección: ${l.title}`}
+                  </option>
+                )
+              })}
             </select>
           </div>
 

@@ -17,10 +17,8 @@ export function TeacherImageUploadPage() {
   const [params] = useSearchParams()
 
   const lessonIdFromUrl = Number(params.get('lessonId'))
-  const moduleIdFromUrl = Number(params.get('moduleId'))
 
   const lessonId = isNaN(lessonIdFromUrl) ? null : lessonIdFromUrl
-  const moduleId = isNaN(moduleIdFromUrl) ? null : moduleIdFromUrl
 
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
@@ -44,11 +42,7 @@ export function TeacherImageUploadPage() {
   }, [file])
 
   const goBack = () => {
-    if (moduleId) {
-      navigate(`/teacher/modules/${moduleId}/lessons`)
-    } else {
-      navigate('/teacher/modules')
-    }
+    navigate('/teacher/lessons')
   }
 
   const handleUpload = () => {

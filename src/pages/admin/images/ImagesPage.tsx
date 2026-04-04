@@ -19,11 +19,25 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { useImageContents } from '@/hooks/useImageContents'
 import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
-// 👇 opcional: usa tu tipo real si lo tienes
+// TIPOS CORRECTOS
 type Lesson = {
   id: number
   title: string
+  moduleId: number
+}
+
+type ModuleDto = {
+  id: number
+  cursoId: number // 🔥 nombre correcto
+  titulo: string
+}
+
+type Course = {
+  id: number
+  titulo: string
 }
 
 export function ImagesPage() {
@@ -31,16 +45,25 @@ export function ImagesPage() {
 
   const { useImagesList, useDeleteImage } = useImageContents()
   const { useLessonsList } = useLessons()
+  const { data: modules = [] } = useModules()
+  const { data: courses = [] } = useCoursesPrueba()
 
-  // ✅ FIX: evitar undefined
   const { data = [], isLoading } = useImagesList()
   const { data: lessons = [] } = useLessonsList()
 
   const { mutate: deleteImage } = useDeleteImage()
 
-  // ✅ MAPA TIPADO
+  // ✅ MAPAS CORREGIDOS
   const lessonsMap: Record<number, Lesson> = Object.fromEntries(
     lessons.map((l: Lesson) => [l.id, l])
+  )
+
+  const modulesMap: Record<number, ModuleDto> = Object.fromEntries(
+    modules.map((m) => [m.id, m]) // 🔥 sin tipar manualmente
+  )
+
+  const coursesMap: Record<number, Course> = Object.fromEntries(
+    courses.map((c: Course) => [c.id, c])
   )
 
   const handleDelete = (id: number) => {
@@ -73,7 +96,7 @@ export function ImagesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>Lección</TableHead>
+                <TableHead>Ubicación</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Imagen</TableHead>
                 <TableHead>Formato</TableHead>
@@ -86,19 +109,22 @@ export function ImagesPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8}>
+                  <TableCell colSpan={10}>
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                 </TableRow>
               ) : data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
+                  <TableCell colSpan={10} className="text-center">
                     No hay imágenes registradas
                   </TableCell>
                 </TableRow>
               ) : (
                 data.map((img: any) => {
+
                   const lesson = lessonsMap[img.content?.lessonId]
+                  const module = lesson ? modulesMap[lesson.moduleId] : null
+                  const course = module ? coursesMap[module.cursoId] : null // 🔥 FIX
 
                   return (
                     <TableRow key={img.contentId}>
@@ -106,16 +132,26 @@ export function ImagesPage() {
                       {/* ID */}
                       <TableCell>{img.contentId}</TableCell>
 
-                      {/* LECCIÓN */}
+                      {/* UBICACIÓN (Curso + Módulo + Lección) */}
                       <TableCell>
-                        {lesson ? (
-                          <div className="flex flex-col">
-                            <span>{lesson.title}</span>
+                        {lesson && module && course ? (
+                          <div className="flex flex-col text-sm leading-tight">
+                            <span>
+                              <strong>Curso:</strong> {course.titulo}
+                            </span>
+                            <span>
+                              <strong>Módulo:</strong> {module.titulo}
+                            </span>
+                            <span>
+                              <strong>Lección:</strong> {lesson.title}
+                            </span>
                             <span className="text-xs text-muted-foreground">
                               ID: {lesson.id}
                             </span>
                           </div>
-                        ) : '—'}
+                        ) : (
+                          '—'
+                        )}
                       </TableCell>
 
                       {/* TÍTULO */}

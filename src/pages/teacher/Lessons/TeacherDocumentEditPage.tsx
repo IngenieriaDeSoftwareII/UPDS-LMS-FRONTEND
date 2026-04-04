@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
@@ -12,12 +12,13 @@ import {
 
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
 export function TeacherDocumentEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  // 🔥 VALIDACIÓN ID
   const documentId = Number(id)
   const isValidId = !isNaN(documentId)
 
@@ -28,38 +29,48 @@ export function TeacherDocumentEditPage() {
 
   const { mutate: update, isPending } = useUpdateDocument()
 
-  // 🔥 TRAER LESSON PARA SACAR moduleId
+  //  DATA
   const { useLessonsList } = useLessons()
   const { data: lessons } = useLessonsList()
 
-  const lesson = lessons?.find(
-    (l) => l.id === doc?.content?.lessonId
-  )
+  const { data: modules } = useModules()
+  const { data: courses } = useCoursesPrueba()
 
-  const moduleId = lesson?.moduleId
-
-  // 🔹 state
+  //  state
   const [title, setTitle] = useState('')
   const [order, setOrder] = useState(1)
   const [pageCount, setPageCount] = useState<number | undefined>()
+  const [lessonId, setLessonId] = useState<number | undefined>()
   const [file, setFile] = useState<File | null>(null)
 
-  // 🔹 cargar datos
+  // cargar datos
   useEffect(() => {
     if (doc) {
       setTitle(doc.content?.title || '')
       setOrder(doc.content?.order || 1)
       setPageCount(doc.pageCount)
+      setLessonId(doc.content?.lessonId)
     }
   }, [doc])
 
-  // 🔙 volver seguro
+  //  (curso/módulo)
+  const selectedLesson = useMemo(
+    () => lessons?.find(l => l.id === lessonId),
+    [lessonId, lessons]
+  )
+
+  const selectedModule = useMemo(
+    () => modules?.find(m => m.id === selectedLesson?.moduleId),
+    [selectedLesson, modules]
+  )
+
+  const selectedCourse = useMemo(
+    () => courses?.find(c => c.id === selectedModule?.cursoId),
+    [selectedModule, courses]
+  )
+
   const goBack = () => {
-    if (moduleId) {
-      navigate(`/teacher/modules/${moduleId}/lessons`)
-    } else {
-      navigate('/teacher/modules') // fallback
-    }
+    navigate('/teacher/lessons')
   }
 
   const handleUpdate = () => {
@@ -68,12 +79,22 @@ export function TeacherDocumentEditPage() {
       return
     }
 
+    if (!lessonId) {
+      alert('Debes seleccionar una lección')
+      return
+    }
+
     // 🔹 SOLO METADATA
     if (!file) {
       update(
         {
           id: documentId,
-          data: { title, order, pageCount }
+          data: {
+            title,
+            order,
+            pageCount,
+            lessonId
+          }
         },
         {
           onSuccess: () => {
@@ -86,13 +107,6 @@ export function TeacherDocumentEditPage() {
     }
 
     // 🔹 CON ARCHIVO
-    const lessonId = doc?.content?.lessonId
-
-    if (!lessonId) {
-      alert('Error: lessonId no encontrado')
-      return
-    }
-
     const formData = new FormData()
     formData.append('File', file)
     formData.append('Title', title)
@@ -130,7 +144,6 @@ export function TeacherDocumentEditPage() {
   return (
     <div className="space-y-6 max-w-xl mx-auto">
 
-      {/* 🔙 VOLVER */}
       <Button variant="outline" onClick={goBack}>
         ← Volver
       </Button>
@@ -142,6 +155,13 @@ export function TeacherDocumentEditPage() {
 
         <CardContent className="space-y-4">
 
+          {/* INFO ACTUAL */}
+          <div className="text-sm bg-gray-50 p-3 rounded space-y-1">
+            <p><strong>Curso:</strong> {selectedCourse?.titulo || '—'}</p>
+            <p><strong>Módulo:</strong> {selectedModule?.titulo || '—'}</p>
+            <p><strong>Lección:</strong> {selectedLesson?.title || '—'}</p>
+          </div>
+
           {/* TÍTULO */}
           <div>
             <label className="text-sm font-medium">Título</label>
@@ -149,6 +169,30 @@ export function TeacherDocumentEditPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
+          </div>
+
+          {/* SELECT  */}
+          <div>
+            <label className="text-sm font-medium">Lección</label>
+
+            <select
+              className="w-full border rounded p-2"
+              value={lessonId ?? ''}
+              onChange={(e) => setLessonId(Number(e.target.value))}
+            >
+              <option value="">Seleccionar</option>
+
+              {lessons?.map(l => {
+                const module = modules?.find(m => m.id === l.moduleId)
+                const course = courses?.find(c => c.id === module?.cursoId)
+
+                return (
+                  <option key={l.id} value={l.id}>
+                    {`Curso: ${course?.titulo || '—'} | Módulo: ${module?.titulo || '—'} | Lección: ${l.title}`}
+                  </option>
+                )
+              })}
+            </select>
           </div>
 
           {/* ORDEN */}
@@ -196,7 +240,6 @@ export function TeacherDocumentEditPage() {
             />
           </div>
 
-          {/* BOTÓN */}
           <Button onClick={handleUpdate} disabled={isPending}>
             {isPending ? 'Guardando...' : 'Guardar cambios'}
           </Button>

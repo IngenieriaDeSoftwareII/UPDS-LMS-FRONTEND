@@ -26,13 +26,7 @@ export function LessonDetailPage() {
       <Button
         variant="outline"
         className="mb-4"
-        onClick={() => {
-          if (lesson?.moduleId) {
-            navigate(`/teacher/modules/${lesson.moduleId}/lessons`)
-          } else {
-            navigate(-1)
-          }
-        }}
+        onClick={() => navigate('/teacher/lessons')}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Volver a Lecciones

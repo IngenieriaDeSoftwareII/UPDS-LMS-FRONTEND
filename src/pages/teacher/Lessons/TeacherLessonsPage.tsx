@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
-import { PlusCircle, Pencil, ArrowLeft, Info } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { PlusCircle, Pencil, Info,Trash2  } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -18,6 +18,7 @@ import { useLessons } from '@/hooks/useLessons'
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useImageContents } from '@/hooks/useImageContents'
 import { useModules } from '@/hooks/useModules'
+import { useDeleteModule } from '@/hooks/useModules'
 
 import { LessonFormDialog } from '@/components/common/LessonFormDialog'
 import { AddContentModal } from '@/components/common/AddContentModal'
@@ -55,29 +56,35 @@ type ImageItem = {
 
 export function TeacherLessonsPage() {
   const navigate = useNavigate()
-  const { moduleId } = useParams()
 
+  //  MÓDULOS
+  const { data: modules } = useModules()
+  const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null)
+  const deleteModule = useDeleteModule()
+
+  //  LECCIONES
   const { useLessonsList, useDeleteLesson } = useLessons()
   const { data: lessons, isLoading, error } = useLessonsList()
   const deleteLesson = useDeleteLesson()
 
+  //  DOCUMENTOS
   const { useDocumentsList, useDeleteDocument } = useDocumentContents()
   const { data: documents } = useDocumentsList()
   const deleteDocument = useDeleteDocument()
 
+  // IMÁGENES
   const { useImagesList, useDeleteImage } = useImageContents()
   const { data: images } = useImagesList()
   const deleteImage = useDeleteImage()
 
-  const { data: modules } = useModules()
-
+  //  MODALES
   const [open, setOpen] = useState(false)
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null)
 
   const [openContentModal, setOpenContentModal] = useState(false)
   const [selectedLessonId, setSelectedLessonId] = useState<number | null>(null)
 
-  // 🔥 NUEVO: control de toggle por lección
+  //  TOGGLE LECCIONES
   const [openLessons, setOpenLessons] = useState<Record<number, boolean>>({})
 
   const toggleLesson = (lessonId: number) => {
@@ -87,12 +94,12 @@ export function TeacherLessonsPage() {
     }))
   }
 
-  const parsedModuleId = Number(moduleId)
-
+  //  FILTRAR POR MÓDULO
   const filteredLessons = (lessons as Lesson[] | undefined)
-    ?.filter((l) => Number(l.moduleId) === parsedModuleId)
+    ?.filter(l => l.moduleId === selectedModuleId)
     ?.sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
+  //  DOCUMENTOS
   const handleOpenDoc = async (contentId: number) => {
     try {
       const res = await http.get(`/DocumentContents/GetSasUrl/${contentId}`)
@@ -109,6 +116,7 @@ export function TeacherLessonsPage() {
     }
   }
 
+  // IMÁGENES
   const handleDeleteImage = (id: number) => {
     if (confirm('¿Eliminar imagen?')) {
       deleteImage.mutate(id)
@@ -119,24 +127,22 @@ export function TeacherLessonsPage() {
     window.open(url, '_blank')
   }
 
+  // AGREGAR CONTENIDO
   const handleSelectContentType = (type: 'document' | 'image') => {
     if (!selectedLessonId) return
 
     if (type === 'document') {
-      navigate(
-        `/teacher/documents/upload?lessonId=${selectedLessonId}&moduleId=${parsedModuleId}`
-      )
+      navigate(`/teacher/documents/upload?lessonId=${selectedLessonId}`)
     }
 
     if (type === 'image') {
-      navigate(
-        `/teacher/images/upload?lessonId=${selectedLessonId}&moduleId=${parsedModuleId}`
-      )
+      navigate(`/teacher/images/upload?lessonId=${selectedLessonId}`)
     }
 
     setOpenContentModal(false)
   }
 
+  // LOADING
   if (isLoading) {
     return (
       <div className="p-6 space-y-4">
@@ -146,6 +152,7 @@ export function TeacherLessonsPage() {
     )
   }
 
+  //  ERROR
   if (error) {
     return (
       <div className="p-6 text-red-500">
@@ -155,18 +162,11 @@ export function TeacherLessonsPage() {
   }
 
   return (
-    <div className="max-w-8xl mx-auto px-6 mt-8 space-y-4">
+    <div className="max-w-7xl mx-auto px-6 mt-8 space-y-6">
 
-      <Button className='mt-4'
-        variant="outline"
-        onClick={() => navigate('/teacher/modules')}
-      >
-        <ArrowLeft className="w-4 h-4 mr-2" />
-        Volver a módulos
-      </Button>
-
+      {/*  HEADER */}
       <PageHeader
-        title="Lecciones del módulo"
+        title="Gestión de Lecciones"
         buttonText="Nueva Lección"
         icon={<PlusCircle className="w-4 h-4 mr-2" />}
         onClick={() => {
@@ -175,24 +175,94 @@ export function TeacherLessonsPage() {
         }}
       />
 
-      {filteredLessons?.map((lesson) => {
+      {/*  SELECT MÓDULO */}
+      <div className="max-w-md space-y-2">
+        <label className="text-sm font-medium">Seleccionar módulo</label>
+
+        <div className="flex gap-2">
+
+          <select
+            className="w-full border rounded-md p-2"
+            value={selectedModuleId ?? ''}
+            onChange={(e) =>
+              setSelectedModuleId(Number(e.target.value))
+            }
+          >
+            <option value="">Seleccione un módulo</option>
+
+            {modules?.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.titulo}
+              </option>
+            ))}
+          </select>
+
+          {/* ➕ CREAR */}
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => navigate('/teacher/modules/create')}
+          >
+            <PlusCircle className="w-4 h-4" />
+          </Button>
+
+          {/* ✏️ EDITAR */}
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!selectedModuleId}
+            onClick={() =>
+              navigate(`/teacher/modules/edit/${selectedModuleId}`)
+            }
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+
+          {/* 🗑 ELIMINAR */}
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={!selectedModuleId}
+            onClick={() => {
+              if (!selectedModuleId) return
+              if (confirm('¿Eliminar módulo?')) {
+                deleteModule.mutate(selectedModuleId)
+                setSelectedModuleId(null)
+              }
+            }}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+
+        </div>
+      </div>
+
+      {/*  SIN MÓDULO */}
+      {!selectedModuleId && (
+        <div className="text-gray-500">
+          Selecciona un módulo para ver sus lecciones 📚
+        </div>
+      )}
+
+      {/*  LISTA */}
+      {selectedModuleId && filteredLessons?.map((lesson) => {
 
         const lessonDocs =
           (documents as DocumentItem[] | undefined)
-            ?.filter((d) => d.content.lessonId === lesson.id) ?? []
+            ?.filter(d => d.content.lessonId === lesson.id) ?? []
 
         const lessonImages =
           (images as ImageItem[] | undefined)
-            ?.map((img) => ({
+            ?.map(img => ({
               ...img,
               lessonId: img.lessonId ?? img.content?.lessonId,
             }))
-            ?.filter((img) => img.lessonId === lesson.id) ?? []
+            ?.filter(img => img.lessonId === lesson.id) ?? []
 
         return (
           <Card key={lesson.id}>
 
-            {/* 🔥 HEADER CLICKEABLE */}
+            {/* HEADER */}
             <CardHeader
               className="flex justify-between items-center cursor-pointer"
               onClick={() => toggleLesson(lesson.id)}
@@ -204,12 +274,10 @@ export function TeacherLessonsPage() {
                 </p>
               </div>
 
-              {/* 🔥 evitar que botones cierren */}
               <div
                 className="flex gap-2"
                 onClick={(e) => e.stopPropagation()}
               >
-
                 <Button
                   onClick={() => {
                     setSelectedLessonId(lesson.id)
@@ -221,9 +289,7 @@ export function TeacherLessonsPage() {
 
                 <Button
                   variant="outline"
-                  onClick={() => {
-                    navigate(`/teacher/lessons/${lesson.id}`)
-                  }}
+                  onClick={() => navigate(`/teacher/lessons/${lesson.id}`)}
                 >
                   <Info className="w-4 h-4" />
                 </Button>
@@ -241,11 +307,10 @@ export function TeacherLessonsPage() {
                 <ConfirmDeleteButton
                   onConfirm={() => deleteLesson.mutate(lesson.id)}
                 />
-
               </div>
             </CardHeader>
 
-            {/* 🔥 TOGGLE (abierto por defecto) */}
+            {/* CONTENIDO */}
             {openLessons[lesson.id] !== false && (
               <CardContent className="space-y-2">
 
@@ -259,7 +324,6 @@ export function TeacherLessonsPage() {
                       order: doc.content?.order ?? 0,
                       data: doc
                     })),
-
                     ...lessonImages.map(img => ({
                       type: 'image',
                       id: img.contentId,
@@ -270,11 +334,7 @@ export function TeacherLessonsPage() {
                   ].sort((a, b) => a.order - b.order)
 
                   if (combined.length === 0) {
-                    return (
-                      <p className="text-gray-400 text-sm">
-                        No hay contenido
-                      </p>
-                    )
+                    return <p className="text-gray-400">No hay contenido</p>
                   }
 
                   return combined.map(item => {
@@ -285,10 +345,10 @@ export function TeacherLessonsPage() {
                       return (
                         <div
                           key={`doc-${item.id}`}
-                          className="flex justify-between items-center border p-3 rounded hover:bg-gray-50"
+                          className="flex justify-between items-center border p-3 rounded"
                         >
                           <div
-                            className="cursor-pointer flex items-center gap-2"
+                            className="cursor-pointer"
                             onClick={() => handleOpenDoc(doc.contentId)}
                           >
                             📄 {item.title}
@@ -316,23 +376,15 @@ export function TeacherLessonsPage() {
                     const img = item.data as ImageItem
 
                     return (
-                      <div
-                        key={`img-${item.id}`}
-                        className="border p-3 rounded space-y-2 hover:bg-gray-50"
-                      >
+                      <div key={`img-${item.id}`} className="border p-3 rounded">
                         <img
                           src={img.imageUrl}
-                          alt={img.altText}
-                          className="w-full max-h-64 object-contain rounded cursor-pointer"
+                          className="w-full max-h-64 object-contain"
                           onClick={() => handleOpenImage(img.imageUrl)}
-                          onError={(e) => {
-                            e.currentTarget.src =
-                              'https://via.placeholder.com/150?text=Error'
-                          }}
                         />
 
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm">{item.title}</p>
+                        <div className="flex justify-between mt-2">
+                          <p>{item.title}</p>
 
                           <div className="flex gap-2">
                             <Button
@@ -355,7 +407,6 @@ export function TeacherLessonsPage() {
                       </div>
                     )
                   })
-
                 })()}
 
               </CardContent>
@@ -364,12 +415,13 @@ export function TeacherLessonsPage() {
         )
       })}
 
+      {/* MODALES */}
       <LessonFormDialog
         open={open}
         onClose={() => setOpen(false)}
         lesson={editingLesson}
         modules={modules}
-        moduleId={parsedModuleId}
+        moduleId={selectedModuleId}
       />
 
       <AddContentModal

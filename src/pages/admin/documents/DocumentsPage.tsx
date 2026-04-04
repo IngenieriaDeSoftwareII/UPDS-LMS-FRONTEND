@@ -14,6 +14,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
 export function DocumentsPage() {
   const navigate = useNavigate()
@@ -22,13 +24,24 @@ export function DocumentsPage() {
   const { data, isLoading, error } = useDocumentsList()
   const { mutate: deleteDocument } = useDeleteDocument()
 
-  // LECCIONES
+  // RELACIONES
   const { useLessonsList } = useLessons()
   const { data: lessons } = useLessonsList()
 
-  // HELPER
-  const getLessonTitle = (lessonId?: number) => {
-    return lessons?.find(l => l.id === lessonId)?.title || 'Sin lección'
+  const { data: modules } = useModules()
+  const { data: courses } = useCoursesPrueba()
+
+  //  HELPER PRO
+  const getFullPath = (lessonId?: number) => {
+    if (!lessonId) return '—'
+
+    const lesson = lessons?.find(l => l.id === lessonId)
+    if (!lesson) return '—'
+
+    const module = modules?.find(m => m.id === lesson.moduleId)
+    const course = courses?.find(c => c.id === module?.cursoId)
+
+    return `Curso: ${course?.titulo || '—'} • Módulo: ${module?.titulo || '—'} • Lección: ${lesson.title}`
   }
 
   const handleDelete = (contentId: number) => {
@@ -87,7 +100,7 @@ export function DocumentsPage() {
                   <TableHead>ID Doc</TableHead>
                   <TableHead>ID Content</TableHead>
                   <TableHead>Título</TableHead>
-                  <TableHead>Lección</TableHead>
+                  <TableHead>Curso / Módulo / Lección</TableHead>
                   <TableHead>Orden</TableHead>
                   <TableHead>Archivo</TableHead>
                   <TableHead>Formato</TableHead>
@@ -114,50 +127,39 @@ export function DocumentsPage() {
                   data?.map((doc) => (
                     <TableRow key={doc.contentId}>
 
-                      {/* ID Document */}
                       <TableCell>{doc.contentId}</TableCell>
 
-                      {/* ID Content */}
                       <TableCell>{doc.content?.id ?? '—'}</TableCell>
 
-                      {/* TÍTULO */}
                       <TableCell>
                         {doc.content?.title || 'Sin título'}
                       </TableCell>
 
-                      {/*  LECCIÓN*/}
+                      {/*  NUEVO */}
                       <TableCell>
-                        {doc.content?.lessonId
-                          ? `${getLessonTitle(doc.content.lessonId)} (ID: ${doc.content.lessonId})`
-                          : '—'}
+                        {getFullPath(doc.content?.lessonId)}
                       </TableCell>
 
-                      {/* ORDER */}
                       <TableCell>
                         {doc.content?.order ?? '—'}
                       </TableCell>
 
-                      {/* ARCHIVO */}
                       <TableCell>
                         {doc.fileUrl || 'Sin archivo'}
                       </TableCell>
 
-                      {/* FORMATO */}
                       <TableCell>{doc.format}</TableCell>
 
-                      {/* TAMAÑO */}
                       <TableCell>
                         {doc.sizeKb ? `${doc.sizeKb} KB` : '—'}
                       </TableCell>
 
-                      {/* PÁGINAS */}
                       <TableCell>
                         {doc.pageCount ?? '—'}
                       </TableCell>
 
-                      {/* Botones */}
                       <TableCell className="flex justify-end gap-2">
-                        {/* VER */}
+
                         <Button
                           variant="ghost"
                           title="Ver documento"
@@ -167,7 +169,6 @@ export function DocumentsPage() {
                           Ver
                         </Button>
 
-                        {/* EDITAR */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -179,7 +180,6 @@ export function DocumentsPage() {
                           <Pencil className="w-4 h-4" />
                         </Button>
 
-                        {/* ELIMINAR */}
                         <Button
                           variant="ghost"
                           size="icon"

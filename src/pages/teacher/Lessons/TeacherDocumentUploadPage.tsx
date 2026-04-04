@@ -18,10 +18,8 @@ export function TeacherDocumentUploadPage() {
 
   // 🔥 VALIDACIÓN SEGURA
   const lessonIdFromUrl = Number(params.get('lessonId'))
-  const moduleIdFromUrl = Number(params.get('moduleId'))
 
   const lessonId = isNaN(lessonIdFromUrl) ? null : lessonIdFromUrl
-  const moduleId = isNaN(moduleIdFromUrl) ? null : moduleIdFromUrl
 
   const [file, setFile] = useState<File | null>(null)
   const [title, setTitle] = useState('')
@@ -33,11 +31,7 @@ export function TeacherDocumentUploadPage() {
 
   // 🔙 VOLVER CORRECTO
   const goBack = () => {
-    if (moduleId) {
-      navigate(`/teacher/modules/${moduleId}/lessons`)
-    } else {
-      navigate('/teacher/modules') // fallback
-    }
+    navigate('/teacher/lessons')
   }
 
   const handleUpload = () => {
