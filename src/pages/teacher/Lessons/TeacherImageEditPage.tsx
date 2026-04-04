@@ -53,6 +53,21 @@ export function TeacherImageEditPage() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [rol, setRol] = useState<string | null>(null)
+
+  useEffect(() => {
+    const savedState = localStorage.getItem('state')
+    if (savedState) {
+      try {
+        const parsedState = JSON.parse(savedState)
+        setRol(parsedState.role)
+      } catch (error) {
+        console.error("Error al leer el rol del localStorage", error)
+      }
+    }
+  }, [])
+
+  const isAdmin = rol === 'admin' || rol === 'Admin' || rol === 'ADMIN'
 
   // 🔹 cargar datos
   useEffect(() => {
@@ -186,14 +201,13 @@ export function TeacherImageEditPage() {
 
           {/*  LECCIÓN */}
           <div>
-            <label className="text-sm font-medium">Lección</label>
+            <label className="text-sm font-medium">Lección asignada</label>
 
             <select
-              className="w-full border rounded p-2"
+              className={`w-full border rounded p-2 ${!isAdmin ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
               value={lessonId ?? ''}
-              onChange={(e) =>
-                setLessonId(Number(e.target.value))
-              }
+              onChange={(e) => setLessonId(Number(e.target.value))}
+              disabled={!isAdmin}
             >
               <option value="">Seleccionar</option>
 

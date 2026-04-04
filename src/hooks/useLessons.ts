@@ -33,10 +33,17 @@ export const useLessons = () => {
         queryClient.invalidateQueries({ queryKey: ['Lessons'] }),
     })
 
+  const useLessonByCourseAndModule = (courseId: number, moduleId: number) =>
+    useQuery({
+      queryKey: ['Lessons', courseId, moduleId],
+      queryFn: () => lessonsService.getLessonByCourseAndModule(courseId, moduleId),
+    })
+
   return {
     useLessonsList,
     useCreateLesson,
     useUpdateLesson,
     useDeleteLesson,
+    useLessonByCourseAndModule,
   }
 }

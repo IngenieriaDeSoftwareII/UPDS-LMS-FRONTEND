@@ -1,5 +1,5 @@
 import http from '@/lib/http'
-
+import type { LessonWithContentsDto } from '@/types/lesson'
 export interface Lesson {
   id: number
   moduleId: number
@@ -46,4 +46,7 @@ export const lessonsService = {
   // DELETE
   remove: (id: number) =>
     http.delete(`${BASE}/Delete/${id}`).then(r => r.data),
+
+  getLessonByCourseAndModule: (courseId: number, moduleId: number) =>
+    http.get<LessonWithContentsDto[]>(`${BASE}/GetByModuleAndCourse/${courseId}/${moduleId}`).then(r => r.data),
 }
