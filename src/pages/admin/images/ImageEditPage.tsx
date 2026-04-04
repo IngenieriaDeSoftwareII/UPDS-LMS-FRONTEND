@@ -11,17 +11,21 @@ import {
 } from '@/components/ui/card'
 
 import { useImageContents } from '@/hooks/useImageContents'
+import { useLessons } from '@/hooks/useLessons'
 
 export function ImageEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
   const { useImagesList, useUpdateImage } = useImageContents()
+  const { useLessonsList } = useLessons()
 
   const { data, isLoading } = useImagesList()
+  const { data: lessons } = useLessonsList()
   const { mutate: update, isPending } = useUpdateImage()
 
   const [title, setTitle] = useState('')
+  const [lessonId, setLessonId] = useState<number | undefined>() 
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -31,6 +35,7 @@ export function ImageEditPage() {
   useEffect(() => {
     if (image) {
       setTitle(image.altText)
+      setLessonId(image.content?.lessonId) // CARGAR ACTUAL
     }
   }, [image])
 
@@ -54,8 +59,14 @@ export function ImageEditPage() {
       return
     }
 
+    if (!lessonId) {
+      setError('Debes seleccionar una lección')
+      return
+    }
+
     const formData = new FormData()
     formData.append('altText', title)
+    formData.append('lessonId', String(lessonId)) 
 
     if (file) {
       formData.append('file', file)
@@ -74,7 +85,7 @@ export function ImageEditPage() {
 
         onError: (err: any) => {
           const message =
-            err?.response?.data?.[0] || // errores del backend tipo array
+            err?.response?.data?.errors?.[0] ||
             err?.response?.data ||
             'No se pudo actualizar la imagen ❌'
 
@@ -110,7 +121,7 @@ export function ImageEditPage() {
 
         <CardContent className="space-y-6">
 
-          {/* 🔴 MENSAJE DE ERROR */}
+          {/* ERROR */}
           {error && (
             <div className="bg-red-100 text-red-700 p-3 rounded">
               {error}
@@ -168,6 +179,26 @@ export function ImageEditPage() {
               }}
               placeholder="Nombre de la imagen"
             />
+          </div>
+
+          {/* LECCIÓN */}
+          <div>
+            <label className="block text-sm font-medium">
+              Lección
+            </label>
+
+            <select
+              className="w-full border rounded p-2"
+              value={lessonId}
+              onChange={(e) => setLessonId(Number(e.target.value))}
+            >
+              <option value="">Seleccionar</option>
+              {lessons?.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.title}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex justify-end">

@@ -1,9 +1,19 @@
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Eye, Pencil, Trash2 } from 'lucide-react'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
 import { Skeleton } from '@/components/ui/skeleton'
+
 import { useDocumentContents } from '@/hooks/useDocumentContents'
+import { useLessons } from '@/hooks/useLessons'
 
 export function DocumentsPage() {
   const navigate = useNavigate()
@@ -12,12 +22,17 @@ export function DocumentsPage() {
   const { data, isLoading, error } = useDocumentsList()
   const { mutate: deleteDocument } = useDeleteDocument()
 
+  // LECCIONES
+  const { useLessonsList } = useLessons()
+  const { data: lessons } = useLessonsList()
+
+  // HELPER
+  const getLessonTitle = (lessonId?: number) => {
+    return lessons?.find(l => l.id === lessonId)?.title || 'Sin lección'
+  }
+
   const handleDelete = (contentId: number) => {
-    if (
-      window.confirm(
-        '¿Estás seguro de que deseas eliminar este documento y su contenido?'
-      )
-    ) {
+    if (window.confirm('¿Eliminar documento?')) {
       deleteDocument(contentId)
     }
   }
@@ -42,7 +57,7 @@ export function DocumentsPage() {
       }
 
       window.open(data.url, '_blank')
-    } catch (err) {
+    } catch {
       alert('No se pudo abrir el documento')
     }
   }
@@ -52,7 +67,7 @@ export function DocumentsPage() {
 
       {/* BOTÓN SUBIR */}
       <div className="flex justify-end">
-        <Button onClick={() => navigate('/admin/uploaddocuments')}>
+        <Button onClick={() => navigate('/admin/documents/upload')}>
           + Subir Documento
         </Button>
       </div>
@@ -72,25 +87,26 @@ export function DocumentsPage() {
                   <TableHead>ID Doc</TableHead>
                   <TableHead>ID Content</TableHead>
                   <TableHead>Título</TableHead>
+                  <TableHead>Lección</TableHead>
                   <TableHead>Orden</TableHead>
                   <TableHead>Archivo</TableHead>
                   <TableHead>Formato</TableHead>
                   <TableHead>Tamaño (KB)</TableHead>
                   <TableHead>Páginas</TableHead>
-                  <TableHead>Acciones</TableHead>
+                  <TableHead className="text-center">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
 
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={10}>
                       <Skeleton className="h-4 w-full" />
                     </TableCell>
                   </TableRow>
                 ) : data?.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center">
+                    <TableCell colSpan={10} className="text-center">
                       No hay documentos
                     </TableCell>
                   </TableRow>
@@ -98,7 +114,7 @@ export function DocumentsPage() {
                   data?.map((doc) => (
                     <TableRow key={doc.contentId}>
 
-                      {/* ID DocumentContent */}
+                      {/* ID Document */}
                       <TableCell>{doc.contentId}</TableCell>
 
                       {/* ID Content */}
@@ -107,6 +123,13 @@ export function DocumentsPage() {
                       {/* TÍTULO */}
                       <TableCell>
                         {doc.content?.title || 'Sin título'}
+                      </TableCell>
+
+                      {/*  LECCIÓN*/}
+                      <TableCell>
+                        {doc.content?.lessonId
+                          ? `${getLessonTitle(doc.content.lessonId)} (ID: ${doc.content.lessonId})`
+                          : '—'}
                       </TableCell>
 
                       {/* ORDER */}
@@ -132,26 +155,40 @@ export function DocumentsPage() {
                         {doc.pageCount ?? '—'}
                       </TableCell>
 
-                      {/* ACCIONES */}
-                      <TableCell className="flex gap-2">
-                        <Button onClick={() => handleOpen(doc.contentId)}>
+                      {/* Botones */}
+                      <TableCell className="flex justify-end gap-2">
+                        {/* VER */}
+                        <Button
+                          variant="ghost"
+                          title="Ver documento"
+                          onClick={() => handleOpen(doc.contentId)}
+                        >
+                          <Eye className="w-4 h-4 mr-2" />
                           Ver
                         </Button>
+
+                        {/* EDITAR */}
                         <Button
-                          variant="outline"
+                          variant="ghost"
+                          size="icon"
+                          title="Editar"
                           onClick={() =>
                             navigate(`/admin/documents/edit/${doc.contentId}`)
                           }
                         >
-                          Editar
+                          <Pencil className="w-4 h-4" />
                         </Button>
 
+                        {/* ELIMINAR */}
                         <Button
-                          variant="destructive"
+                          variant="ghost"
+                          size="icon"
+                          title="Eliminar"
                           onClick={() => handleDelete(doc.contentId)}
                         >
-                          Eliminar
+                          <Trash2 className="w-4 h-4" />
                         </Button>
+
                       </TableCell>
 
                     </TableRow>

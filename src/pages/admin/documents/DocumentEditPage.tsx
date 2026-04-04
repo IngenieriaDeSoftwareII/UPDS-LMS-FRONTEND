@@ -1,28 +1,50 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card'
+
 import { useDocumentContents } from '@/hooks/useDocumentContents'
+import { useLessons } from '@/hooks/useLessons'
 
 export function DocumentEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const { useDocumentById, useUpdateDocument } = useDocumentContents()
-  const { data: doc, isLoading, isError } = useDocumentById(Number(id))
-  const { mutate: update } = useUpdateDocument()
+  const documentId = Number(id)
+  const isValidId = !isNaN(documentId)
 
+  const { useDocumentById, useUpdateDocument } = useDocumentContents()
+  const { data: doc, isLoading, isError } = useDocumentById(
+    isValidId ? documentId : 0
+  )
+
+  const { mutate: update, isPending } = useUpdateDocument()
+
+  // 🔥 TRAER LECCIONES
+  const { useLessonsList } = useLessons()
+  const { data: lessons } = useLessonsList()
+
+  // 🔹 state
   const [title, setTitle] = useState('')
   const [order, setOrder] = useState(1)
   const [pageCount, setPageCount] = useState<number | undefined>()
+  const [lessonId, setLessonId] = useState<number | undefined>()
   const [file, setFile] = useState<File | null>(null)
 
+  // 🔹 cargar datos
   useEffect(() => {
     if (doc) {
       setTitle(doc.content?.title || '')
       setOrder(doc.content?.order || 1)
       setPageCount(doc.pageCount)
+      setLessonId(doc.content?.lessonId)
     }
   }, [doc])
 
@@ -32,68 +54,76 @@ export function DocumentEditPage() {
       return
     }
 
-    // Obtener lessonId (necesario tanto para metadatos como para archivo)
-    const lessonId = doc?.content?.lessonId
-    if (!lessonId || lessonId <= 0) {
-      alert('Error: La lección asociada no es válida.')
+    if (!lessonId) {
+      alert('Debes seleccionar una lección')
       return
     }
 
-    // Caso 1: Solo actualización de metadatos (sin archivo)
+    // 🔹 SOLO METADATA
     if (!file) {
       update(
-        { 
-          id: Number(id), 
-          data: { 
-            Title: title, 
-            Order: order, 
-            PageCount: pageCount,
-            LessonId: lessonId
-          } 
+        {
+          id: documentId,
+          data: {
+            title,
+            order,
+            pageCount,
+            lessonId 
+          }
         },
         {
           onSuccess: () => {
-            alert('Documento actualizado correctamente ✅')
+            alert('Documento actualizado ✅')
             navigate('/admin/documents')
           },
           onError: (err: any) => {
-            console.error(err)
-            alert('Error al actualizar ❌\n' + (err?.response?.data || err.message))
-          },
+            alert('Error ❌\n' + (err?.response?.data || err.message))
+          }
         }
       )
       return
     }
 
-    // Caso 2: Reemplazo de archivo (FormData)
+    // 🔹 CON ARCHIVO
     const formData = new FormData()
     formData.append('File', file)
     formData.append('Title', title)
     formData.append('Order', String(order))
-    formData.append('LessonId', String(lessonId))
-    if (pageCount) formData.append('PageCount', String(pageCount))
+    formData.append('LessonId', String(lessonId)) // 🔥 IMPORTANTE
+    if (pageCount) {
+      formData.append('PageCount', String(pageCount))
+    }
 
     update(
-      { id: Number(id), data: formData },
+      { id: documentId, data: formData },
       {
         onSuccess: () => {
-          alert('Archivo reemplazado correctamente ✅')
+          alert('Archivo actualizado ✅')
           navigate('/admin/documents')
         },
         onError: (err: any) => {
-          console.error(err)
-          alert('Error reemplazando archivo ❌\n' + (err?.response?.data || err.message))
-        },
+          alert('Error ❌\n' + (err?.response?.data || err.message))
+        }
       }
     )
   }
 
-  if (isLoading) return <p>Cargando documento...</p>
-  if (isError) return <p>Error al cargar documento</p>
-  if (!doc) return <p>Documento no encontrado</p>
+  // 🔹 estados
+  if (!isValidId) {
+    return <p className="p-6 text-red-500">ID inválido</p>
+  }
+
+  if (isLoading) {
+    return <p className="p-6">Cargando...</p>
+  }
+
+  if (isError || !doc) {
+    return <p className="p-6 text-red-500">Error al cargar</p>
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-xl mx-auto">
+
       <Button variant="outline" onClick={() => navigate('/admin/documents')}>
         ← Volver
       </Button>
@@ -104,13 +134,36 @@ export function DocumentEditPage() {
         </CardHeader>
 
         <CardContent className="space-y-4">
+
+          {/* TÍTULO */}
           <div>
-            <label>Título</label>
-            <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+            <label className="text-sm font-medium">Título</label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
           </div>
 
+          {/* LECCIÓN 🔥 NUEVO */}
           <div>
-            <label>Orden</label>
+            <label className="text-sm font-medium">Lección</label>
+            <select
+              className="w-full border rounded p-2"
+              value={lessonId}
+              onChange={(e) => setLessonId(Number(e.target.value))}
+            >
+              <option value="">Seleccionar</option>
+              {lessons?.map(l => (
+                <option key={l.id} value={l.id}>
+                  {l.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* ORDEN */}
+          <div>
+            <label className="text-sm font-medium">Orden</label>
             <Input
               type="number"
               min={1}
@@ -119,24 +172,44 @@ export function DocumentEditPage() {
             />
           </div>
 
+          {/* PÁGINAS */}
           <div>
-            <label>Páginas</label>
+            <label className="text-sm font-medium">
+              Número de páginas
+            </label>
             <Input
               type="number"
               min={1}
-              value={pageCount}
-              onChange={(e) => setPageCount(Number(e.target.value))}
+              value={pageCount || ''}
+              onChange={(e) => {
+                const val = Number(e.target.value)
+                setPageCount(val > 0 ? val : undefined)
+              }}
             />
           </div>
 
+          {/* ARCHIVO */}
           <div>
-            <label>Reemplazar archivo</label>
-            <Input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <label className="text-sm font-medium">
+              Reemplazar archivo
+            </label>
+            <Input
+              type="file"
+              onChange={(e) => {
+                const selected = e.target.files?.[0] || null
+                setFile(selected)
+
+                if (selected && !title) {
+                  setTitle(selected.name)
+                }
+              }}
+            />
           </div>
 
-          <Button onClick={handleUpdate}>
-            Guardar cambios
+          <Button onClick={handleUpdate} disabled={isPending}>
+            {isPending ? 'Guardando...' : 'Guardar cambios'}
           </Button>
+
         </CardContent>
       </Card>
     </div>

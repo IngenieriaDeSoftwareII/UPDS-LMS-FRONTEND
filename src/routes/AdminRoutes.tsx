@@ -29,15 +29,17 @@ export function AdminRoutes() {
       {/* Content */}
       <Route path="/contents" element={<ContentsPage />} />
       {/* DocumentContent */}
-      <Route path="/documents" element={<DocumentsPage />} />
-      <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
-      <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
+      <Route path="documents" element={<DocumentsPage />} />
+      <Route path="documents/upload" element={<DocumentUploadPage />} />
+      <Route path="documents/edit/:id" element={<DocumentEditPage />} />
       {/* ImageContent */}
-      <Route path="/images" element={<ImagesPage />} />
-      <Route path="/uploadimage" element={<ImageUploadPage />} />
-      <Route path="/images/edit/:id" element={<ImageEditPage />} />
+      <Route path="images" element={<ImagesPage />} />
+      <Route path="images/upload" element={<ImageUploadPage />} />
+      <Route path="images/edit/:id" element={<ImageEditPage />} />
       {/* Modules */}
       <Route path="modules" element={<ModulesPage />} />
+
+
       <Route path="reports/courses" element={<AdminCourseReportsPage />} />
       <Route path="reports/teachers" element={<AdminTeacherReportsPage />} />
       <Route path="courses" element={<CoursesPage />} />
