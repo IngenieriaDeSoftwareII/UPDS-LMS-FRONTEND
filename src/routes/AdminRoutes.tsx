@@ -17,6 +17,8 @@ import { CoursesPage } from '@/pages/admin/CoursesPage'
 import { CategoriesPage } from '@/pages/admin/CategoriesPage'
 import { CatalogsPage } from '@/pages/admin/CatalogsPage'
 import { TeachersPage } from '@/pages/admin/TeachersPage'
+import { HomeworksPage } from '@/pages/admin/homeworks/HomeworksPage'
+import { HomeworkSubmissionsAdminPage } from '@/pages/admin/homeworks/HomeworkSubmissionsAdminPage'
 
 export function AdminRoutes() {
   return (
@@ -39,6 +41,9 @@ export function AdminRoutes() {
       {/* Modules */}
       <Route path="modules" element={<ModulesPage />} />
 
+      {/* Homeworks */}
+      <Route path="homeworks" element={<HomeworksPage />} />
+      <Route path="homeworkSubmissions" element={<HomeworkSubmissionsAdminPage />} />
 
       <Route path="reports/courses" element={<AdminCourseReportsPage />} />
       <Route path="reports/teachers" element={<AdminTeacherReportsPage />} />

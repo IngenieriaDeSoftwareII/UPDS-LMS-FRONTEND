@@ -12,25 +12,24 @@ import {
   Loader2,
   ServerCrash,
   FileText,
+  ClipboardList,
+  AlertCircle,
+  Calendar,
 } from 'lucide-react'
 import { useCourseById } from '@/hooks/useCourses'
+import { useHomeWork } from '@/hooks/useHomeWork'
+import { useHomeworkSubmission } from '@/hooks/useHomeworkSubmiss'
+import type { getHomeWorkDto } from '@/types/homeWork'
 import { useAuthStore } from '@/store/auth.store'
 import { inscriptionService } from '@/services/inscription.service'
 import { studentProgressService } from '@/services/student-progress.service'
-import { getApiErrorMessage } from '@/lib/api.error'
+import { getErrorMessage } from '@/lib/api.error'
 import type { Course } from '@/types/course'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
 import {
   Dialog,
   DialogContent,
@@ -44,6 +43,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 //mio
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useImageContents } from '@/hooks/useImageContents'
+import { toast } from 'sonner'
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5024/api'
 const API_ORIGIN = API_URL.replace(/\/api\/?$/, '')
@@ -66,17 +66,24 @@ function labelInscripcionEstado(raw: string | undefined | null): string {
 }
 
 export function CourseDetail() {
-  //mio
   const { useDocumentsList } = useDocumentContents()
   const { data: documents } = useDocumentsList()
   const { useImagesList } = useImageContents()
   const { data: images } = useImagesList()
+  const { getAll: getHomeworks } = useHomeWork()
+  const { data: homeworks = [] } = getHomeworks
+  const { getAll: getSubmissions, submit: submitHomework } = useHomeworkSubmission()
+  const { data: submissions = [] } = getSubmissions
+
+  const [submissionHomework, setSubmissionHomework] = useState<getHomeWorkDto | null>(null)
+  const [submissionFile, setSubmissionFile] = useState<File | null>(null)
+  const [submissionComment, setSubmissionComment] = useState('')
 
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const isAuthenticated = useAuthStore(s => s.isAuthenticated)
-  const role = useAuthStore(s => s.role)
+  const isAuthenticated = useAuthStore((s: any) => s.isAuthenticated)
+  const role = useAuthStore((s: any) => s.role)
 
   const profileQuery = useQuery({
     queryKey: ['profile', 'me'],
@@ -106,7 +113,7 @@ export function CourseDetail() {
 
   const course = courseQuery.data
   const learning = learningQuery.data
-  
+
   //mio
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null)
   useEffect(() => {
@@ -153,7 +160,38 @@ export function CourseDetail() {
     mutationFn: () => studentProgressService.downloadCertificate(cursoId),
   })
 
-  
+  const handleHomeworkSubmit = () => {
+    if (!submissionHomework || !submissionFile || !profileQuery.data?.personId) return
+
+    const formData = new FormData()
+    // Configuración exacta pedida:
+    formData.append('homeworkId', submissionHomework.id.toString())
+    formData.append('File', submissionFile)
+
+    if (submissionComment) {
+      formData.append('Comentario', submissionComment)
+    }
+
+    const fileName = submissionFile.name
+    const ext = fileName.split('.').pop()?.toLowerCase() || 'otro'
+    formData.append('Formato', ext)
+    formData.append('TamanoKb', Math.round(submissionFile.size / 1024).toString())
+
+    submitHomework.mutate(formData, {
+      onSuccess: () => {
+        toast.success('Tarea entregada correctamente')
+        setSubmissionHomework(null)
+        setSubmissionFile(null)
+        setSubmissionComment('')
+      },
+      onError: (err: any) => {
+        const msg = getErrorMessage(err, 'Error al entregar tarea')
+        toast.error(msg)
+      }
+    })
+  }
+
+
 
   const heroImage = useMemo(() => resolveImageUrl(course), [course])
 
@@ -184,7 +222,7 @@ export function CourseDetail() {
         <Alert variant="destructive">
           <ServerCrash className="h-4 w-4" />
           <AlertTitle>No se pudo cargar el curso</AlertTitle>
-          <AlertDescription>{getApiErrorMessage(courseQuery.error, 'Error desconocido')}</AlertDescription>
+          <AlertDescription>{getErrorMessage(courseQuery.error, 'Error desconocido')}</AlertDescription>
         </Alert>
         <Button variant="outline" onClick={() => navigate('/student/courses')}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Volver al catálogo
@@ -207,7 +245,7 @@ export function CourseDetail() {
   const descripcion = course.descripcion
   const nivel = course.nivel
   const duracionMin = course.duracion_total_min
-  
+
 
   return (
     <div className="space-y-6 p-6">
@@ -299,7 +337,7 @@ export function CourseDetail() {
                           <Alert variant="destructive">
                             <AlertTitle>Error</AlertTitle>
                             <AlertDescription>
-                              {getApiErrorMessage(inscriptionMutation.error, 'No se pudo inscribir')}
+                              {getErrorMessage(inscriptionMutation.error, 'No se pudo inscribir')}
                             </AlertDescription>
                           </Alert>
                         ) : null}
@@ -342,7 +380,7 @@ export function CourseDetail() {
             <Alert variant="destructive">
               <AlertTitle>No se pudo cargar el progreso</AlertTitle>
               <AlertDescription>
-                {getApiErrorMessage(learningQuery.error, 'Intenta de nuevo más tarde.')}
+                {getErrorMessage(learningQuery.error, 'Intenta de nuevo más tarde.')}
               </AlertDescription>
             </Alert>
           ) : null}
@@ -398,7 +436,7 @@ export function CourseDetail() {
                 </Button>
                 {certMutation.isError ? (
                   <p className="text-sm text-destructive">
-                    {getApiErrorMessage(certMutation.error, 'No se pudo generar el certificado')}
+                    {getErrorMessage(certMutation.error, 'No se pudo generar el certificado')}
                   </p>
                 ) : null}
               </div>
@@ -500,6 +538,11 @@ export function CourseDetail() {
                       return Number(lessonId) === Number(leccion.id)
                     })
 
+                    // 📝 TAREAS (HOMEWORKS)
+                    const lessonHWs = homeworks.filter((hw: getHomeWorkDto) =>
+                      Number(hw.lessonId) === Number(leccion.id)
+                    )
+
                     // 🔥 COMBINAR
                     const contenidos = [
                       ...lessonDocs.map((doc: any) => ({
@@ -537,6 +580,21 @@ export function CourseDetail() {
                           img.texto_alternativo ??
                           'imagen',
                       })),
+
+                      ...lessonHWs.map((hw: getHomeWorkDto) => {
+                        const mySubmission = submissions.find(s =>
+                          s.homeworkId === hw.id &&
+                          s.usuarioId === profileQuery.data?.personId
+                        )
+                        return {
+                          type: 'homework' as const,
+                          id: hw.id,
+                          title: hw.titulo,
+                          order: 999, // Generalmente al final
+                          homework: hw,
+                          submission: mySubmission
+                        }
+                      })
                     ].sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 
                     return (
@@ -594,6 +652,71 @@ export function CourseDetail() {
                                         <span className="text-sm">
                                           {item.title}
                                         </span>
+                                      </div>
+                                    )
+                                  }
+
+                                  // 📝 TAREA (HOMEWORK)
+                                  if (item.type === 'homework') {
+                                    const hw = item.homework!
+                                    const sub = item.submission
+                                    const isSubmitted = !!sub
+                                    const isGraded = sub?.revisado
+
+                                    return (
+                                      <div
+                                        key={`hw-${item.id}`}
+                                        className="flex flex-col gap-2 p-3 rounded-xl border bg-card/50"
+                                      >
+                                        <div className="flex items-center justify-between gap-3">
+                                          <div className="flex items-center gap-3">
+                                            <div className="p-2 bg-primary/10 rounded-lg">
+                                              <ClipboardList className="w-4 h-4 text-primary" />
+                                            </div>
+                                            <div>
+                                              <span className="text-sm font-semibold block uppercase tracking-tight">
+                                                Tarea: {item.title}
+                                              </span>
+                                              {hw.fechaLimite && (
+                                                <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                                  <Calendar className="w-3 h-3" />
+                                                  Vence: {new Date(hw.fechaLimite).toLocaleString()}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+
+                                          <div className="flex items-center gap-2">
+                                            {isSubmitted ? (
+                                              <Badge variant={isGraded ? 'default' : 'secondary'}>
+                                                {isGraded ? 'Calificada' : 'Entregada'}
+                                              </Badge>
+                                            ) : (
+                                              <Badge variant="outline" className="text-muted-foreground border-dashed">
+                                                Pendiente
+                                              </Badge>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        {hw.descripcion && (
+                                          <p className="text-xs text-muted-foreground ml-11 border-l-2 border-primary/20 pl-3 py-1">
+                                            {hw.descripcion}
+                                          </p>
+                                        )}
+
+                                        <div className="flex justify-end mt-2">
+                                          {isAuthenticated && role === 'Estudiante' && yaInscrito && (
+                                            <Button
+                                              size="xs"
+                                              variant={isSubmitted ? 'outline' : 'default'}
+                                              disabled={isSubmitted && isGraded}
+                                              onClick={() => setSubmissionHomework(hw)}
+                                            >
+                                              {isSubmitted ? 'Ver / Editar entrega' : 'Realizar entrega'}
+                                            </Button>
+                                          )}
+                                        </div>
                                       </div>
                                     )
                                   }
@@ -656,6 +779,77 @@ export function CourseDetail() {
           )}
         </CardContent>
       </Card>
+
+      {/* DIÁLOGO DE ENTREGA DE TAREA */}
+      <Dialog open={!!submissionHomework} onOpenChange={(o) => !o && setSubmissionHomework(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Entregar Tarea</DialogTitle>
+            <DialogDescription>
+              {submissionHomework?.titulo}
+              {submissionHomework && (
+                <div className="mt-4 p-3 bg-muted rounded-md space-y-1 text-xs">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-muted-foreground uppercase opacity-70">Apertura</span>
+                    <span>{new Date(submissionHomework.fechaApertura).toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between border-t border-border pt-1 mt-1 font-medium text-destructive">
+                    <span className="uppercase opacity-70">Fecha Límite</span>
+                    <span>{new Date(submissionHomework.fechaEntrega).toLocaleString()}</span>
+                  </div>
+                </div>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Seleccionar archivo</label>
+              <input
+                type="file"
+                className="w-full text-sm border rounded-lg p-2"
+                onChange={(e) => setSubmissionFile(e.target.files?.[0] || null)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Comentario (opcional)</label>
+              <textarea
+                className="w-full text-sm border rounded-lg p-2 min-h-24"
+                placeholder="Escribe un comentario para tu docente..."
+                value={submissionComment}
+                onChange={(e) => setSubmissionComment(e.target.value)}
+              />
+            </div>
+
+            {submitHomework.isError && (
+              <Alert variant="destructive">
+                <AlertCircle className="w-4 h-4" />
+                <AlertTitle>Error</AlertTitle>
+                <AlertDescription>
+                  {getErrorMessage(submitHomework.error, 'No se pudo enviar la tarea')}
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSubmissionHomework(null)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={!submissionFile || submitHomework.isPending}
+              onClick={handleHomeworkSubmit}
+            >
+              {submitHomework.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Enviando...
+                </>
+              ) : 'Enviar Tarea'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
