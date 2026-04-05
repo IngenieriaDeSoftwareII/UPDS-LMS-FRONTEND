@@ -5,6 +5,7 @@ export interface Course {
   nivel: string;
   imagen_url: string;
   docenteId?: number | null;
+  categoriaId?: number | null;
   publicado: boolean;
   duracion_total_min: number;
   max_estudiantes?: number | null;
@@ -19,6 +20,8 @@ export interface CourseCreateDTO {
   descripcion?: string;
   nivel: string;
   imagen_url: string;
+  docente_id?: number | null;
+  categoriaId?: number | null;
   publicado: boolean;
   duracion_total_min: number;
   max_estudiantes?: number | null;
