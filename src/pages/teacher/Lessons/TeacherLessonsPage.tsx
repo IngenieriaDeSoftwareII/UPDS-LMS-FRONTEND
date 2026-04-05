@@ -26,6 +26,7 @@ import { useCourseById } from '@/hooks/useCourses'
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useImageContents } from '@/hooks/useImageContents'
 import { useHomeWork } from '@/hooks/useHomeWork'
+import { useVideoContents } from '@/hooks/useVideoContents'
 
 import { LessonFormDialog } from '@/components/common/LessonFormDialog'
 import { AddContentModal } from '@/components/common/AddContentModal'
@@ -50,6 +51,8 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
   const courseQuery = useCourseById(courseId)
   const { data: modules, isLoading: loadingModules } = useModuleByCourseId(courseId)
   const [selectedModuleId, setSelectedModuleId] = useState<number | null>(null)
+  const { useVideosList } = useVideoContents()
+  const { data: allVideos = [] } = useVideosList()
 
   // Inicializar modulo seleccionado
   useEffect(() => {
@@ -78,6 +81,8 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
   const { useDeleteImage } = useImageContents()
   const deleteImage = useDeleteImage()
   const { remove: deleteHomework } = useHomeWork()
+  const { useDeleteVideo } = useVideoContents()
+  const deleteVideo = useDeleteVideo()
 
   // ESTADO DE MODALES
   const [lessonModalOpen, setLessonModalOpen] = useState(false)
@@ -123,24 +128,67 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
     }
   }
 
-  const handleDeleteContent = (type: 'document' | 'image' | 'homework', id: number) => {
+  const handleDeleteContent = (
+    type: 'document' | 'image' | 'homework' | 'video',
+    id: number
+  ) => {
     if (!confirm(`¿Estás seguro de eliminar este ${type}?`)) return
 
-    const mutation = type === 'document' ? deleteDocument : type === 'image' ? deleteImage : deleteHomework
+    const mutation =
+      type === 'document'
+        ? deleteDocument
+        : type === 'image'
+        ? deleteImage
+        : type === 'video'
+        ? deleteVideo
+        : deleteHomework
+
     mutation.mutate(id, {
       onSuccess: () => {
-        toast.success(`${type === 'document' ? 'Documento' : type === 'image' ? 'Imagen' : 'Tarea'} eliminado`)
-        queryClient.invalidateQueries({ queryKey: ['lessonsByCourseAndModule'] })
+        const labels = {
+          document: 'Documento',
+          image: 'Imagen',
+          video: 'Video',
+          homework: 'Tarea'
+        }
+
+        toast.success(`${labels[type]} eliminado`)
+
+        // KEY CORRECTA
+        queryClient.invalidateQueries({
+          queryKey: ['lessonsByCourseAndModule', courseId, selectedModuleId]
+        })
+
+        queryClient.invalidateQueries({
+          queryKey: ['imagesByCourse', courseId]
+        })
+
+        queryClient.invalidateQueries({
+          queryKey: ['videos']
+        })
       },
-      onError: (err) => toast.error(getErrorMessage(err, 'Error al eliminar'))
+      onError: (err) =>
+        toast.error(getErrorMessage(err, 'Error al eliminar'))
     })
   }
 
-  const handleSelectContentType = (type: 'document' | 'image') => {
+  const handleSelectContentType = (
+    type: 'document' | 'image' | 'homework' | 'video'
+  ) => {
     if (!selectedLessonId) return
+
+    if (type === 'homework') {
+      navigate(`/teacher/homework/create?lessonId=${selectedLessonId}&courseId=${courseId}`)
+      return
+    }
+
+    if (type === 'video') {
+      navigate(`/teacher/videos/create?lessonId=${selectedLessonId}&courseId=${courseId}`)
+      return
+    }
+
     const path = type === 'document' ? 'documents' : 'images'
-    navigate(`/teacher/${path}/upload?lessonId=${selectedLessonId}`)
-    setContentModalOpen(false)
+    navigate(`/teacher/${path}/upload?lessonId=${selectedLessonId}&courseId=${courseId}`)
   }
 
   //RENDERIZADO
@@ -260,6 +308,8 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
                   <option value="">No hay módulos creados</option>
                 )}
               </select>
+
+              {/*  EDITAR */}
               <Button
                 variant="outline"
                 size="icon"
@@ -267,6 +317,15 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
                 onClick={() => navigate(`/teacher/modules/edit/${selectedModuleId}`)}
               >
                 <Pencil className="h-4 w-4" />
+              </Button>
+
+              {/*  CREAR */}
+              <Button
+                variant="default"
+                size="icon"
+                onClick={() => navigate(`/teacher/modules/create?courseId=${courseId}`)}
+              >
+                <PlusCircle className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -298,54 +357,90 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
                 </Button>
               </div>
             ) : (
-              <ul className="space-y-4">
+              <ul className="space-y-6">
                 {lessonsWithContents.map((lesson) => {
                   const contenidos = [
                     ...(lesson.contents || []).map((c: any) => {
-                      const isImage = c.type?.toLowerCase() === 'imagen' || c.type?.toLowerCase() === 'image' || c.type === '2'
+                      const typeLower = c.type?.toLowerCase?.() || ''
 
-                      let resolvedUrl = null;
+                      //  BUSCAR EL VIDEO REAL EN allVideos
+                      const videoMatch = allVideos.find(
+                          (v: any) => v.content?.id === c.id
+                        )
+
+                      const videoUrl = videoMatch?.videoUrl || null
+                      const isVideo = !!videoMatch
+
+                      const isImage =
+                        !isVideo &&
+                        (typeLower.includes('image') ||
+                          typeLower.includes('imagen') ||
+                          c.type === '2')
+
+                      let resolvedUrl = null
+
+                      // 🖼️ IMAGEN
                       if (isImage && allImages) {
-                        const match = allImages.find((i: any) => i.contentId === c.id);
-                        resolvedUrl = match?.imageUrl;
+                        const match = allImages.find((i: any) => i.contentId === c.id)
+                        resolvedUrl = match?.imageUrl
+                      }
+
+                      // 🎬 VIDEO
+                      if (isVideo) {
+                        resolvedUrl = videoUrl
                       }
 
                       return {
-                        type: isImage ? 'image' : 'document',
-                        id: c.id,
-                        title: c.title || (isImage ? 'Imagen' : 'Documento'),
+                        type: isVideo ? 'video' : isImage ? 'image' : 'document',
+
+                        id: c.id, //  ESTE es el contentId (NO TOCAR)
+
+                        videoId: videoMatch?.contentId, // AGREGA ESTA LÍNEA
+
+                        title:
+                          c.title ||
+                          (isImage ? 'Imagen' : isVideo ? 'Video' : 'Documento'),
+
                         order: c.order || 0,
-                        url: resolvedUrl,
-                        alt: ''
+                        url: resolvedUrl
                       }
                     }),
+
                     ...(lesson.homeworks || []).map((hw: any) => ({
                       type: 'homework',
                       id: hw.id,
                       title: hw.titulo,
                       order: 999,
-                      url: null,
-                      homework: hw
+                      url: null
                     }))
                   ].sort((a, b) => a.order - b.order)
 
                   return (
-                    <li key={lesson.id} className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm group">
-                      {/* LESSON HEADER */}
-                      <div className="flex flex-wrap items-center justify-between gap-3 p-4 bg-muted/20 border-b border-border/40">
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="bg-background">#{lesson.order}</Badge>
+                    <li
+                      key={lesson.id}
+                      className="bg-card/50 rounded-lg p-4 transition hover:bg-muted/40"
+                    >
+                      {/* HEADER */}
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-start gap-3">
+                          <span className="text-xs text-muted-foreground mt-1">
+                            #{lesson.order}
+                          </span>
+
                           <div>
-                            <h3 className="font-semibold text-lg leading-tight">{lesson.title}</h3>
-                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">{lesson.description}</p>
+                            <h3 className="font-semibold text-base">
+                              {lesson.title}
+                            </h3>
+                            <p className="text-xs text-muted-foreground line-clamp-1">
+                              {lesson.description}
+                            </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 opacity-90 transition-opacity">
+
+                        <div className="flex gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-primary"
-                            title="Agregar contenido"
                             onClick={() => {
                               setSelectedLessonId(lesson.id)
                               setContentModalOpen(true)
@@ -353,11 +448,10 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
                           >
                             <PlusCircle className="h-4 w-4" />
                           </Button>
+
                           <Button
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 text-foreground/70"
-                            title="Editar lección"
                             onClick={() => {
                               setEditingLesson(lesson)
                               setLessonModalOpen(true)
@@ -365,100 +459,166 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <div className="h-8 w-8 text-destructive flex items-center justify-center">
-                            <ConfirmDeleteButton
-                              onConfirm={() => deleteLesson.mutate(lesson.id)}
-                            />
-                          </div>
+
+                          <ConfirmDeleteButton
+                            onConfirm={() => deleteLesson.mutate(lesson.id)}
+                          />
                         </div>
                       </div>
 
-                      {/* LESSON CONTENTS */}
-                      <div className="p-4 bg-background">
-                        {contenidos.length === 0 ? (
-                          <p className="text-xs text-muted-foreground italic text-center py-2 underline-offset-4 underline decoration-dotted">
-                            Sin contenidos asociados
-                          </p>
-                        ) : (
-                          <div className="space-y-3">
-                            {contenidos.map((item) => (
-                              <div key={`${item.type}-${item.id}`} className="flex items-center justify-between gap-3 group/content border-b border-border/30 pb-2 last:border-0 last:pb-0">
+                      {/* CONTENTS */}
+                      {contenidos.length === 0 ? (
+                        <p className="text-xs text-muted-foreground italic">
+                          Sin contenidos
+                        </p>
+                      ) : (
+                        <div className="divide-y divide-border/40">
+                          {contenidos.map((item) => (
+                            <div
+                              key={`${item.type}-${item.id}`}
+                              className="py-2 px-2 rounded-md transition hover:bg-muted/30"
+                            >
 
-                                {item.type === 'document' ? (
-                                  <div className="flex items-center gap-12 flex-1 cursor-pointer" onClick={() => handleOpenDoc(item.id)}>
-                                    <div className="flex items-center gap-3">
-                                      <FileText className="w-4 h-4 text-primary" />
-                                      <span className="text-sm font-medium hover:text-primary transition-colors">{item.title}</span>
-                                    </div>
-                                    <Badge variant="secondary" className="text-[10px] hidden sm:block">Documento</Badge>
-                                  </div>
-                                ) : item.type === 'homework' ? (
-                                  <div className="flex items-center gap-12 flex-1">
-                                    <div className="flex items-center gap-3">
-                                      <ClipboardList className="w-4 h-4 text-orange-500" />
-                                      <span className="text-sm font-medium">{item.title}</span>
-                                    </div>
-                                    <Badge variant="outline" className="text-[10px] hidden sm:block border-orange-200 text-orange-700 bg-orange-50">Tarea</Badge>
-                                  </div>
-                                ) : (
-                                  <div className="flex items-center gap-12 flex-1">
-                                    <div className="flex items-center gap-4">
-                                      {item.url ? (
-                                        <div
-                                          className="h-14 w-20 overflow-hidden rounded-md border bg-muted/30 cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0"
-                                          onClick={() => handleOpenImage(item.id)}
-                                          title="Hacer click para expandir"
-                                        >
-                                          <img src={item.url} alt={item.title} className="object-cover w-full h-full" />
-                                        </div>
-                                      ) : (
-                                        <div
-                                          className="h-14 w-20 flex items-center justify-center rounded-md border bg-muted/30 cursor-pointer hover:bg-muted/50 transition-colors flex-shrink-0"
-                                          onClick={() => handleOpenImage(item.id)}
-                                          title="Cargar imagen"
-                                        >
-                                          <ImageOff className="w-5 h-5 text-muted-foreground/50" />
-                                        </div>
-                                      )}
-                                      <span className="text-sm font-medium">{item.title}</span>
-                                    </div>
-                                    <Badge variant="secondary" className="text-[10px] hidden sm:block bg-blue-50/50 text-blue-700 hover:bg-blue-100/50">Imagen</Badge>
-                                  </div>
-                                )}
+                              {/* 🎬 VIDEO */}
+                              {item.type === 'video' && item.url ? (
+                                <div className="flex flex-col gap-2">
 
-                                <div className="flex items-center gap-0.5">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                                    onClick={() => {
-                                      if (item.type === 'homework') {
-                                        navigate(`/teacher/homework/edit/${item.id}`)
-                                      } else {
-                                        const path = item.type === 'document' ? 'documents' : 'images'
-                                        navigate(`/teacher/${path}/edit/${item.id}`)
+                                  {/* SOLO VIDEO */}
+                                  {item.url ? (
+                                    <video
+                                      key={item.url}
+                                      src={item.url}
+                                      controls
+                                      className="w-full max-w-md rounded-lg shadow-sm"
+                                      onError={() => console.log('❌ Error cargando video:', item.url)}
+                                    />
+                                  ) : (
+                                    <span className="text-xs text-red-500">
+                                      Video no disponible ❌
+                                    </span>
+                                  )}
+
+                                  {/* ACCIONES */}
+                                  <div className="flex justify-end gap-1">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() =>
+                                        navigate(`/teacher/videos/edit/${item.id}`)
                                       }
-                                    }}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                    onClick={() => {
-                                      handleDeleteContent(item.type as any, item.id)
-                                      queryClient.invalidateQueries({ queryKey: ['lessons', selectedModuleId] })
-                                    }}
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() =>
+                                        handleDeleteContent(
+                                          item.type as any,
+                                          item.type === 'video' ? item.id : item.id
+                                        )
+                                      }
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
                                 </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                              ) : (
+                                /* RESTO */
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-3 flex-1">
+
+                                    {/* DOCUMENTO */}
+                                    {item.type === 'document' && (
+                                      <>
+                                        <FileText className="w-4 h-4 text-blue-600" />
+                                        <span
+                                          className="text-sm cursor-pointer hover:underline"
+                                          onClick={() => handleOpenDoc(item.id)}
+                                        >
+                                          {item.title}
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700">
+                                          Documento
+                                        </span>
+                                      </>
+                                    )}
+
+                                    {/* TAREA */}
+                                    {item.type === 'homework' && (
+                                      <>
+                                        <ClipboardList className="w-4 h-4 text-orange-500" />
+                                        <span className="text-sm">{item.title}</span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded bg-orange-50 text-orange-700">
+                                          Tarea
+                                        </span>
+                                      </>
+                                    )}
+
+                                    {/* IMAGEN */}
+                                    {item.type === 'image' && (
+                                      <>
+                                        {item.url ? (
+                                          <img
+                                            src={item.url}
+                                            className="w-16 h-12 object-cover rounded-md cursor-pointer"
+                                            onClick={() => handleOpenImage(item.id)}
+                                          />
+                                        ) : (
+                                          <ImageOff className="w-4 h-4 text-muted-foreground" />
+                                        )}
+                                        <span className="text-sm">{item.title}</span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded bg-blue-50 text-blue-700">
+                                          Imagen
+                                        </span>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* ACCIONES */}
+                                  <div className="flex gap-1 opacity-70 hover:opacity-100 transition">
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() => {
+                                        if (item.type === 'homework') {
+                                          navigate(`/teacher/homework/edit/${item.id}?courseId=${courseId}`)
+                                          return
+                                        }
+
+                                        if (item.type === 'video') {
+                                          navigate(`/teacher/videos/edit/${item.id}?courseId=${courseId}`)
+                                          return
+                                        }
+
+                                        const path =
+                                          item.type === 'document'
+                                            ? 'documents'
+                                            : 'images'
+
+                                        navigate(`/teacher/${path}/edit/${item.id}?courseId=${courseId}`)
+                                      }}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+
+                                    <Button
+                                      size="icon"
+                                      variant="ghost"
+                                      onClick={() =>
+                                        handleDeleteContent(item.type as any, item.id)
+                                      }
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </li>
                   )
                 })}

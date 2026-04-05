@@ -25,6 +25,7 @@ import { inscriptionService } from '@/services/inscription.service'
 import { studentProgressService } from '@/services/student-progress.service'
 import { getErrorMessage } from '@/lib/api.error'
 import type { Course } from '@/types/course'
+import { useVideoContents } from '@/hooks/useVideoContents'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -74,6 +75,8 @@ export function CourseDetail() {
   const { data: homeworks = [] } = getHomeworks
   const { getAll: getSubmissions, submit: submitHomework } = useHomeworkSubmission()
   const { data: submissions = [] } = getSubmissions
+  const { useVideosList } = useVideoContents()
+  const { data: videos = [] } = useVideosList()
 
   const [submissionHomework, setSubmissionHomework] = useState<getHomeWorkDto | null>(null)
   const [submissionFile, setSubmissionFile] = useState<File | null>(null)
@@ -537,13 +540,21 @@ export function CourseDetail() {
 
                       return Number(lessonId) === Number(leccion.id)
                     })
+                    // VIDEOS
+                      const lessonVideos = (videos ?? []).filter((v: any) => {
+                        const lessonId =
+                          v.content?.lessonId ??
+                          v.lessonId
 
-                    // 📝 TAREAS (HOMEWORKS)
+                        return Number(lessonId) === Number(leccion.id)
+                    })
+
+                    //  TAREAS (HOMEWORKS)
                     const lessonHWs = homeworks.filter((hw: getHomeWorkDto) =>
                       Number(hw.lessonId) === Number(leccion.id)
                     )
 
-                    // 🔥 COMBINAR
+                    //  COMBINAR
                     const contenidos = [
                       ...lessonDocs.map((doc: any) => ({
                         type: 'document' as const,
@@ -580,6 +591,13 @@ export function CourseDetail() {
                           img.texto_alternativo ??
                           'imagen',
                       })),
+                      ...lessonVideos.map((v: any) => ({
+                        type: 'video' as const,
+                        id: v.contentId,
+                        title: v.content?.title ?? 'Video',
+                        order: Number(v.content?.order ?? 0),
+                        url: v.videoUrl, 
+                      })),
 
                       ...lessonHWs.map((hw: getHomeWorkDto) => {
                         const mySubmission = submissions.find(s =>
@@ -605,7 +623,7 @@ export function CourseDetail() {
                         {/* HEADER */}
                         <div className="flex flex-wrap items-center justify-between gap-3">
                           <div>
-                            {/* 🧠 TÍTULO */}
+                            {/*  TÍTULO */}
                             <label
                               htmlFor={`leccion-${leccion.id}`}
                               className="font-medium leading-tight cursor-pointer"
@@ -628,7 +646,7 @@ export function CourseDetail() {
                                 </p>
                               ) : (
                                 contenidos.map(item => {
-                                  // 📄 DOCUMENTO limpio tipo Moodle
+                                  // DOCUMENTO limpio tipo Moodle
                                   if (item.type === 'document') {
                                     return (
                                       <div
@@ -652,6 +670,25 @@ export function CourseDetail() {
                                         <span className="text-sm">
                                           {item.title}
                                         </span>
+                                      </div>
+                                    )
+                                  }
+                                  //  VIDEO
+                                  if (item.type === 'video') {
+                                    return (
+                                      <div key={`video-${item.id}`} className="flex justify-center">
+                                        {item.url ? (
+                                          <video
+                                            src={item.url}
+                                            controls
+                                            className="max-w-xl rounded-lg shadow"
+                                            onError={() => console.log('❌ Error video:', item.url)}
+                                          />
+                                        ) : (
+                                          <span className="text-xs text-red-500">
+                                            Video no disponible
+                                          </span>
+                                        )}
                                       </div>
                                     )
                                   }

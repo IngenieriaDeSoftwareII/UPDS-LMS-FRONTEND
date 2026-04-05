@@ -60,7 +60,7 @@ export function TeacherEditModulePage() {
       {
         onSuccess: () => {
           alert('Módulo actualizado ✅')
-          navigate('/teacher/lessons')
+          navigate(`/teacher/lessons/${cursoId}`)
         },
         onError: () => {
           setError('Error al actualizar ❌')
@@ -76,7 +76,7 @@ export function TeacherEditModulePage() {
   return (
     <div className="max-w-xl mx-auto space-y-6">
 
-      <Button variant="outline" onClick={() => navigate('/teacher/lessons')}>
+      <Button variant="outline" onClick={() => navigate(`/teacher/lessons/${cursoId}`)}>
         ← Volver
       </Button>
 

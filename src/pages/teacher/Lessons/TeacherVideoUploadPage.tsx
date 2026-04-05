@@ -10,26 +10,27 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-import { useImageContents } from '@/hooks/useImageContents'
+import { useVideoContents } from '@/hooks/useVideoContents'
 
-export function TeacherImageUploadPage() {
+export function TeacherVideoUploadPage() {
   const navigate = useNavigate()
   const [params] = useSearchParams()
 
   const lessonIdFromUrl = Number(params.get('lessonId'))
+  const lessonId = isNaN(lessonIdFromUrl) ? null : lessonIdFromUrl
   const courseIdFromUrl = Number(params.get('courseId'))
 
-  const lessonId = isNaN(lessonIdFromUrl) ? null : lessonIdFromUrl
 
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
-  const [title, setTitle] = useState('')
+  const [duration, setDuration] = useState<number>(0)
   const [order, setOrder] = useState<number>(1)
   const [error, setError] = useState<string | null>(null)
 
-  const { useUploadImage } = useImageContents()
-  const { mutate: upload, isPending } = useUploadImage()
+  const { useUploadVideo } = useVideoContents()
+  const { mutate: upload, isPending } = useUploadVideo()
 
+  // 🎥 preview + duración automática
   useEffect(() => {
     if (!file) {
       setPreview(null)
@@ -38,6 +39,13 @@ export function TeacherImageUploadPage() {
 
     const url = URL.createObjectURL(file)
     setPreview(url)
+
+    const video = document.createElement('video')
+    video.src = url
+
+    video.onloadedmetadata = () => {
+      setDuration(Math.floor(video.duration))
+    }
 
     return () => URL.revokeObjectURL(url)
   }, [file])
@@ -49,26 +57,35 @@ export function TeacherImageUploadPage() {
   const handleUpload = () => {
     setError(null)
 
-    if (!file) return setError('Selecciona una imagen')
-    if (!lessonId) return setError('Error: lessonId inválido')
+    if (!file) return setError('Selecciona un video')
+    if (!lessonId) return setError('lessonId inválido')
 
-    if (!order || order < 1) {
+    if (!file.type.startsWith('video/')) {
+      return setError('Solo se permiten videos')
+    }
+
+    if (duration <= 0) {
+      return setError('Duración inválida')
+    }
+
+    if (order < 1) {
       return setError('El orden debe ser mayor a 0')
     }
 
     const formData = new FormData()
     formData.append('lessonId', String(lessonId))
-    formData.append('title', title.trim() || file.name)
-    formData.append('order', String(order)) 
+    formData.append('title', file.name)
+    formData.append('order', String(order))
+    formData.append('duracionSeg', String(duration))
     formData.append('file', file)
 
     upload(formData, {
       onSuccess: () => {
-        alert('Imagen subida correctamente ✅')
+        alert('Video subido correctamente ✅')
         goBack()
       },
       onError: () => {
-        setError('Error al subir la imagen ❌')
+        setError('Error al subir el video ❌')
       },
     })
   }
@@ -82,7 +99,7 @@ export function TeacherImageUploadPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Subir Imagen</CardTitle>
+          <CardTitle>Subir Video</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -96,67 +113,55 @@ export function TeacherImageUploadPage() {
 
           {/* PREVIEW */}
           {preview && (
-            <img
+            <video
               src={preview}
-              alt="preview"
-              className="w-40 h-40 object-cover mx-auto rounded"
+              controls
+              className="w-full rounded-lg border shadow"
             />
           )}
 
-          {/* TÍTULO */}
-          <div>
-            <label className="text-sm font-medium">Título</label>
-            <Input
-              placeholder="Ej: Imagen explicativa"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          {/* ORDEN*/}
+          {/* ORDEN */}
           <div>
             <label className="text-sm font-medium">Orden</label>
             <Input
               type="number"
               min={1}
               value={order}
-              onChange={(e) => {
-                const val = Number(e.target.value)
-
-                if (isNaN(val)) {
-                  setOrder(1)
-                } else {
-                  setOrder(val)
-                }
-              }}
+              onChange={(e) => setOrder(Number(e.target.value))}
             />
+          </div>
+
+          {/* DURACIÓN */}
+          <div>
+            <label className="text-sm font-medium">
+              Duración (segundos)
+            </label>
+            <Input value={duration} readOnly />
           </div>
 
           {/* ARCHIVO */}
           <div>
-            <label className="text-sm font-medium">Imagen</label>
+            <label className="text-sm font-medium">Video</label>
             <Input
               type="file"
-              accept="image/*"
+              accept="video/*"
               onChange={(e) => {
                 const f = e.target.files?.[0]
                 if (!f) return
 
-                if (!f.type.startsWith('image/')) {
-                  setError('Solo se permiten imágenes')
+                if (!f.type.startsWith('video/')) {
+                  setError('Solo se permiten videos')
                   return
                 }
 
                 setError(null)
                 setFile(f)
-
-                if (!title) setTitle(f.name)
               }}
             />
           </div>
 
           <Button onClick={handleUpload} disabled={isPending}>
-            {isPending ? 'Subiendo...' : 'Subir Imagen'}
+            {isPending ? 'Subiendo...' : 'Subir Video'}
           </Button>
 
         </CardContent>

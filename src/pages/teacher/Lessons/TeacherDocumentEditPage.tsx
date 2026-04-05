@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams  } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,6 +42,9 @@ export function TeacherDocumentEditPage() {
   const [pageCount, setPageCount] = useState<number | undefined>()
   const [lessonId, setLessonId] = useState<number | undefined>()
   const [file, setFile] = useState<File | null>(null)
+  //Navigate
+  const [searchParams] = useSearchParams()
+  const courseIdFromQuery = searchParams.get('courseId')
 
   // cargar datos
   useEffect(() => {
@@ -70,7 +73,7 @@ export function TeacherDocumentEditPage() {
   )
 
   const goBack = () => {
-    navigate('/teacher/lessons')
+    navigate(`/teacher/lessons/${courseIdFromQuery}`)
   }
 
   const handleUpdate = () => {

@@ -19,6 +19,9 @@ import { CatalogsPage } from '@/pages/admin/CatalogsPage'
 import { TeachersPage } from '@/pages/admin/TeachersPage'
 import { HomeworksPage } from '@/pages/admin/homeworks/HomeworksPage'
 import { HomeworkSubmissionsAdminPage } from '@/pages/admin/homeworks/HomeworkSubmissionsAdminPage'
+import { VideosPage } from '@/pages/admin/videos/VideosPage'
+import { VideoUploadPage } from '@/pages/admin/videos/VideoUploadPage'
+import { VideoEditPage } from '@/pages/admin/videos/VideoEditPage'
 
 export function AdminRoutes() {
   return (
@@ -40,6 +43,10 @@ export function AdminRoutes() {
       <Route path="images/edit/:id" element={<ImageEditPage />} />
       {/* Modules */}
       <Route path="modules" element={<ModulesPage />} />
+      {/* VideoContent */}
+      <Route path="videos" element={<VideosPage />} />
+      <Route path="videos/upload" element={<VideoUploadPage />} />
+      <Route path="videos/edit/:id" element={<VideoEditPage />} />
 
       {/* Homeworks */}
       <Route path="homeworks" element={<HomeworksPage />} />

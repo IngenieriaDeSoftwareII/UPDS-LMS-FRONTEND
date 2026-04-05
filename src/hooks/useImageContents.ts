@@ -4,14 +4,14 @@ import { imageContentService } from '@/services/imageContent.service'
 export const useImageContents = () => {
   const qc = useQueryClient()
 
-  // ✅ LIST
+  // LIST
   const useImagesList = () =>
     useQuery({
       queryKey: ['images'],
       queryFn: imageContentService.getAll,
     })
 
-  // ✅ UPLOAD
+  // UPLOAD
   const useUploadImage = () =>
     useMutation({
       mutationFn: imageContentService.upload,
@@ -20,7 +20,7 @@ export const useImageContents = () => {
       },
     })
 
-  // ✅ DELETE
+  // DELETE
   const useDeleteImage = () =>
     useMutation({
       mutationFn: imageContentService.delete,
@@ -29,7 +29,7 @@ export const useImageContents = () => {
       },
     })
 
-  // ✅ UPDATE (CORREGIDO)
+  //  UPDATE 
   const useUpdateImage = () =>
     useMutation({
       mutationFn: ({ id, formData }: { id: number; formData: FormData }) =>

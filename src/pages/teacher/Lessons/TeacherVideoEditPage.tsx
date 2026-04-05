@@ -10,31 +10,30 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-import { useImageContents } from '@/hooks/useImageContents'
+import { useVideoContents } from '@/hooks/useVideoContents'
 import { useLessons } from '@/hooks/useLessons'
 import { useModules } from '@/hooks/useModules'
 import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
-type ImageItem = {
+type VideoItem = {
   contentId: number
-  imageUrl: string
-  altText: string
+  videoUrl: string
+  duracionSeg: number
   content?: {
     lessonId: number
-    title?: string
     order?: number
   }
 }
 
-export function TeacherImageEditPage() {
+export function TeacherVideoEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const imageId = Number(id)
+  const videoId = Number(id)
 
-  const { useImagesList, useUpdateImage } = useImageContents()
-  const { data: images } = useImagesList()
-  const { mutate: update, isPending } = useUpdateImage()
+  const { useVideosList, useUpdateVideo } = useVideoContents()
+  const { data: videos } = useVideosList()
+  const { mutate: update, isPending } = useUpdateVideo()
 
   const { useLessonsList } = useLessons()
   const { data: lessons } = useLessonsList()
@@ -42,51 +41,61 @@ export function TeacherImageEditPage() {
   const { data: modules } = useModules()
   const { data: courses } = useCoursesPrueba()
 
-  const image = (images as ImageItem[] | undefined)?.find(
-    (i) => i.contentId === imageId
+  const video = (videos as VideoItem[] | undefined)?.find(
+    (v) => v.contentId === videoId
   )
 
-  //  STATES
+  // STATES
   const [lessonId, setLessonId] = useState<number | undefined>()
-  const [title, setTitle] = useState('')
   const [order, setOrder] = useState<number>(1)
+  const [duration, setDuration] = useState<number>(0)
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [rol, setRol] = useState<string | null>(null)
 
+  // 🔹 obtener rol
   useEffect(() => {
     const savedState = localStorage.getItem('state')
     if (savedState) {
       try {
-        const parsedState = JSON.parse(savedState)
-        setRol(parsedState.role)
-      } catch (error) {
-        console.error("Error al leer el rol del localStorage", error)
+        const parsed = JSON.parse(savedState)
+        setRol(parsed.role)
+      } catch {
+        console.error('Error leyendo rol')
       }
     }
   }, [])
 
-  const isAdmin = rol === 'admin' || rol === 'Admin' || rol === 'ADMIN'
+  const isAdmin = rol?.toLowerCase() === 'admin'
 
-  // 🔹 cargar datos
+  // 🔹 cargar datos iniciales
   useEffect(() => {
-    if (image) {
-      setTitle(image.content?.title || image.altText)
-      setOrder(image.content?.order || 1)
-      setLessonId(image.content?.lessonId)
+    if (video) {
+      setLessonId(video.content?.lessonId)
+      setOrder(video.content?.order || 1)
+      setDuration(video.duracionSeg || 0)
     }
-  }, [image])
+  }, [video])
 
-  // 🔹 preview
+  // 🔹 preview + duración si cambia archivo
   useEffect(() => {
     if (!file) return
+
     const url = URL.createObjectURL(file)
     setPreview(url)
+
+    const vid = document.createElement('video')
+    vid.src = url
+
+    vid.onloadedmetadata = () => {
+      setDuration(Math.floor(vid.duration))
+    }
+
     return () => URL.revokeObjectURL(url)
   }, [file])
 
-  // DERIVADOS 
+  // DERIVADOS
   const selectedLesson = useMemo(
     () => lessons?.find(l => l.id === lessonId),
     [lessonId, lessons]
@@ -103,46 +112,47 @@ export function TeacherImageEditPage() {
   )
   const selectedCourseId = selectedCourse?.id
   const goBack = () => {
-    navigate(`/teacher/lessons/${selectedCourseId}`)
+     navigate(`/teacher/lessons/${selectedCourseId}`)
   }
 
   const handleUpdate = () => {
     setError(null)
 
-    if (!title.trim()) {
-      return setError('El título es obligatorio')
-    }
-
     if (!lessonId) {
       return setError('Debes seleccionar una lección')
     }
 
-    if (!order || order < 1 || isNaN(order)) {
-      return setError('El orden debe ser mayor a 0')
+    if (!order || order < 1) {
+      return setError('Orden inválido')
+    }
+
+    if (duration <= 0) {
+      return setError('Duración inválida')
     }
 
     const formData = new FormData()
-    formData.append('altText', title)
-    formData.append('order', String(order))
     formData.append('lessonId', String(lessonId))
+    formData.append('order', String(order))
+    formData.append('duracionSeg', String(duration))
 
     if (file) {
-      if (!file.type.startsWith('image/')) {
-        return setError('Solo se permiten imágenes')
+      if (!file.type.startsWith('video/')) {
+        return setError('Solo se permiten videos')
       }
 
-      if (file.size > 5 * 1024 * 1024) {
-        return setError('La imagen supera los 5MB')
+      // opcional: límite 200MB
+      if (file.size > 200 * 1024 * 1024) {
+        return setError('El video es demasiado grande (máx 200MB)')
       }
 
       formData.append('file', file)
     }
 
     update(
-      { id: imageId, formData },
+      { id: videoId, formData },
       {
         onSuccess: () => {
-          alert('Imagen actualizada ✅')
+          alert('Video actualizado ✅')
           goBack()
         },
         onError: () => {
@@ -152,8 +162,8 @@ export function TeacherImageEditPage() {
     )
   }
 
-  if (!image) {
-    return <div className="p-6">Imagen no encontrada</div>
+  if (!video) {
+    return <div className="p-6">Video no encontrado</div>
   }
 
   return (
@@ -165,7 +175,7 @@ export function TeacherImageEditPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Editar Imagen</CardTitle>
+          <CardTitle>Editar Video</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-4">
@@ -177,7 +187,7 @@ export function TeacherImageEditPage() {
             </div>
           )}
 
-          {/*  INFO  */}
+          {/* INFO */}
           <div className="text-sm bg-gray-50 p-3 rounded space-y-1">
             <p><strong>Curso:</strong> {selectedCourse?.titulo || '—'}</p>
             <p><strong>Módulo:</strong> {selectedModule?.titulo || '—'}</p>
@@ -185,26 +195,18 @@ export function TeacherImageEditPage() {
           </div>
 
           {/* PREVIEW */}
-          <img
-            src={preview || image.imageUrl}
-            className="w-40 h-40 object-cover mx-auto rounded"
+          <video
+            src={preview || video.videoUrl}
+            controls
+            className="w-full rounded-lg border shadow"
           />
 
-          {/* TÍTULO */}
+          {/* LECCIÓN */}
           <div>
-            <label className="text-sm font-medium">Título</label>
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          {/*  LECCIÓN */}
-          <div>
-            <label className="text-sm font-medium">Lección asignada</label>
+            <label className="text-sm font-medium">Lección</label>
 
             <select
-              className={`w-full border rounded p-2 ${!isAdmin ? 'bg-gray-100 cursor-not-allowed opacity-70' : ''}`}
+              className={`w-full border rounded p-2 ${!isAdmin ? 'bg-gray-100 opacity-70 cursor-not-allowed' : ''}`}
               value={lessonId ?? ''}
               onChange={(e) => setLessonId(Number(e.target.value))}
               disabled={!isAdmin}
@@ -235,20 +237,28 @@ export function TeacherImageEditPage() {
             />
           </div>
 
+          {/* DURACIÓN */}
+          <div>
+            <label className="text-sm font-medium">
+              Duración (segundos)
+            </label>
+            <Input value={duration} readOnly />
+          </div>
+
           {/* FILE */}
           <div>
             <label className="text-sm font-medium">
-              Reemplazar imagen
+              Reemplazar video
             </label>
             <Input
               type="file"
-              accept="image/*"
+              accept="video/*"
               onChange={(e) => {
                 const f = e.target.files?.[0]
                 if (!f) return
 
-                if (!f.type.startsWith('image/')) {
-                  setError('Solo imágenes')
+                if (!f.type.startsWith('video/')) {
+                  setError('Solo videos')
                   return
                 }
 

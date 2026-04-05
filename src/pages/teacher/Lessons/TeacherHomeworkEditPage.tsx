@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams, useSearchParams  } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -17,6 +17,9 @@ export function TeacherHomeworkEditPage() {
 
   const { getAll, update } = useHomeWork()
   const { data: homeworks, isLoading: loadingHomeworks } = getAll
+  //navigate
+  const [searchParams] = useSearchParams()
+  const courseIdFromQuery = searchParams.get('courseId')
   
   // Buscar la tarea especifica
   const homework = useMemo(() => homeworks?.find(h => h.id === homeworkId), [homeworks, homeworkId])
@@ -62,7 +65,7 @@ export function TeacherHomeworkEditPage() {
   const selectedCourse = useMemo(() => courses?.find(c => c.id === selectedModule?.cursoId), [selectedModule, courses])
 
   const goBack = () => {
-    navigate('/teacher/lessons')
+    navigate(`/teacher/lessons/${courseIdFromQuery}`)
   }
 
   const handleUpdate = () => {

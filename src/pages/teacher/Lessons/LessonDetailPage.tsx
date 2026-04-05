@@ -6,7 +6,7 @@ import { useLessons } from '@/hooks/useLessons'
 import { DocumentsTable } from '@/components/DocumentsTable'
 
 export function LessonDetailPage() {
-  const { id } = useParams()
+  const { id,courseId  } = useParams()
   const navigate = useNavigate()
 
   const { useDocumentsList } = useDocumentContents()
@@ -26,7 +26,7 @@ export function LessonDetailPage() {
       <Button
         variant="outline"
         className="mb-4"
-        onClick={() => navigate('/teacher/lessons')}
+        onClick={() => navigate(`/teacher/lessons/${courseId}`)}
       >
         <ArrowLeft className="w-4 h-4 mr-2" />
         Volver a Lecciones

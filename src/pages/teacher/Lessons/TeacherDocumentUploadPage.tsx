@@ -29,9 +29,13 @@ export function TeacherDocumentUploadPage() {
   const { useUploadDocument } = useDocumentContents()
   const { mutate: upload, isPending } = useUploadDocument()
 
+  //Navigate
+  const [searchParams] = useSearchParams()
+  const courseIdFromQuery = searchParams.get('courseId')
+
   // 🔙 VOLVER CORRECTO
   const goBack = () => {
-    navigate('/teacher/lessons')
+    navigate(`/teacher/lessons/${courseIdFromQuery}`)
   }
 
   const handleUpload = () => {

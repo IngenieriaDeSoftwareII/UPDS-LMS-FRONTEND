@@ -70,7 +70,7 @@ export function TeacherCreateModulePage() {
       {
         onSuccess: () => {
           alert('Módulo creado ✅')
-          navigate('/teacher/lessons')
+          navigate(`/teacher/lessons/${cursoId}`)
         },
         onError: () => {
           setError('Error al crear módulo ❌')
@@ -82,7 +82,7 @@ export function TeacherCreateModulePage() {
   return (
     <div className="max-w-xl mx-auto space-y-6">
 
-      <Button variant="outline" onClick={() => navigate('/teacher/lessons')}>
+      <Button variant="outline" onClick={() => navigate(`/teacher/lessons/${cursoId}`)}>
         ← Volver
       </Button>
 
