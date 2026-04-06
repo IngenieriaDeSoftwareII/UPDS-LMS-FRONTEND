@@ -2,9 +2,10 @@
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Pencil, ServerCrash, Search } from 'lucide-react'
+import { Pencil, ServerCrash, Search, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '@/lib/api.error'
 import { useTeacherCourses, useUpdateCourse } from '@/hooks/useCourses'
 import { useTeacherProfile } from '@/hooks/useTeacherProfile'
@@ -197,6 +198,7 @@ export function TeacherCoursesPage() {
     )
   }, [courses, searchTerm])
 
+  const navigate = useNavigate()
   return (
     <div className="space-y-6 p-6">
       <div className="flex items-center justify-between">
@@ -289,7 +291,14 @@ export function TeacherCoursesPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <EditCourseDialog course={course} />
+                          <Button variant="ghost" size="icon" title="Ver curso"
+                            onClick={() => {
+                              navigate(`/teacher/lessons/${course.id}`)
+                            }}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         </TableCell>
+
                       </TableRow>
                     ))
                   )}

@@ -18,7 +18,6 @@ import { TeacherVideoUploadPage } from '@/pages/teacher/content/TeacherVideoUplo
 import { TeacherVideoEditPage } from '@/pages/teacher/content/TeacherVideoEditPage'
 import { TeacherCreateHomeworkPage } from '@/pages/teacher/homework/TeacherCreateHomeworkPage'
 import { TeacherSubmissionsPage } from '@/pages/teacher/homework/TeacherSubmissionsPage'
-import { TeacherLessonsSelectionPage } from '@/pages/teacher/Lessons/TeacherLessonsSelectionPage'
 
 export function TeacherRoutes() {
   return (
@@ -28,8 +27,6 @@ export function TeacherRoutes() {
       <Route path="evaluations" element={<EvaluationManagementPage />} />
       <Route path="evaluations/grades" element={<EvaluationGradesPage />} />
 
-      {/* Probar TechaerLessonsPage cambiar por la pagina donde se listen los cursos*/}
-      <Route path="lessons" element={<TeacherLessonsSelectionPage />} />
       {/* pagina para seleccionar un mudlo y listar lecciones y contenidos del curso, pasarle el id de curso */}
       <Route path="lessons/:id" element={<TeacherLessonsPage />} />
       {/* Teacher Modulos,leciones y contenidos*/}
