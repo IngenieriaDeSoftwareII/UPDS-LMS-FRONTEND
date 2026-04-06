@@ -37,12 +37,18 @@ export const useHomeWork = () => {
             queryClient.invalidateQueries({ queryKey: ['homeworks'] })
         },
     })
-
+    const getSubmissions = useMutation({
+        mutationFn: (homeworkId: number) => homeWorkService.getSubmissions(homeworkId),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['homework-submissions'] })
+        },
+    })
     return {
         getAll,
         create,
         update,
         remove,
         getUrl,
+        getSubmissions
     }
 }

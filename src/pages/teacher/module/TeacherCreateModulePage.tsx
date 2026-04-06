@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { useEffect } from 'react'
 import { Input } from '@/components/ui/input'
@@ -45,8 +45,11 @@ export function TeacherCreateModulePage() {
   const courses = isAdmin ? allCourses : teacherCourses
   const isLoading = isAdmin ? loadingAll : loadingTeacher
 
+  const [params] = useSearchParams()
+  const courseIdFromUrl = params.get('courseId')
+
   const [titulo, setTitulo] = useState('')
-  const [cursoId, setCursoId] = useState<number | ''>('')
+  const [cursoId, setCursoId] = useState<number | ''>(courseIdFromUrl ? Number(courseIdFromUrl) : '')
   const [error, setError] = useState<string | null>(null)
 
 
@@ -82,7 +85,7 @@ export function TeacherCreateModulePage() {
   return (
     <div className="max-w-xl mx-auto space-y-6">
 
-      <Button variant="outline" onClick={() => navigate(`/teacher/lessons/${cursoId}`)}>
+      <Button variant="outline" onClick={() => navigate(cursoId ? `/teacher/lessons/${cursoId}` : -1 as any)}>
         ← Volver
       </Button>
 

@@ -28,5 +28,5 @@ export const homeWorkSubmissionService = {
         http.get<urlHomeWorkSubmissionDto>(`${BASE}/GetSubmissionSasUrl/${id}`).then(r => r.data),
 
     grade: (data: gradeHomeWorkDto) =>
-        http.post<gradeHomeWorkDto>(`${BASE}/Grade`, data).then(r => r.data),
+        http.put<gradeHomeWorkDto>(`${BASE}/Grade`, data).then(r => r.data),
 }

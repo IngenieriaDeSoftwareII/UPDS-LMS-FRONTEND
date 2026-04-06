@@ -10,21 +10,28 @@ type FormatDocument = {
     zip: 'zip',
     otro: 'otro'
 }
+import type { getHomeWorkDto } from "./homeWork";
+
 //Dto para obtener la tarea
 export type homeWorkSubmissionDto = {
     id: number;
     homeworkId: number;
     homeworkTitulo: string;
     usuarioId: number;
-    urlArchivo: string;
-    formato: FormatDocument;
-    tamanoKb: number;
-    comentario: string;
+    urlArchivo?: string;
+    formato?: FormatDocument;
+    tamanoKb?: number;
+    comentario?: string;
     revisado: boolean;
     fechaEntrega: Date;
-    feedback: string;
+    feedback?: string;
     estado: string;
     estudianteNombre: string;
+}
+
+export type HomeworkWithSubmissionsDto = {
+    homework: getHomeWorkDto;
+    submissions: homeWorkSubmissionDto[];
 }
 
 //Dto para entregar la tarea
@@ -38,9 +45,9 @@ export type submitHomeWorkDto = {
 }
 //Dto para revisar la tarea
 export type gradeHomeWorkDto = {
-    submissionId: number;
-    revisado: boolean;
-    feedback: string;
+    SubmissionId: number;
+    Revisado: boolean;
+    Feedback: string;
 }
 
 export type urlHomeWorkSubmissionDto = {

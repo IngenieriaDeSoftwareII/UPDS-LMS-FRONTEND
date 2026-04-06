@@ -3,6 +3,7 @@ import type {
     getHomeWorkDto,
     getUrlHomeWorkDto
 } from '@/types/homeWork'
+import type { homeWorkSubmissionDto } from '@/types/homeworkSubmission'
 
 export const homeWorkService = {
     getAll: () =>
@@ -23,5 +24,8 @@ export const homeWorkService = {
 
     getUrl: (id: number) =>
         http.get<getUrlHomeWorkDto>(`/homeworks/GetSasUrl/${id}`).then(r => r.data),
+
+    getSubmissions: (homeworkId: number) =>
+        http.get<homeWorkSubmissionDto[]>(`/homeworks/GetSubmissions/${homeworkId}`).then(r => r.data),
 
 }

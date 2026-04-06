@@ -7,17 +7,18 @@ import { TeacherCourseReportPage } from '@/pages/teacher/reports/TeacherCourseRe
 import { TeacherCoursesPage } from '@/pages/teacher/TeacherCoursesPage'
 import { TeacherLessonsPage } from '@/pages/teacher/Lessons/TeacherLessonsPage'
 import { LessonDetailPage } from '@/pages/teacher/Lessons/LessonDetailPage'
-import { TeacherDocumentUploadPage } from '@/pages/teacher/Lessons/TeacherDocumentUploadPage'
-import { TeacherDocumentEditPage } from '@/pages/teacher/Lessons/TeacherDocumentEditPage'
-import { TeacherImageUploadPage } from '@/pages/teacher/Lessons/TeacherImageUploadPage'
-import { TeacherImageEditPage } from '@/pages/teacher/Lessons/TeacherImageEditPage'
-import { TeacherCreateModulePage } from '@/pages/teacher/Lessons/TeacherCreateModulePage'
-import { TeacherEditModulePage } from '@/pages/teacher/Lessons/TeacherEditModulePage'
-import { TeacherHomeworkEditPage } from '@/pages/teacher/Lessons/TeacherHomeworkEditPage'
-import { TeacherVideoUploadPage } from '@/pages/teacher/Lessons/TeacherVideoUploadPage'
-import { TeacherVideoEditPage } from '@/pages/teacher/Lessons/TeacherVideoEditPage'
-import { TestTeacherLessonsPage } from '@/pages/teacher/Lessons/TestTeacherLessonsPage'
-import { TeacherCreateHomeworkPage } from '@/pages/teacher/Lessons/TeacherCreateHomeworkPage'
+import { TeacherDocumentUploadPage } from '@/pages/teacher/content/TeacherDocumentUploadPage'
+import { TeacherDocumentEditPage } from '@/pages/teacher/content/TeacherDocumentEditPage'
+import { TeacherImageUploadPage } from '@/pages/teacher/content/TeacherImageUploadPage'
+import { TeacherImageEditPage } from '@/pages/teacher/content/TeacherImageEditPage'
+import { TeacherCreateModulePage } from '@/pages/teacher/module/TeacherCreateModulePage'
+import { TeacherEditModulePage } from '@/pages/teacher/module/TeacherEditModulePage'
+import { TeacherHomeworkEditPage } from '@/pages/teacher/homework/TeacherHomeworkEditPage'
+import { TeacherVideoUploadPage } from '@/pages/teacher/content/TeacherVideoUploadPage'
+import { TeacherVideoEditPage } from '@/pages/teacher/content/TeacherVideoEditPage'
+import { TeacherCreateHomeworkPage } from '@/pages/teacher/homework/TeacherCreateHomeworkPage'
+import { TeacherSubmissionsPage } from '@/pages/teacher/homework/TeacherSubmissionsPage'
+import { TeacherLessonsSelectionPage } from '@/pages/teacher/Lessons/TeacherLessonsSelectionPage'
 
 export function TeacherRoutes() {
   return (
@@ -26,11 +27,12 @@ export function TeacherRoutes() {
       <Route path="courses" element={<TeacherCoursesPage />} />
       <Route path="evaluations" element={<EvaluationManagementPage />} />
       <Route path="evaluations/grades" element={<EvaluationGradesPage />} />
-     
-      {/* Probar TechaeressonPage para borrar OJO */}
-      <Route path="test/lessons" element={<TestTeacherLessonsPage />} />
-       {/* Teacher Modulos,leciones y contenidos*/}
+
+      {/* Probar TechaerLessonsPage cambiar por la pagina donde se listen los cursos*/}
+      <Route path="lessons" element={<TeacherLessonsSelectionPage />} />
+      {/* pagina para seleccionar un mudlo y listar lecciones y contenidos del curso, pasarle el id de curso */}
       <Route path="lessons/:id" element={<TeacherLessonsPage />} />
+      {/* Teacher Modulos,leciones y contenidos*/}
       <Route path="lessons/:courseId/detail/:id" element={<LessonDetailPage />} />
       <Route path="documents/upload" element={<TeacherDocumentUploadPage />} />
       <Route path="documents/edit/:id" element={<TeacherDocumentEditPage />} />
@@ -38,13 +40,12 @@ export function TeacherRoutes() {
       <Route path="images/edit/:id" element={<TeacherImageEditPage />} />
       <Route path="homework/create" element={<TeacherCreateHomeworkPage />} />
       <Route path="homework/edit/:id" element={<TeacherHomeworkEditPage />} />
+      <Route path="homework/submissions/:homeworkId" element={<TeacherSubmissionsPage />} />
       <Route path="modules/create" element={<TeacherCreateModulePage />} />
       <Route path="modules/edit/:id" element={<TeacherEditModulePage />} />
       <Route path="videos/create" element={<TeacherVideoUploadPage />} />
       <Route path="videos/edit/:id" element={<TeacherVideoEditPage />} />
-      
-      
-    
+
       <Route path="reports" element={<TeacherReportsPage />} />
       <Route path="reports/courses/:courseId" element={<TeacherCourseReportPage />} />
     </Routes>

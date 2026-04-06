@@ -16,7 +16,6 @@ import { useQueryClient, useQuery } from '@tanstack/react-query'
 
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
@@ -138,10 +137,10 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
       type === 'document'
         ? deleteDocument
         : type === 'image'
-        ? deleteImage
-        : type === 'video'
-        ? deleteVideo
-        : deleteHomework
+          ? deleteImage
+          : type === 'video'
+            ? deleteVideo
+            : deleteHomework
 
     mutation.mutate(id, {
       onSuccess: () => {
@@ -365,8 +364,8 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
 
                       //  BUSCAR EL VIDEO REAL EN allVideos
                       const videoMatch = allVideos.find(
-                          (v: any) => v.content?.id === c.id
-                        )
+                        (v: any) => v.content?.id === c.id
+                      )
 
                       const videoUrl = videoMatch?.videoUrl || null
                       const isVideo = !!videoMatch
@@ -549,7 +548,12 @@ export function TeacherLessonsPage({ courseId: propCourseId }: TeacherLessonsPag
                                     {item.type === 'homework' && (
                                       <>
                                         <ClipboardList className="w-4 h-4 text-orange-500" />
-                                        <span className="text-sm">{item.title}</span>
+                                        <span
+                                          className="text-sm cursor-pointer hover:underline"
+                                          onClick={() => navigate(`/teacher/homework/submissions/${item.id}`)}
+                                        >
+                                          {item.title}
+                                        </span>
                                         <span className="text-[10px] px-2 py-0.5 rounded bg-orange-50 text-orange-700">
                                           Tarea
                                         </span>
