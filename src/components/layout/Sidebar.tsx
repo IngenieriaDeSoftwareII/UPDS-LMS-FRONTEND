@@ -3,8 +3,7 @@ import {
   LayoutDashboard, Users, UserCog,
   Menu, ChevronLeft, X, ClipboardList,
   BarChart3, BookOpenCheck, GraduationCap,
-  BookOpen, Tags, Library, LibraryBig,
-  Contact
+  BookOpen, Tags, Library, LibraryBig
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserRole } from '@/types';
@@ -25,7 +24,6 @@ const navItems: NavItem[] = [
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
   { label: 'Reportes (Cursos)', path: '/admin/reports/courses', icon: BarChart3, roles: ['Admin'] },
   { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
-  { label: 'Docentes', path: '/admin/teachers', icon: Contact, roles: ['Admin'] },
   { label: 'Cursos', path: '/admin/courses', icon: BookOpen, roles: ['Admin'] },
   { label: 'Categorías', path: '/admin/categories', icon: Tags, roles: ['Admin'] },
   { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] },

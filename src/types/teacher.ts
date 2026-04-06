@@ -1,6 +1,6 @@
 export interface Teacher {
   id: number;
-  usuario_id: number;
+  usuarioId: string;
   especialidad: string;
   biografia?: string;
   anios_experiencia: number;
@@ -11,7 +11,7 @@ export interface Teacher {
 }
 
 export interface TeacherCreateDTO {
-  usuario_id: number;
+  usuarioId: string;
   especialidad: string;
   biografia?: string;
   anios_experiencia: number;

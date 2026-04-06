@@ -44,7 +44,7 @@ import {
 // ─── Validación ──────────────────────────────────────────────────────────────
 
 const teacherSchema = z.object({
-  usuario_id: z.coerce.number().min(1, 'Requerido'),
+  usuarioId: z.string().min(1, 'Requerido'),
   especialidad: z.string().min(1, 'Requerido').max(100),
   anios_experiencia: z.coerce.number().min(0, 'Debe ser mayor o igual a 0'),
   biografia: z.string().optional(),
@@ -72,7 +72,7 @@ function TeacherForm({
   
   const userOptions = useMemo(() => {
     return users?.map(u => ({
-      value: Number(u.id),
+      value: String(u.id),
       label: u.fullName
     })) || []
   }, [users])
@@ -81,7 +81,7 @@ function TeacherForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <Controller
-          name="usuario_id"
+          name="usuarioId"
           control={control}
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
@@ -89,7 +89,7 @@ function TeacherForm({
               <Combobox
                 options={userOptions}
                 value={field.value}
-                onChange={(val) => field.onChange(val ? Number(val) : 0)}
+                onChange={(val) => field.onChange(val ? String(val) : '')}
                 placeholder={isLoadingUsers ? "Cargando..." : "Seleccionar usuario..."}
                 searchPlaceholder="Buscar usuario..."
                 emptyText="No se encontraron usuarios"
@@ -177,7 +177,7 @@ function CreateTeacherDialog() {
           </DialogDescription>
         </DialogHeader>
         <TeacherForm
-          defaultValues={{ usuario_id: 0, especialidad: '', anios_experiencia: 0, biografia: '' }}
+          defaultValues={{ usuarioId: 0, especialidad: '', anios_experiencia: 0, biografia: '' }}
           onSubmit={handleSubmit}
           isPending={isPending}
         />
@@ -219,7 +219,7 @@ function EditTeacherDialog({ teacher }: { teacher: Teacher }) {
         </DialogHeader>
         <TeacherForm
           defaultValues={{
-            usuario_id: teacher.usuario_id,
+            usuarioId: teacher.usuarioId,
             especialidad: teacher.especialidad,
             anios_experiencia: teacher.anios_experiencia,
             biografia: teacher.biografia ?? '',
@@ -243,7 +243,7 @@ export function TeachersPage() {
     if (!searchTerm) return teachers
     const term = searchTerm.toLowerCase()
     return teachers.filter(
-      t => t.especialidad.toLowerCase().includes(term) || t.usuario_id.toString().includes(term)
+      t => t.especialidad.toLowerCase().includes(term) || t.usuarioId.toString().includes(term)
     )
   }, [teachers, searchTerm])
 
@@ -315,7 +315,7 @@ export function TeachersPage() {
                   ) : (
                     filtered.map(teacher => (
                       <TableRow key={teacher.id}>
-                        <TableCell className="font-medium text-center">{teacher.usuario_id}</TableCell>
+                        <TableCell className="font-medium text-center">{teacher.usuarioId}</TableCell>
                         <TableCell>{teacher.especialidad}</TableCell>
                         <TableCell>{teacher.anios_experiencia}</TableCell>
                         <TableCell className="max-w-72 truncate">{teacher.biografia || '-'}</TableCell>
