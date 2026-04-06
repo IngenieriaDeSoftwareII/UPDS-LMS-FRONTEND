@@ -200,7 +200,9 @@ export function CourseDetail() {
 
   const estadoInscripcion = (learning?.estadoInscripcion ?? '').toLowerCase()
   const yaInscrito = Boolean(learning?.inscrito)
-  const terminado = estadoInscripcion === 'terminado'
+  const hasPendingLessons =
+    learning?.modulos?.some(m => m.lecciones?.some(l => !l.completada)) ?? false
+  const terminado = estadoInscripcion === 'terminado' && !hasPendingLessons
   const puedeCertificado =
     learning?.puedeDescargarCertificado !== undefined
       ? Boolean(learning.puedeDescargarCertificado)
@@ -479,6 +481,15 @@ export function CourseDetail() {
                 ))}
               </div>
             </div>
+          ) : null}
+
+          {learning && yaInscrito && estadoInscripcion === 'terminado' && hasPendingLessons ? (
+            <Alert className="border-emerald-300 bg-emerald-50 text-emerald-900">
+              <AlertTitle>Se agregaron nuevas lecciones</AlertTitle>
+              <AlertDescription>
+                El curso estaba marcado como completado, pero ahora tiene lecciones pendientes. Marca las nuevas lecciones para actualizar tu progreso.
+              </AlertDescription>
+            </Alert>
           ) : null}
 
           {learning && learning.modulos.length > 0 ? (
@@ -782,7 +793,7 @@ export function CourseDetail() {
                           </div>
 
                           {/* BOTÓN */}
-                          {yaInscrito && !terminado ? (
+                          {yaInscrito ? (
                             <Button
                               size="sm"
                               variant={leccion.completada ? 'outline' : 'default'}
