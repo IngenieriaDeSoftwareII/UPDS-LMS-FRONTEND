@@ -5,7 +5,7 @@ import {
   BarChart3, BookOpenCheck, GraduationCap,
   BookOpen, Tags, Library, LibraryBig,
   Contact, LayoutPanelLeft, Image, List,
-  ListTodo, FileText, Video 
+  ListTodo, FileText, Video
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserRole } from '@/types';
@@ -44,7 +44,6 @@ const navItems: NavItem[] = [
   { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
   { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
   { label: 'Reportes', path: '/teacher/reports', icon: BarChart3, roles: ['Docente'] },
-  { label: 'Probar Se eliminara', path: '/teacher/test/lessons', icon: List, roles: ['Docente'] },
 
   // Estudiante (rutas bajo /student/*)
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['Estudiante'] },
