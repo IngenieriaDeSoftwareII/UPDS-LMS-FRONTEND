@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,15 +7,21 @@ import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '@/lib/api.error'
 
-import { useCourses, useCreateCourse, useUpdateCourse } from '@/hooks/useCourses'
+import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from '@/hooks/useCourses'
+import { useUsers } from '@/hooks/useUsers'
+import { usePersons } from '@/hooks/usePersons'
+import { useTeachers } from '@/hooks/useTeachers'
+import { teacherService } from '@/services/teacher.service'
 import type { Course } from '@/types/course'
 
 import { Button } from '@/components/ui/button'
+import { ConfirmDeleteButton } from '@/components/common/ConfirmDeleteButton'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldLabel, FieldError, FieldGroup } from '@/components/ui/field'
+import { Combobox } from '@/components/ui/combobox'
 import {
   Card,
   CardContent,
@@ -47,6 +53,7 @@ const courseSchema = z.object({
   descripcion: z.string().optional(),
   nivel: z.string().min(1, 'Requerido'),
   imagen_url: z.string().optional(),
+  docenteId: z.any().refine(val => val !== undefined && val !== null && val !== '' && val !== 0, { message: 'Debes asignar un docente al curso' }),
   publicado: z.boolean(),
   duracion_total_min: z.coerce.number().min(0),
   max_estudiantes: z.coerce.number().min(0).optional(),
@@ -72,6 +79,7 @@ function CourseForm({
       descripcion: '',
       nivel: 'Básico',
       imagen_url: '',
+      docenteId: undefined,
       publicado: false,
       duracion_total_min: 60,
       max_estudiantes: undefined,
@@ -79,21 +87,79 @@ function CourseForm({
     },
   })
 
+  const { data: users, isLoading: isLoadingUsers } = useUsers()
+  const { data: persons, isLoading: isLoadingPersons } = usePersons()
+  const { data: teachers, isLoading: isLoadingTeachers } = useTeachers()
+  const isLoadingData = isLoadingUsers || isLoadingPersons || isLoadingTeachers
+
+  const docenteOptions = useMemo(() => {
+    if (!users || !persons || !teachers) return []
+
+    // Filtrar los usuarios que son de rol Docente
+    const docenteUsers = users.filter((user) => {
+      const role = String((user as any).role ?? (user as any).Role ?? '').trim().toLowerCase()
+      return role === 'docente'
+    })
+
+    return docenteUsers.map((user) => {
+      const typedUser = user as any
+      // El ID de usuario sabemos de antemano que es un string (GUID o un alphanumeric ID) directamente del User
+      let userIdStr = String(typedUser.id ?? typedUser.Id)
+      
+      // Asegurarse de no utilizar el PersonId (usualmente un número local DB que rompía el request al POST del Teacher)
+      if (!userIdStr || userIdStr === 'undefined') return null
+
+      // Revisar si ya están creados en la tabla Teachers.
+      // Aquí validamos comparando siempre String(teacher.usuarioId) que es la llave UUID.
+      const teacherMatch = teachers.find(t => String(t.usuarioId) === userIdStr)
+      
+      // Si tiene Teacher, enviamos el ID numérico del maestro (dbo.docentes.id) para crear el curso
+      // Si no, enviamos su GUID original string de identidad como value, que servirá para crearlo al vuelo
+      const finalValue = teacherMatch ? Number(teacherMatch.id) : userIdStr
+
+      return {
+        value: finalValue,
+        label: typedUser.fullName ?? typedUser.Email ?? `Usuario Docente`,      
+      }
+    }).filter(opt => opt !== null) as {value: string | number, label: string}[]
+  }, [users, persons, teachers])
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <FieldGroup>
 
-        <Controller
-          name="titulo"
-          control={control}
-          render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Título</FieldLabel>
-              <Input {...field} />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+          <Controller
+            name="titulo"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Título</FieldLabel>
+                <Input {...field} />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+
+          <Controller
+            name="docenteId"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Docente Asignado</FieldLabel>
+                <Combobox
+                  options={docenteOptions}
+                  value={field.value ?? undefined}
+                  onChange={(val) => field.onChange(val)}
+                  placeholder={isLoadingData ? "Cargando..." : "Seleccionar docente..."}
+                  searchPlaceholder="Buscar docente..."
+                  emptyText="No se encontraron docentes"
+                  disabled={isLoadingData}
+                />
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+        </div>
 
         <Controller
           name="descripcion"
@@ -165,7 +231,7 @@ function CourseForm({
               <input
                 type="checkbox"
                 checked={field.value}
-                onChange={field.onChange}
+                onChange={(e) => field.onChange(e.target.checked)}
               />
               Publicado
             </label>
@@ -197,6 +263,7 @@ export function CoursesPage() {
 
   const { mutate: createCourse, isPending: isCreating } = useCreateCourse()
   const { mutate: updateCourse, isPending: isUpdating } = useUpdateCourse()
+  const { mutate: deleteCourse, isPending: isDeleting } = useDeleteCourse()
 
   const filteredCourses = useMemo(() => {
     if (!courses) return []
@@ -207,20 +274,56 @@ export function CoursesPage() {
 
   // ─── Handlers ─────────────────────────────────────────────────────
 
-  const handleCreate = (values: FormValues) => {
-    createCourse(values as any, {
+  const handleCreate = async (values: FormValues) => {
+    let finalDocenteId = values.docenteId
+    
+    // Si finalDocenteId es un string (UUID del usuario), significa que es un usuario docente que NO
+    // ha sido registrado en la tabla Teachers, por lo que creamos ese registro al vuelo primero.
+    if (typeof finalDocenteId === 'string' && finalDocenteId !== '') {
+      try {
+        const newTeacher = await teacherService.create({ usuarioId: finalDocenteId, especialidad: 'Designado Auto', anios_experiencia: 0 })
+        finalDocenteId = newTeacher.id // Este sí es numérico porque es el ID generado por dbo.docentes
+      } catch (err) {
+        toast.error('Error auto-registrando la cuenta de Docente en base de datos. Completa en Menú de Profesores.')
+        return
+      }
+    }
+
+    const payload = {
+      titulo: values.titulo,
+      descripcion: values.descripcion,
+      nivel: values.nivel,
+      imagen_url: values.imagen_url,
+      docente_id: Number(finalDocenteId),
+      publicado: values.publicado,
+      duracion_total_min: values.duracion_total_min,
+      max_estudiantes: values.max_estudiantes,
+    }
+    createCourse(payload as any, {
       onSuccess: () => {
-        toast.success('Curso creado correctamente')
+        toast.success('Curso creado como borrador. Para activarlo, ve a Editar, marca "Publicado" y confirma minutos y máximo de estudiantes.')
         setCreateOpen(false)
       },
       onError: (err) => toast.error(getApiErrorMessage(err, 'Error al crear')),
     })
   }
 
-  const handleUpdate = (values: FormValues) => {
+  const handleUpdate = async (values: FormValues) => {
     if (!editCourse) return
+
+    let finalDocenteId = values.docenteId
+    if (typeof finalDocenteId === 'string' && finalDocenteId !== '') {
+      try {
+        const newTeacher = await teacherService.create({ usuarioId: finalDocenteId, especialidad: 'Designado Auto', anios_experiencia: 0 })
+        finalDocenteId = newTeacher.id
+      } catch (err) {
+        toast.error('Error auto-registrando la cuenta de Docente en base de datos. Completa en Menú de Profesores.')
+        return
+      }
+    }
+
     updateCourse(
-      { id: editCourse.id, data: values as any },
+      { id: editCourse.id, data: { id: editCourse.id, ...values, docenteId: Number(finalDocenteId) } as any },
       {
         onSuccess: () => {
           toast.success('Curso actualizado')
@@ -229,6 +332,13 @@ export function CoursesPage() {
         onError: (err) => toast.error(getApiErrorMessage(err, 'Error al actualizar')),
       },
     )
+  }
+
+  const handleDelete = (id: number) => {
+    deleteCourse(id, {
+      onSuccess: () => toast.success('Curso desactivado correctamente'),
+      onError: (err) => toast.error(getApiErrorMessage(err, 'Error al desactivar el curso')),
+    })
   }
 
   return (
@@ -302,6 +412,7 @@ export function CoursesPage() {
                 descripcion: editCourse.descripcion || '',
                 nivel: editCourse.nivel,
                 imagen_url: editCourse.imagen_url || '',
+                docenteId: editCourse.docenteId ?? undefined,
                 publicado: editCourse.publicado,
                 duracion_total_min: editCourse.duracion_total_min,
                 max_estudiantes: editCourse.max_estudiantes ?? undefined,
@@ -370,7 +481,7 @@ export function CoursesPage() {
                           {course.publicado ? 'Publicado' : 'Borrador'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -378,6 +489,7 @@ export function CoursesPage() {
                         >
                           <Pencil className="w-4 h-4" />
                         </Button>
+                        <ConfirmDeleteButton onConfirm={() => handleDelete(course.id)} />
                       </TableCell>
                     </TableRow>
                   ))

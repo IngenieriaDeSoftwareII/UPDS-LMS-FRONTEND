@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '@/lib/api.error'
 import { useTeacherCourses, useUpdateCourse } from '@/hooks/useCourses'
+import { useTeacherProfile } from '@/hooks/useTeacherProfile'
 import type { Course } from '@/types/course'
 
 import { Button } from '@/components/ui/button'
@@ -42,18 +43,8 @@ import {
 // ─── IMPORTANTE: Obtén el ID del docente desde tu contexto de autenticación ───
 // Ajusta esto según cómo manejes la autenticación en tu proyecto
 const useCurrentTeacherId = () => {
-  // TODO: Reemplaza esto con tu lógica real de autenticación
-  // Ejemplo: const { user } = useAuth(); return user?.teacherId || user?.id;
-  const [teacherId] = useState(() => {
-    // Esto es un placeholder - reemplázalo con tu implementación real
-    const storedUser = localStorage.getItem('user')
-    if (storedUser) {
-      const user = JSON.parse(storedUser)
-      return user.id // o user.teacher_id según tu estructura
-    }
-    return null
-  })
-  return teacherId
+  const { data: profile } = useTeacherProfile()
+  return profile?.teacherId
 }
 
 // ─── Validación para DOCENTE (solo campos permitidos) ─────────────────────────
@@ -127,7 +118,7 @@ function CourseForm({
             <input
               type="checkbox"
               checked={field.value}
-              onChange={field.onChange}
+              onChange={(e) => field.onChange(e.target.checked)}
               className="h-4 w-4"
             />
             <span className="text-sm">Publicar curso (visible para estudiantes)</span>

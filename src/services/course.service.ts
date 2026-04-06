@@ -22,6 +22,10 @@ function normalizeCourse(raw: Record<string, unknown>): Course {
       raw.docenteId != null || raw.docente_id != null
         ? Number(raw.docenteId ?? raw.docente_id)
         : undefined,
+    categoriaId:
+      raw.categoriaId != null || raw.categoria_id != null
+        ? Number(raw.categoriaId ?? raw.categoria_id)
+        : null,
   }
 }
 
