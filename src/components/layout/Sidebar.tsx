@@ -3,7 +3,9 @@ import {
   LayoutDashboard, Users, UserCog,
   Menu, ChevronLeft, X, ClipboardList,
   BarChart3, BookOpenCheck, GraduationCap,
-  BookOpen, Tags, Library, LibraryBig
+  BookOpen, Tags, Library, LibraryBig,
+  Contact, LayoutPanelLeft, Image, List,
+  ListTodo, FileText, Video 
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserRole } from '@/types';
@@ -27,6 +29,14 @@ const navItems: NavItem[] = [
   { label: 'Cursos', path: '/admin/courses', icon: BookOpen, roles: ['Admin'] },
   { label: 'Categorías', path: '/admin/categories', icon: Tags, roles: ['Admin'] },
   { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] },
+  { label: 'Módulos', path: '/admin/modules', icon: LayoutPanelLeft, roles: ['Admin'] },
+  { label: 'Tareas', path: '/admin/homeworks', icon: FileText, roles: ['Admin'] },
+  { label: 'Entregas', path: '/admin/homeworkSubmissions', icon: ListTodo, roles: ['Admin'] },
+  { label: 'Lecciones', path: '/admin/lessons', icon: List, roles: ['Admin'] },
+  { label: 'Imagenes', path: '/admin/images', icon: Image, roles: ['Admin'] },
+  { label: 'Documentos', path: '/admin/documents', icon: FileText, roles: ['Admin'] },
+  { label: 'Videos', path: '/admin/videos', icon: Video, roles: ['Admin'] },
+
 
   // Docente (rutas bajo /teacher/*)
   { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['Docente'] },
@@ -34,6 +44,7 @@ const navItems: NavItem[] = [
   { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
   { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
   { label: 'Reportes', path: '/teacher/reports', icon: BarChart3, roles: ['Docente'] },
+  { label: 'Probar Se eliminara', path: '/teacher/test/lessons', icon: List, roles: ['Docente'] },
 
   // Estudiante (rutas bajo /student/*)
   { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, roles: ['Estudiante'] },

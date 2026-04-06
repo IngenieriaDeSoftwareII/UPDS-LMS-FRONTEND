@@ -31,14 +31,6 @@ export interface UploadDocumentDto {
   order: number
 }
 
-// DTO update (metadatos únicamente)
-export interface UpdateDocumentMetadataDto {
-  Title: string
-  Order: number
-  PageCount?: number
-  LessonId: number
-}
-
 export const documentContentsService = {
 
   // GET ALL
@@ -70,14 +62,26 @@ export const documentContentsService = {
     })
   },
   //UPDATE
-  update: (id: number, data: FormData | UpdateDocumentMetadataDto) => {
+  update: (
+    id: number,
+    data: FormData | {
+      title: string
+      order: number
+      pageCount?: number
+      lessonId: number
+    }
+  ) => {
     if (data instanceof FormData) {
       return http.put(`/DocumentContents/UpdateFile/${id}`, data, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
     } else {
-      // Los endpoints JSON suelen requerir PascalCase si no se configuró camelCase en el backend
-      return http.put(`/DocumentContents/Update/${id}`, data)
+      return http.put(`/DocumentContents/Update/${id}`, {
+        Title: data.title,
+        Order: data.order,
+        PageCount: data.pageCount,
+        LessonId: data.lessonId 
+      })
     }
   },
   //Para cargar

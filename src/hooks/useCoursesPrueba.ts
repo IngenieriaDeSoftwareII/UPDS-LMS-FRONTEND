@@ -42,3 +42,10 @@ export const useDeleteCoursePrueba = () => {
     },
   })
 }
+
+export const useCoursesByTeacher = (teacherId?: number) =>
+  useQuery({
+    queryKey: ['courses-teacher', teacherId],
+    queryFn: () => coursePruebaService.getByTeacher(teacherId!),
+    enabled: !!teacherId,
+})

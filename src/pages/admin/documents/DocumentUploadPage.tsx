@@ -18,7 +18,7 @@ import {
 
 import { useDocumentContents } from '@/hooks/useDocumentContents'
 import { useLessons } from '@/hooks/useLessons'
-import type { Lesson } from '@/hooks/useLessons'
+import type { Lesson } from '@/services/lessons.service'
 
 export function DocumentUploadPage() {
   const navigate = useNavigate()
@@ -55,9 +55,9 @@ export function DocumentUploadPage() {
       {
         file,
         lessonId,
-        title,
+        title, 
         pageCount,
-        order
+        order 
       },
       {
         onSuccess: () => {

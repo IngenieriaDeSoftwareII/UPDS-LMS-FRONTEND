@@ -30,7 +30,11 @@ export const useUpdateModule = () => {
     },
   })
 }
-
+export const useModuleByCourseId = (courseId: number) =>
+  useQuery({
+    queryKey: ['modules', courseId],
+    queryFn: () => moduleService.getModuleByCourseId(courseId),
+  })
 export const useDeleteModule = () => {
   const qc = useQueryClient()
 

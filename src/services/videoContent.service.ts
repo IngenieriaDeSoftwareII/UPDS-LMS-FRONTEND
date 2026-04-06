@@ -1,11 +1,9 @@
 import http from '@/lib/http'
 
-export interface ImageContent {
+export interface VideoContent {
   contentId: number
-  imageUrl: string
-  format: string
-  sizeKb?: number
-  altText: string
+  videoUrl: string
+  duracionSeg: number
 
   content: {
     id: number
@@ -15,14 +13,18 @@ export interface ImageContent {
   }
 }
 
-const BASE = '/ImageContents'
+const BASE = '/VideoContents'
 
-export const imageContentService = {
-  //  GET ALL
-  getAll: async (): Promise<ImageContent[]> => {
+export const videoContentService = {
+    // GET ALL
+    getAll: async (): Promise<VideoContent[]> => {
     const res = await http.get(`${BASE}/GetAll`)
-    return res.data
-  },
+
+    return res.data.map((v: any) => ({
+        ...v,
+        videoUrl: v.urlVideo, 
+    }))
+    },
 
   // UPLOAD
   upload: async (data: FormData) => {
@@ -32,7 +34,7 @@ export const imageContentService = {
     return res.data
   },
 
-  //  UPDATE
+  // UPDATE
   update: async (id: number, formData: FormData) => {
     const res = await http.put(`${BASE}/Update/${id}`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
@@ -40,7 +42,7 @@ export const imageContentService = {
     return res.data
   },
 
-  //  DELETE
+  // DELETE
   delete: async (id: number) => {
     const res = await http.delete(`${BASE}/Delete/${id}`)
     return res.data

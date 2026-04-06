@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { PlusCircle, Pencil } from 'lucide-react'
+import { PlusCircle, Pencil, Trash2 } from 'lucide-react'
 
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -25,7 +25,6 @@ import {
 
 import { PageHeader } from '@/components/common/PageHeader'
 import { DataTable } from '@/components/common/DataTable'
-import { ConfirmDeleteButton } from '@/components/common/ConfirmDeleteButton'
 
 import {
   useModules,
@@ -34,7 +33,7 @@ import {
   useUpdateModule,
 } from '@/hooks/useModules'
 
-// ✅ cursos reales desde backend nuevo
+// cursos reales desde backend 
 import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
 export default function ModulesPage() {
@@ -48,40 +47,36 @@ export default function ModulesPage() {
   const [open, setOpen] = useState(false)
 
   const [titulo, setTitulo] = useState('')
-  const [orden, setOrden] = useState<number>(1)
   const [cursoId, setCursoId] = useState<number | ''>('')
 
   const [editingModule, setEditingModule] = useState<any | null>(null)
   const isEditing = !!editingModule
 
-  // abrir modal crear
+  // 🔹 abrir modal crear
   const handleOpen = () => {
     setEditingModule(null)
     setTitulo('')
-    setOrden(1)
     setCursoId('')
     setOpen(true)
   }
 
-  // editar
+  // 🔹 editar
   const handleEdit = (module: any) => {
     setEditingModule(module)
     setTitulo(module.titulo)
-    setOrden(module.orden || 1)
     setCursoId(module.cursoId)
     setOpen(true)
   }
 
-  // reset form
+  // 🔹 reset form
   const resetForm = () => {
     setTitulo('')
-    setOrden(1)
     setCursoId('')
     setEditingModule(null)
     setOpen(false)
   }
 
-  // submit
+  // 🔹 submit
   const handleSubmit = () => {
     if (!cursoId) {
       alert('Selecciona un curso')
@@ -95,11 +90,11 @@ export default function ModulesPage() {
 
     if (isEditing) {
       const payload = {
-        id: editingModule.id,
+        id: editingModule.id, // ✅ FIX TypeScript
         cursoId: Number(cursoId),
         titulo,
         descripcion: 'Test',
-        orden: Number(orden),
+        orden: 1,
       }
 
       updateModule.mutate(
@@ -116,7 +111,7 @@ export default function ModulesPage() {
         cursoId: Number(cursoId),
         titulo,
         descripcion: 'Test',
-        orden: Number(orden),
+        orden: 1,
       }
 
       createModule.mutate(payload, {
@@ -125,7 +120,7 @@ export default function ModulesPage() {
     }
   }
 
-  // delete
+  // 🔹 delete
   const handleDelete = (id: number) => {
     if (confirm('¿Seguro que deseas eliminar este módulo?')) {
       deleteModule.mutate(id)
@@ -175,7 +170,7 @@ export default function ModulesPage() {
 
                 {courses.map(c => (
                   <option key={c.id} value={c.id}>
-                    {c.titulo}
+                    {c.titulo} (ID: {c.id})
                   </option>
                 ))}
               </select>
@@ -187,16 +182,6 @@ export default function ModulesPage() {
               <Input
                 value={titulo}
                 onChange={e => setTitulo(e.target.value)}
-              />
-            </div>
-            {/* ORDEN */}
-            <div>
-              <label>Orden</label>
-              <Input
-                type="number"
-                min={1}
-                value={orden}
-                onChange={e => setOrden(Number(e.target.value))}
               />
             </div>
 
@@ -237,25 +222,28 @@ export default function ModulesPage() {
               return (
                 <TableRow key={m.id}>
                   <TableCell>{m.id}</TableCell>
-                  <TableCell>{curso?.titulo ?? 'N/A'}</TableCell>
+                  <TableCell>
+                    {curso ? `${curso.titulo} (ID: ${curso.id})` : 'N/A'}
+                  </TableCell>
                   <TableCell>{m.titulo}</TableCell>
                   <TableCell>{m.orden}</TableCell>
-
+                  {/* Botones */}
                   <TableCell className="flex gap-2">
-
-                    {/* EDIT */}
                     <Button
-                      variant="outline"
-                      size="sm"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => handleEdit(m)}
                     >
                       <Pencil className="w-4 h-4" />
                     </Button>
 
-                    {/* DELETE */}
-                    <ConfirmDeleteButton
-                      onConfirm={() => handleDelete(m.id)}
-                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(m.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
                   </TableCell>
 
                 </TableRow>
