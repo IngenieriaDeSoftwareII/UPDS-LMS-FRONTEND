@@ -18,7 +18,6 @@ import { useAuthStore } from '@/store/auth.store'
 import { inscriptionService } from '@/services/inscription.service'
 import { studentProgressService } from '@/services/student-progress.service'
 import { getApiErrorMessage } from '@/lib/api.error'
-import type { Course } from '@/types/course'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import {
@@ -42,15 +41,9 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 
-const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:5024/api'
-const API_ORIGIN = API_URL.replace(/\/api\/?$/, '')
+const DEFAULT_COURSE_IMAGE_URL = 'https://www.ucentral.edu.co/sites/default/files/imagenes-ucentral/Noticentral/2021-04/04-19-21-tecnicas-de-estudio-03.webp'
 
-const resolveImageUrl = (course: Course | undefined) => {
-  const raw = course?.imagen_url || (course as { imagenUrl?: string } | undefined)?.imagenUrl
-  if (!raw) return ''
-  if (/^https?:\/\//i.test(raw)) return raw
-  return `${API_ORIGIN}${raw.startsWith('/') ? '' : '/'}${raw}`
-}
+const resolveImageUrl = () => DEFAULT_COURSE_IMAGE_URL
 
 function labelInscripcionEstado(raw: string | undefined | null): string {
   const e = (raw ?? '').trim().toLowerCase()
@@ -132,7 +125,7 @@ export function CourseDetail() {
   const course = courseQuery.data
   const learning = learningQuery.data
 
-  const heroImage = useMemo(() => resolveImageUrl(course), [course])
+  const heroImage = useMemo(() => resolveImageUrl(), [])
 
   const estadoInscripcion = (learning?.estadoInscripcion ?? '').toLowerCase()
   const yaInscrito = Boolean(learning?.inscrito)
@@ -214,7 +207,7 @@ export function CourseDetail() {
           <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
           <div className="absolute bottom-4 left-4 right-4 flex flex-wrap items-end justify-between gap-3">
             <div>
-              <span className="mb-4 inline-block rounded-full bg-primary/15 px-3 py-1 text-xs font-medium text-primary">
+              <span className="mb-4 inline-block rounded-full bg-primary/25 px-3 py-1 text-xs font-medium text-white">
                 {nivel ?? '—'}
               </span>
               <h1 className="text-2xl font-bold tracking-tight md:text-3xl">{titulo}</h1>
@@ -240,9 +233,7 @@ export function CourseDetail() {
                 ) : null}
               </div>
               <CardDescription>
-                {learning?.categoriaNombre
-                  ? `Categoría: ${learning.categoriaNombre}`
-                  : 'Información general del curso (API de cursos).'}
+                {descripcion ?? 'Sin descripción disponible.'}
               </CardDescription>
             </div>
             <div className="flex flex-wrap gap-2">

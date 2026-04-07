@@ -3,7 +3,7 @@ import {
   LayoutDashboard, Users, UserCog,
   Menu, ChevronLeft, X, ClipboardList,
   BarChart3, BookOpenCheck, GraduationCap,
-  BookOpen, Tags, Library, LibraryBig
+  BookOpen, Tags, Library
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserRole } from '@/types';
@@ -18,7 +18,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  // Admin routes
+  // Admin routes (Catálogos eliminado)
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { label: 'Personas', path: '/admin/persons', icon: Users, roles: ['Admin'] },
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
@@ -26,7 +26,7 @@ const navItems: NavItem[] = [
   { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
   { label: 'Cursos', path: '/admin/courses', icon: BookOpen, roles: ['Admin'] },
   { label: 'Categorías', path: '/admin/categories', icon: Tags, roles: ['Admin'] },
-  { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] },
+  // { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] }, // ELIMINADO
 
   // Docente (rutas bajo /teacher/*)
   { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['Docente'] },
