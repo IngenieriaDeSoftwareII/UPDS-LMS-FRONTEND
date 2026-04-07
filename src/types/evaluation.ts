@@ -3,6 +3,7 @@ export interface ApiErrorResponse {
 }
 
 export interface CreateEvaluationDto {
+  id?: number
   cursoId: number
   titulo: string
   descripcion?: string
@@ -56,9 +57,27 @@ export interface EvaluationQuestion {
   opciones: EvaluationAnswerOption[]
 }
 
+export interface EvaluationQuestionToTake {
+  id: number
+  evaluacionId: number
+  enunciado: string
+  tipo: string
+  puntos: number
+  orden: number
+  opciones: EvaluationAnswerOptionToTake[]
+}
+
+export interface EvaluationAnswerOptionToTake {
+  id: number
+  texto: string
+  orden: number
+  esCorrecta?: boolean
+}
+
 export interface Evaluation {
   id: number
   cursoId: number
+  nombreCurso?: string
   titulo: string
   descripcion?: string
   tipo: string
@@ -66,7 +85,7 @@ export interface Evaluation {
   puntajeMinimoAprobacion?: number
   intentosPermitidos: number
   tiempoLimiteMax?: number
-  preguntas?: EvaluationQuestion[]
+  preguntas?: EvaluationQuestion[] | EvaluationQuestionToTake[]
 }
 
 export interface EvaluationSubmissionResult {

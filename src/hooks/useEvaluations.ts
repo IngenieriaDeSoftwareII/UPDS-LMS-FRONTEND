@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { AxiosError } from 'axios'
 import { evaluationService } from '@/services/evaluation.service'
+import { useAuthStore } from '@/store/auth.store'
 import type {
   AddEvaluationQuestionDto,
   ApiErrorResponse,
@@ -39,12 +40,20 @@ export const useAddEvaluationQuestion = () =>
     mutationFn: (data: AddEvaluationQuestionDto) => evaluationService.addQuestion(data),
   })
 
-export const useEvaluationByCourseId = (cursoId?: number) =>
-  useQuery({
+export const useEvaluationByCourseId = (cursoId?: number) => {
+  const { role } = useAuthStore()
+
+  return useQuery({
     queryKey: ['evaluation', 'course', cursoId],
-    queryFn: () => evaluationService.getByCourseId(cursoId as number),
+    queryFn: () => {
+      if (role === 'Docente') {
+        return evaluationService.getByCourseIdForTeacher(cursoId as number)
+      }
+      return evaluationService.getByCourseId(cursoId as number)
+    },
     enabled: Boolean(cursoId),
   })
+}
 
 export const useSubmitEvaluation = () =>
   useMutation({
@@ -56,6 +65,16 @@ export const useMyEvaluationGrades = () =>
     queryKey: ['evaluation-grades', 'me'],
     queryFn: evaluationService.getMyGrades,
   })
+
+export const useUpdateEvaluation = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: CreateEvaluationDto }) => evaluationService.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evaluation'] })
+    },
+  })
+}
 
 export const useEvaluationGradesForTeacher = (cursoId?: number) =>
   useQuery({
