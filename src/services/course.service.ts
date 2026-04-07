@@ -32,14 +32,20 @@ function normalizeCourse(raw: Record<string, unknown>): Course {
 export const courseService = {
   ...baseService,
 
-  getAll: (): Promise<Course[]> =>
-    http.get<Course[]>('/Courses').then(res => res.data),
+  getAll: async (): Promise<Course[]> => {
+    const { data } = await http.get<Record<string, unknown>[]>('/Courses')
+    return (Array.isArray(data) ? data : []).map(normalizeCourse)
+  },
 
-  getByTeacher: (teacherId: number): Promise<Course[]> =>
-    http.get<Course[]>(`/Courses/teacher/${teacherId}`).then(res => res.data),
+  getByTeacher: async (teacherId: number): Promise<Course[]> => {
+    const { data } = await http.get<Record<string, unknown>[]>(`/Courses/teacher/${teacherId}`)
+    return (Array.isArray(data) ? data : []).map(normalizeCourse)
+  },
 
-  getByTeacherWithoutEvaluation: (teacherId: number): Promise<Course[]> =>
-    http.get<Course[]>(`/Courses/teacher/${teacherId}/without-evaluation`).then(res => res.data),
+  getByTeacherWithoutEvaluation: async (teacherId: number): Promise<Course[]> => {
+    const { data } = await http.get<Record<string, unknown>[]>(`/Courses/teacher/${teacherId}/without-evaluation`)
+    return (Array.isArray(data) ? data : []).map(normalizeCourse)
+  },
 
   getAllNormalized: async () => {
     const { data } = await http.get<Record<string, unknown>[]>('/Courses')

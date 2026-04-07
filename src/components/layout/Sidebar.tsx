@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Users, UserCog,
   Menu, ChevronLeft, X, ClipboardList,
   BarChart3, BookOpenCheck, GraduationCap,
+  BookOpen, Tags, Library
   BookOpen, Tags, Library, LibraryBig,
   LayoutPanelLeft, Image, List,
   ListTodo, FileText, Video
@@ -20,7 +21,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  // Admin routes
+  // Admin routes (Catálogos eliminado)
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { label: 'Personas', path: '/admin/persons', icon: Users, roles: ['Admin'] },
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
@@ -28,6 +29,7 @@ const navItems: NavItem[] = [
   { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
   { label: 'Cursos', path: '/admin/courses', icon: BookOpen, roles: ['Admin'] },
   { label: 'Categorías', path: '/admin/categories', icon: Tags, roles: ['Admin'] },
+  // { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] }, // ELIMINADO
   { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] },
   { label: 'Módulos', path: '/admin/modules', icon: LayoutPanelLeft, roles: ['Admin'] },
   { label: 'Tareas', path: '/admin/homeworks', icon: FileText, roles: ['Admin'] },

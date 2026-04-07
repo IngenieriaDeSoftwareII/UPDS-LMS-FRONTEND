@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { BookOpenText, Pencil, PlusCircle, Search, ServerCrash, Link2 } from 'lucide-react'
+import { BookOpenText, Pencil, PlusCircle, Search, ServerCrash, Link2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '@/lib/api.error'
@@ -35,6 +35,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+
+const DEFAULT_COURSE_IMAGE_URL = 'https://www.ucentral.edu.co/sites/default/files/imagenes-ucentral/Noticentral/2021-04/04-19-21-tecnicas-de-estudio-03.webp'
 
 function generateSlug(text: string): string {
   return text
@@ -97,7 +107,7 @@ function CategoryForm({
         control={control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Nombre de la categoria</FieldLabel>
+            <FieldLabel>Nombre de la categoría</FieldLabel>
             <Input {...field} />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
@@ -109,7 +119,7 @@ function CategoryForm({
         control={control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Descripcion</FieldLabel>
+            <FieldLabel>Descripción</FieldLabel>
             <Input {...field} />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
@@ -167,7 +177,19 @@ function CategoryEditForm({
         control={control}
         render={({ field, fieldState }) => (
           <Field data-invalid={fieldState.invalid}>
-            <FieldLabel>Nombre de la categoria</FieldLabel>
+            <FieldLabel>Nombre de la categoría</FieldLabel>
+            <Input {...field} />
+            {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+          </Field>
+        )}
+      />
+
+      <Controller
+        name="descripcion"
+        control={control}
+        render={({ field, fieldState }) => (
+          <Field data-invalid={fieldState.invalid}>
+            <FieldLabel>Descripción</FieldLabel>
             <Input {...field} />
             {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
           </Field>
@@ -210,12 +232,12 @@ function CreateCategoryDialog() {
                     titulo: course.titulo,
                     descripcion: course.descripcion,
                     nivel: course.nivel,
-                    imagen_url: course.imagen_url,
-                    docente_id: course.docenteId,
+                    imagenUrl: DEFAULT_COURSE_IMAGE_URL,
+                    docenteId: course.docenteId,
                     categoriaId: newCategory.id,
                     publicado: course.publicado,
-                    duracion_total_min: course.duracion_total_min,
-                    max_estudiantes: course.max_estudiantes,
+                    duracionTotalMin: course.duracion_total_min,
+                    maxEstudiantes: course.max_estudiantes,
                   } as any,
                 })
               }
@@ -225,9 +247,8 @@ function CreateCategoryDialog() {
             await Promise.all(promises)
           }
           
-          toast.success('Categoria creada exitosamente')
+          toast.success('Categoría creada exitosamente')
           
-          // Refrescar los datos
           await Promise.all([
             queryClient.invalidateQueries({ queryKey: ['categories'] }),
             refetchCourses(),
@@ -243,7 +264,7 @@ function CreateCategoryDialog() {
       },
       onError: err => {
         console.error('Error creating category:', err)
-        toast.error(getApiErrorMessage(err, 'Error al crear la categoria'))
+        toast.error(getApiErrorMessage(err, 'Error al crear la categoría'))
       },
     })
   }
@@ -252,13 +273,13 @@ function CreateCategoryDialog() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button size="sm">
-          <PlusCircle className="mr-2 h-4 w-4" /> Nueva categoria
+          <PlusCircle className="mr-2 h-4 w-4" /> Nueva categoría
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Anadir nueva categoria</DialogTitle>
-          <DialogDescription>Ingresa la informacion basica de la categoria.</DialogDescription>
+          <DialogTitle>Añadir nueva categoría</DialogTitle>
+          <DialogDescription>Ingresa la información básica de la categoría.</DialogDescription>
         </DialogHeader>
         <CategoryForm
           defaultValues={{ nombre: '', descripcion: '' }}
@@ -292,7 +313,7 @@ function EditCategoryDialog({ category }: { category: Category }) {
       },
       {
         onSuccess: () => {
-          toast.success('Categoria actualizada exitosamente')
+          toast.success('Categoría actualizada exitosamente')
           setOpen(false)
         },
         onError: err => toast.error(getApiErrorMessage(err, 'Error al actualizar')),
@@ -303,14 +324,14 @@ function EditCategoryDialog({ category }: { category: Category }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Pencil className="h-4 w-4" />
+        <Button variant="outline" size="sm">
+          <Pencil className="h-4 w-4 mr-1" /> Editar
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar categoria</DialogTitle>
-          <DialogDescription>Modifica los datos de la categoria.</DialogDescription>
+          <DialogTitle>Editar categoría</DialogTitle>
+          <DialogDescription>Modifica los datos de la categoría.</DialogDescription>
         </DialogHeader>
         {!categoryDetail || isLoading ? (
           <div className="space-y-4 py-4">
@@ -338,8 +359,8 @@ function DeleteCategoryButton({ categoryId }: { categoryId: number }) {
     <ConfirmDeleteButton
       onConfirm={() =>
         mutate(categoryId, {
-          onSuccess: () => toast.success('Categoria desactivada'),
-          onError: err => toast.error(getApiErrorMessage(err, 'Error al desactivar categoria')),
+          onSuccess: () => toast.success('Categoría desactivada'),
+          onError: err => toast.error(getApiErrorMessage(err, 'Error al desactivar categoría')),
         })
       }
     />
@@ -379,7 +400,6 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
   const handleSaveCourses = async () => {
     setIsUpdating(true)
     try {
-      // Obtener IDs originales de la categoría
       let originalIds: number[] = []
       if (categoryDetail?.cursoIds && Array.isArray(categoryDetail.cursoIds)) {
         originalIds = categoryDetail.cursoIds
@@ -389,7 +409,6 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
         originalIds = (categoryDetail as any).Cursos.map(c => c.id)
       }
 
-      // Calcular qué cursos agregar y quitar
       const toUnlink = originalIds.filter(id => !localSelectedIds.includes(id))
       const toLink = localSelectedIds.filter(id => !originalIds.includes(id))
 
@@ -400,7 +419,6 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
 
       const promises = []
 
-      // Agregar cursos
       for (const courseId of toLink) {
         const course = allCourses.find(x => x.id === courseId)
         if (course) {
@@ -412,19 +430,18 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
                 titulo: course.titulo,
                 descripcion: course.descripcion,
                 nivel: course.nivel,
-                imagen_url: course.imagen_url,
-                docente_id: course.docenteId,
+                imagenUrl: DEFAULT_COURSE_IMAGE_URL,
+                docenteId: course.docenteId,
                 categoriaId: category.id,
                 publicado: course.publicado,
-                duracion_total_min: course.duracion_total_min,
-                max_estudiantes: course.max_estudiantes,
+                duracionTotalMin: course.duracion_total_min,
+                maxEstudiantes: course.max_estudiantes,
               } as any,
             }),
           )
         }
       }
 
-      // Quitar cursos
       for (const courseId of toUnlink) {
         const course = allCourses.find(x => x.id === courseId)
         if (course) {
@@ -436,12 +453,12 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
                 titulo: course.titulo,
                 descripcion: course.descripcion,
                 nivel: course.nivel,
-                imagen_url: course.imagen_url,
-                docente_id: course.docenteId,
+                imagenUrl: DEFAULT_COURSE_IMAGE_URL,
+                docenteId: course.docenteId,
                 categoriaId: null,
                 publicado: course.publicado,
-                duracion_total_min: course.duracion_total_min,
-                max_estudiantes: course.max_estudiantes,
+                duracionTotalMin: course.duracion_total_min,
+                maxEstudiantes: course.max_estudiantes,
               } as any,
             }),
           )
@@ -472,14 +489,14 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" title="Gestionar cursos">
-          <Link2 className="h-4 w-4" />
+        <Button variant="outline" size="sm">
+          <Link2 className="h-4 w-4 mr-1" /> Cursos
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Gestionar cursos</DialogTitle>
-          <DialogDescription>Agrega o quita cursos para la categoria "{category.nombre}".</DialogDescription>
+          <DialogDescription>Agrega o quita cursos para la categoría "{category.nombre}".</DialogDescription>
         </DialogHeader>
         {isLoading ? (
           <div className="space-y-2 py-4">
@@ -542,7 +559,7 @@ function CategoryCoursesPreview({ courseNames }: { courseNames: string[] }) {
       ))}
       {remaining > 0 && (
         <Badge variant="outline" className="text-slate-600 dark:text-slate-300">
-          +{remaining} mas
+          +{remaining} más
         </Badge>
       )}
     </div>
@@ -587,10 +604,10 @@ export function CategoriesPage() {
             <BookOpenText className="h-6 w-6" />
           </div>
           <div>
-            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Administracion</p>
-            <h1 className="text-2xl font-bold">Categorias academicas</h1>
+            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Administración</p>
+            <h1 className="text-2xl font-bold">Categorías académicas</h1>
             <p className="text-sm text-muted-foreground">
-              Gestiona categorias y la vinculacion con cursos desde una vista central.
+              Gestión de categorías y la vinculación con cursos desde una vista central.
             </p>
           </div>
         </div>
@@ -599,7 +616,7 @@ export function CategoriesPage() {
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Buscar por nombre o descripcion"
+              placeholder="Buscar por nombre o descripción"
               className="pl-9"
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
@@ -611,71 +628,88 @@ export function CategoriesPage() {
 
       <Card className="border border-border/70 bg-card/80 shadow-sm">
         <CardHeader className="border-b border-border bg-muted/40">
-          <CardTitle className="text-lg">Categorias registradas</CardTitle>
+          <CardTitle className="text-lg">Categorías registradas</CardTitle>
           <CardDescription>
-            {filtered.length} resultado(s) sobre {totalCategories} categorias y {totalCoursesLinked} cursos vinculados.
+            {filtered.length} resultado(s) sobre {totalCategories} categorías y {totalCoursesLinked} cursos vinculados.
           </CardDescription>
         </CardHeader>
-        <CardContent className="p-6">
+        <CardContent className="p-0">
           {isError ? (
-            <Alert variant="destructive">
-              <ServerCrash className="h-4 w-4" />
-              <AlertTitle>Error al cargar registros</AlertTitle>
-              <AlertDescription className="flex flex-wrap items-center gap-2">
-                {getApiErrorMessage(error, 'Error al cargar categorias')}
-                <Button variant="link" size="sm" onClick={() => refetch()}>
-                  Reintentar
-                </Button>
-              </AlertDescription>
-            </Alert>
+            <div className="p-6">
+              <Alert variant="destructive">
+                <ServerCrash className="h-4 w-4" />
+                <AlertTitle>Error al cargar registros</AlertTitle>
+                <AlertDescription className="flex flex-wrap items-center gap-2">
+                  {getApiErrorMessage(error, 'Error al cargar categorías')}
+                  <Button variant="link" size="sm" onClick={() => refetch()}>
+                    Reintentar
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
           ) : isLoading ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              {Array.from({ length: 4 }).map((_, i) => (
-                <Skeleton key={i} className="h-52 rounded-2xl" />
-              ))}
+            <div className="p-6">
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
             </div>
           ) : filtered.length === 0 ? (
-            <Card className="border-dashed">
-              <CardHeader>
-                <CardTitle>Sin resultados</CardTitle>
-                <CardDescription>No se encontraron categorias con ese criterio de busqueda.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" onClick={() => setSearchTerm('')}>
-                  Limpiar busqueda
-                </Button>
-              </CardContent>
-            </Card>
+            <div className="p-6">
+              <Card className="border-dashed">
+                <CardHeader>
+                  <CardTitle>Sin resultados</CardTitle>
+                  <CardDescription>No se encontraron categorías con ese criterio de búsqueda.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" onClick={() => setSearchTerm('')}>
+                    Limpiar búsqueda
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
-            <div className="grid gap-4 md:grid-cols-2">
-              {filtered.map(category => {
-                const courseNames = coursesByCategory.get(category.id) ?? []
+            <div className="rounded-lg border dark:border-slate-800">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="min-w-48">Categoría</TableHead>
+                    <TableHead className="min-w-64">Descripción</TableHead>
+                    <TableHead>Cursos asociados</TableHead>
+                    <TableHead className="w-48 text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map(category => {
+                    const courseNames = coursesByCategory.get(category.id) ?? []
 
-                return (
-                  <Card key={category.id} className="border border-border shadow-sm">
-                    <CardHeader className="space-y-2">
-                      <CardTitle className="text-lg leading-tight">{category.nombre}</CardTitle>
-                      <CardDescription className="line-clamp-2">
-                        {category.descripcion?.trim() ? category.descripcion : 'Sin descripcion'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Cursos asociados</p>
-                        <CategoryCoursesPreview courseNames={courseNames} />
-                      </div>
-                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                        <span>{courseNames.length} curso(s) vinculados</span>
-                      </div>
-                      <div className="flex items-center justify-end gap-2">
-                        <EditCategoryDialog category={category} />
-                        <ManageCategoryCoursesDialog category={category} />
-                        <DeleteCategoryButton categoryId={category.id} />
-                      </div>
-                    </CardContent>
-                  </Card>
-                )
-              })}
+                    return (
+                      <TableRow key={category.id}>
+                        <TableCell>
+                          <p className="font-semibold text-slate-900 dark:text-slate-100">{category.nombre}</p>
+                        </TableCell>
+                        <TableCell className="text-slate-700 dark:text-slate-300">
+                          {category.descripcion?.trim() ? category.descripcion : 'Sin descripción'}
+                        </TableCell>
+                        <TableCell>
+                          <div className="space-y-2">
+                            <CategoryCoursesPreview courseNames={courseNames} />
+                            <span className="text-xs text-muted-foreground">{courseNames.length} curso(s) vinculados</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-2">
+                            <EditCategoryDialog category={category} />
+                            <ManageCategoryCoursesDialog category={category} />
+                            <DeleteCategoryButton categoryId={category.id} />
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
             </div>
           )}
         </CardContent>
@@ -683,6 +717,3 @@ export function CategoriesPage() {
     </div>
   )
 }
-
-
-

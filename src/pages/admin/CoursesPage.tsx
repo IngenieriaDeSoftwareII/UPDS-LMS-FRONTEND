@@ -1,8 +1,8 @@
-﻿import { useState, useMemo } from 'react'
+﻿import { useState, useMemo, useEffect } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { PlusCircle, Pencil, BookOpen, ServerCrash, Search } from 'lucide-react'
+import { PlusCircle, Pencil, BookOpen, ServerCrash, Search, GraduationCap, Clock, Users } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '@/lib/api.error'
@@ -22,6 +22,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Field, FieldLabel, FieldError, FieldGroup } from '@/components/ui/field'
 import { Combobox } from '@/components/ui/combobox'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Card,
   CardContent,
@@ -48,10 +55,13 @@ import {
 
 // ─── Schema ──────────────────────────────────────────────────────────────
 
+const NIVELES = ['Básico', 'Intermedio', 'Avanzado'] as const
+const DEFAULT_COURSE_IMAGE_URL = 'https://www.ucentral.edu.co/sites/default/files/imagenes-ucentral/Noticentral/2021-04/04-19-21-tecnicas-de-estudio-03.webp'
+
 const courseSchema = z.object({
   titulo: z.string().min(1, 'Requerido').max(200),
   descripcion: z.string().optional(),
-  nivel: z.string().min(1, 'Requerido'),
+  nivel: z.enum(NIVELES, { message: 'Requerido' }),
   imagen_url: z.string().optional(),
   docenteId: z.any().refine(val => val !== undefined && val !== null && val !== '' && val !== 0, { message: 'Debes asignar un docente al curso' }),
   publicado: z.boolean(),
@@ -66,19 +76,21 @@ function CourseForm({
   onSubmit,
   isPending,
   onCancel,
+  isEditMode = false,
 }: {
   defaultValues: Partial<FormValues>
   onSubmit: (values: FormValues) => void
   isPending: boolean
   onCancel: () => void
+  isEditMode?: boolean
 }) {
-  const { control, handleSubmit } = useForm<FormValues>({
+  const { control, handleSubmit, reset } = useForm<FormValues>({
     resolver: zodResolver(courseSchema) as any,
     defaultValues: {
       titulo: '',
       descripcion: '',
       nivel: 'Básico',
-      imagen_url: '',
+      imagen_url: DEFAULT_COURSE_IMAGE_URL,
       docenteId: undefined,
       publicado: false,
       duracion_total_min: 60,
@@ -86,6 +98,21 @@ function CourseForm({
       ...defaultValues,
     },
   })
+
+  // Resetear el formulario cuando cambian los defaultValues
+  useEffect(() => {
+    console.log('🔄 Datos recibidos para resetear:', defaultValues)
+    reset({
+      titulo: defaultValues.titulo ?? '',
+      descripcion: defaultValues.descripcion ?? '',
+      nivel: (defaultValues.nivel as 'Básico' | 'Intermedio' | 'Avanzado') ?? 'Básico',
+      imagen_url: defaultValues.imagen_url ?? DEFAULT_COURSE_IMAGE_URL,
+      docenteId: defaultValues.docenteId,
+      publicado: defaultValues.publicado ?? false,
+      duracion_total_min: defaultValues.duracion_total_min ?? 60,
+      max_estudiantes: defaultValues.max_estudiantes,
+    })
+  }, [defaultValues, reset])
 
   const { data: users, isLoading: isLoadingUsers } = useUsers()
   const { data: persons, isLoading: isLoadingPersons } = usePersons()
@@ -123,6 +150,7 @@ function CourseForm({
       }
     }).filter(opt => opt !== null) as {value: string | number, label: string}[]
   }, [users, persons, teachers])
+  
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <FieldGroup>
@@ -180,7 +208,18 @@ function CourseForm({
             render={({ field, fieldState }) => (
               <Field data-invalid={fieldState.invalid}>
                 <FieldLabel>Nivel</FieldLabel>
-                <Input {...field} />
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar nivel..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {NIVELES.map((nivel) => (
+                      <SelectItem key={nivel} value={nivel}>
+                        {nivel}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
               </Field>
             )}
@@ -203,11 +242,15 @@ function CourseForm({
           name="imagen_url"
           control={control}
           render={({ field, fieldState }) => (
-            <Field data-invalid={fieldState.invalid}>
-              <FieldLabel>Imagen URL</FieldLabel>
-              <Input {...field} />
-              {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-            </Field>
+            <>
+              {isEditMode && (
+                <Field data-invalid={fieldState.invalid}>
+                  <FieldLabel>Imagen URL (No editable)</FieldLabel>
+                  <Input {...field} readOnly className="bg-muted cursor-not-allowed" />
+                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                </Field>
+              )}
+            </>
           )}
         />
 
@@ -257,20 +300,26 @@ function CourseForm({
 export function CoursesPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editCourse, setEditCourse] = useState<Course | null>(null)
-  const [search, setSearch] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
 
-  const { data: courses, isLoading, error } = useCourses()
+  const { data: courses, isLoading, isError, error, refetch } = useCourses()
 
   const { mutate: createCourse, isPending: isCreating } = useCreateCourse()
   const { mutate: updateCourse, isPending: isUpdating } = useUpdateCourse()
-  const { mutate: deleteCourse, isPending: isDeleting } = useDeleteCourse()
+  const { mutate: deleteCourse } = useDeleteCourse()
 
   const filteredCourses = useMemo(() => {
     if (!courses) return []
-    const q = search.toLowerCase()
+    const q = searchTerm.toLowerCase()
     if (!q) return courses
     return courses.filter(c => c.titulo.toLowerCase().includes(q))
-  }, [courses, search])
+  }, [courses, searchTerm])
+
+  // Estadísticas
+  const totalCourses = courses?.length ?? 0
+  const publishedCourses = courses?.filter(c => c.publicado).length ?? 0
+  const totalDuration = courses?.reduce((acc, c) => acc + (c.duracion_total_min || 0), 0) ?? 0
+  const avgDuration = totalCourses > 0 ? Math.round(totalDuration / totalCourses) : 0
 
   // ─── Handlers ─────────────────────────────────────────────────────
 
@@ -293,15 +342,16 @@ export function CoursesPage() {
       titulo: values.titulo,
       descripcion: values.descripcion,
       nivel: values.nivel,
-      imagen_url: values.imagen_url,
-      docente_id: Number(finalDocenteId),
+      imagenUrl: DEFAULT_COURSE_IMAGE_URL,
+      docenteId: Number(finalDocenteId),
       publicado: values.publicado,
-      duracion_total_min: values.duracion_total_min,
-      max_estudiantes: values.max_estudiantes,
+      duracionTotalMin: Number(values.duracion_total_min || 0),
+      maxEstudiantes: values.max_estudiantes ? Number(values.max_estudiantes) : null,
     }
+    console.log('📤 Payload enviado (CREATE):', payload)
     createCourse(payload as any, {
       onSuccess: () => {
-        toast.success('Curso creado como borrador. Para activarlo, ve a Editar, marca "Publicado" y confirma minutos y máximo de estudiantes.')
+        toast.success('Curso creado. Abre Editar para confirmar que todos los campos se guardaron.')
         setCreateOpen(false)
       },
       onError: (err) => toast.error(getApiErrorMessage(err, 'Error al crear')),
@@ -322,14 +372,43 @@ export function CoursesPage() {
       }
     }
 
+    // Construir payload con ID (obligatorio para UPDATE)
+    const updateData: any = {
+      id: editCourse.id,  // ✅ OBLIGATORIO: Backend requiere el ID en el body
+      titulo: values.titulo,
+      descripcion: values.descripcion ?? '',  // Enviar string vacío en lugar de null
+      nivel: values.nivel,
+      imagenUrl: editCourse.imagen_url || DEFAULT_COURSE_IMAGE_URL,
+      docenteId: Number(finalDocenteId),
+      publicado: values.publicado,
+      duracionTotalMin: Number(values.duracion_total_min || 0),
+    }
+
+    // Solo incluir maxEstudiantes si tiene valor válido
+    if (values.max_estudiantes && values.max_estudiantes > 0) {
+      updateData.maxEstudiantes = Number(values.max_estudiantes)
+    }
+
+    // Solo incluir categoriaId si existe
+    if (editCourse.categoriaId) {
+      updateData.categoriaId = editCourse.categoriaId
+    }
+
+    console.log('📤 Payload COMPLETO (UPDATE):', JSON.stringify(updateData, null, 2))
     updateCourse(
-      { id: editCourse.id, data: { id: editCourse.id, ...values, docenteId: Number(finalDocenteId) } as any },
+      {
+        id: editCourse.id,
+        data: updateData,
+      },
       {
         onSuccess: () => {
-          toast.success('Curso actualizado')
+          toast.success('Curso actualizado correctamente')
           setEditCourse(null)
         },
-        onError: (err) => toast.error(getApiErrorMessage(err, 'Error al actualizar')),
+        onError: (err) => {
+          console.error('❌ Error en UPDATE:', err)
+          toast.error(getApiErrorMessage(err, 'Error al actualizar'))
+        },
       },
     )
   }
@@ -344,31 +423,31 @@ export function CoursesPage() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
+      {/* Header - Mismo estilo que CategoriesPage */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-3">
-          <div className="p-2 bg-primary/10 rounded-lg">
-            <BookOpen className="w-5 h-5 text-primary" />
+          <div className="rounded-2xl border border-primary/20 bg-primary/10 p-3 text-primary shadow-inner">
+            <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">Cursos</h1>
+            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">Administración</p>
+            <h1 className="text-2xl font-bold">Cursos académicos</h1>
             <p className="text-sm text-muted-foreground">
-              {filteredCourses.length} registros
+              Gestión de cursos, niveles y asignación docente desde una vista central.
             </p>
           </div>
         </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+          <div className="relative w-full sm:w-80">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar curso..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              className="pl-8 w-60"
+              type="search"
+              placeholder="Buscar por título..."
+              className="pl-9"
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
             />
           </div>
-
           <Dialog open={createOpen} onOpenChange={setCreateOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -383,15 +462,49 @@ export function CoursesPage() {
                   Completa la información del curso
                 </DialogDescription>
               </DialogHeader>
-
               <CourseForm
                 defaultValues={{}}
                 onSubmit={handleCreate}
                 isPending={isCreating}
                 onCancel={() => setCreateOpen(false)}
+                isEditMode={false}
               />
             </DialogContent>
           </Dialog>
+        </div>
+      </div>
+
+      {/* Tarjetas de estadísticas - Mismo estilo que CategoriesPage */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/70">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Total cursos</p>
+          <div className="mt-2 flex items-center gap-2">
+            <BookOpen className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{totalCourses}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/70">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Cursos publicados</p>
+          <div className="mt-2 flex items-center gap-2">
+            <GraduationCap className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{publishedCourses}</p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/70">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Duración promedio</p>
+          <div className="mt-2 flex items-center gap-2">
+            <Clock className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">{avgDuration} min</p>
+          </div>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900/70">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Capacidad total</p>
+          <div className="mt-2 flex items-center gap-2">
+            <Users className="h-4 w-4 text-slate-600 dark:text-slate-300" />
+            <p className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
+              {courses?.reduce((acc, c) => acc + (c.max_estudiantes || 0), 0) ?? 0}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -404,14 +517,13 @@ export function CoursesPage() {
               Modifica los datos del curso
             </DialogDescription>
           </DialogHeader>
-
           {editCourse && (
             <CourseForm
               defaultValues={{
                 titulo: editCourse.titulo,
                 descripcion: editCourse.descripcion || '',
-                nivel: editCourse.nivel,
-                imagen_url: editCourse.imagen_url || '',
+                nivel: (editCourse.nivel as 'Básico' | 'Intermedio' | 'Avanzado') || 'Básico',
+                imagen_url: editCourse.imagen_url || DEFAULT_COURSE_IMAGE_URL,
                 docenteId: editCourse.docenteId ?? undefined,
                 publicado: editCourse.publicado,
                 duracion_total_min: editCourse.duracion_total_min,
@@ -420,82 +532,108 @@ export function CoursesPage() {
               onSubmit={handleUpdate}
               isPending={isUpdating}
               onCancel={() => setEditCourse(null)}
+              isEditMode={true}
             />
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Tabla */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Listado de cursos</CardTitle>
-          <CardDescription>Administra los cursos del sistema</CardDescription>
+      {/* Tabla - Mismo estilo que CategoriesPage */}
+      <Card className="border border-border/70 bg-card/80 shadow-sm">
+        <CardHeader className="border-b border-border bg-muted/40">
+          <CardTitle className="text-lg">Cursos registrados</CardTitle>
+          <CardDescription>
+            {filteredCourses.length} resultado(s) sobre {totalCourses} cursos y {publishedCourses} publicados.
+          </CardDescription>
         </CardHeader>
-
-        <CardContent>
-          {error ? (
-            <Alert variant="destructive">
-              <ServerCrash />
-              <AlertTitle>Error</AlertTitle>
-              <AlertDescription>
-                No se pudieron cargar los cursos
-              </AlertDescription>
-            </Alert>
+        <CardContent className="p-0">
+          {isError ? (
+            <div className="p-6">
+              <Alert variant="destructive">
+                <ServerCrash className="h-4 w-4" />
+                <AlertTitle>Error al cargar registros</AlertTitle>
+                <AlertDescription className="flex flex-wrap items-center gap-2">
+                  {getApiErrorMessage(error, 'Error al cargar cursos')}
+                  <Button variant="link" size="sm" onClick={() => refetch()}>
+                    Reintentar
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          ) : isLoading ? (
+            <div className="p-6">
+              <div className="space-y-4">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-16 w-full" />
+                ))}
+              </div>
+            </div>
+          ) : filteredCourses.length === 0 ? (
+            <div className="p-6">
+              <Card className="border-dashed">
+                <CardHeader>
+                  <CardTitle>Sin resultados</CardTitle>
+                  <CardDescription>No se encontraron cursos para el criterio de búsqueda.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Button variant="outline" onClick={() => setSearchTerm('')}>
+                    Limpiar búsqueda
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Nivel</TableHead>
-                  <TableHead>Duración</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-
-              <TableBody>
-                {isLoading ? (
-                  Array.from({ length: 5 }).map((_, i) => (
-                    <TableRow key={i}>
-                      {Array.from({ length: 5 }).map((_, j) => (
-                        <TableCell key={j}>
-                          <Skeleton className="h-4 w-full" />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : filteredCourses.length === 0 ? (
+            <div className="rounded-lg border dark:border-slate-800">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-10">
-                      No hay cursos
-                    </TableCell>
+                    <TableHead className="min-w-48">Título</TableHead>
+                    <TableHead>Nivel</TableHead>
+                    <TableHead>Duración</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="w-24 text-right">Acciones</TableHead>
                   </TableRow>
-                ) : (
-                  filteredCourses.map(course => (
+                </TableHeader>
+                <TableBody>
+                  {filteredCourses.map(course => (
                     <TableRow key={course.id}>
-                      <TableCell>{course.titulo}</TableCell>
-                      <TableCell>{course.nivel}</TableCell>
-                      <TableCell>{course.duracion_total_min} min</TableCell>
+                      <TableCell>
+                        <p className="font-semibold text-slate-900 dark:text-slate-100">{course.titulo}</p>
+                        {course.descripcion && (
+                          <p className="text-sm text-muted-foreground line-clamp-1">{course.descripcion}</p>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="bg-slate-100 dark:bg-slate-800">
+                          {course.nivel}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-slate-700 dark:text-slate-300">
+                        {course.duracion_total_min} min
+                      </TableCell>
                       <TableCell>
                         <Badge variant={course.publicado ? 'default' : 'secondary'}>
                           {course.publicado ? 'Publicado' : 'Borrador'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right flex items-center justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditCourse(course)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <ConfirmDeleteButton onConfirm={() => handleDelete(course.id)} />
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setEditCourse(course)}
+                            title="Editar curso"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <ConfirmDeleteButton onConfirm={() => handleDelete(course.id)} />
+                        </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
