@@ -41,7 +41,8 @@ const navItems: NavItem[] = [
   // Docente (rutas bajo /teacher/*)
   { label: 'Dashboard', path: '/teacher/dashboard', icon: LayoutDashboard, roles: ['Docente'] },
   { label: 'Mis Cursos', path: '/teacher/courses', icon: BookOpen, roles: ['Docente'] },
-  { label: 'Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
+  { label: 'Crear Evaluaciones', path: '/teacher/evaluations', icon: ClipboardList, roles: ['Docente'] },
+  { label: 'Mis Evaluaciones', path: '/teacher/my-evaluations', icon: FileText, roles: ['Docente'] },
   { label: 'Notas', path: '/teacher/evaluations/grades', icon: BarChart3, roles: ['Docente'] },
   { label: 'Reportes', path: '/teacher/reports', icon: BarChart3, roles: ['Docente'] },
 

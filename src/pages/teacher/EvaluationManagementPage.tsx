@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Controller, useForm, type Resolver } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { ClipboardList, PlusCircle, Trash2, ArrowRight } from 'lucide-react'
-import { useAddEvaluationQuestion, useCreateEvaluation, getApiErrorMessages } from '@/hooks/useEvaluations'
+import { useAddEvaluationQuestion, useCreateEvaluation, useEvaluationByCourseId, getApiErrorMessages } from '@/hooks/useEvaluations'
 import { useCoursesWithoutEvaluation } from '@/hooks/useCoursesWithoutEvaluation'
+import { evaluationService } from '@/services/evaluation.service'
 import type { AddAnswerOptionDto, AddEvaluationQuestionDto, CreateEvaluationDto } from '@/types'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -67,29 +69,106 @@ const buildOptions = (values: QuestionFormValues): AddAnswerOptionDto[] => {
 }
 
 export function EvaluationManagementPage() {
+  const navigate = useNavigate()
+  const { courseId: courseIdParam } = useParams<{ courseId?: string }>()
   const [evaluationId, setEvaluationId] = useState<number | null>(null)
-  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(null)
+  const [selectedCourseId, setSelectedCourseId] = useState<number | null>(courseIdParam ? parseInt(courseIdParam) : null)
   const [savedQuestions, setSavedQuestions] = useState<AddEvaluationQuestionDto[]>([])
   const [backendErrors, setBackendErrors] = useState<string[]>([])
+  const [activeTab, setActiveTab] = useState('datos')
+  const [isEdit, setIsEdit] = useState(false)
+  const [evaluationIdToEdit, setEvaluationIdToEdit] = useState<number | undefined>(undefined)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const coursesWithoutEvaluationQuery = useCoursesWithoutEvaluation()
   const createEvaluation = useCreateEvaluation()
   const addQuestion = useAddEvaluationQuestion()
 
+  const evaluationQuery = useEvaluationByCourseId(courseIdParam ? (selectedCourseId || undefined) : undefined)
+
   const createForm = useForm<CreateFormValues>({
     resolver: zodResolver(createSchema) as Resolver<CreateFormValues>,
-    defaultValues: { tipo: 'multiple_opcion', intentosPermitidos: 1 },
+    defaultValues: { 
+      cursoId: parseInt(courseIdParam || '0'),
+      titulo: '', 
+      descripcion: '', 
+      tipo: 'multiple_opcion', 
+      intentosPermitidos: 1,
+      puntajeMaximo: undefined,
+      puntajeMinimoAprobacion: undefined,
+      tiempoLimiteMax: undefined,
+    },
+    mode: 'onChange',
   })
 
   const questionForm = useForm<QuestionFormValues>({
     resolver: zodResolver(questionSchema) as Resolver<QuestionFormValues>,
-    defaultValues: { tipo: 'opcion_unica', puntos: 1, orden: 1, correcta: 'A' },
+    defaultValues: { 
+      enunciado: '',
+      tipo: 'opcion_unica', 
+      puntos: 1, 
+      orden: 1, 
+      correcta: 'A', 
+      opcionA: '',
+      opcionB: '',
+      opcionC: '', 
+      opcionD: '' 
+    },
+    mode: 'onChange',
   })
 
-  const onCreateEvaluation = (values: CreateFormValues) => {
+  useEffect(() => {
+    if (!courseIdParam) {
+      return
+    }
+
+    if (!evaluationQuery.data || isEdit) {
+      return
+    }
+
+    const data = evaluationQuery.data
+    
+    setIsEdit(true)
+    setEvaluationIdToEdit(data.id)
+    setEvaluationId(data.id)
+    
+    createForm.reset({
+      cursoId: data.cursoId,
+      titulo: data.titulo,
+      descripcion: data.descripcion ?? '',
+      tipo: data.tipo,
+      puntajeMaximo: data.puntajeMaximo,
+      puntajeMinimoAprobacion: data.puntajeMinimoAprobacion,
+      intentosPermitidos: data.intentosPermitidos,
+      tiempoLimiteMax: data.tiempoLimiteMax,
+    })
+    
+    if (data.preguntas && data.preguntas.length > 0) {
+      const questionsFormatted = data.preguntas.map((pregunta: any) => ({
+        evaluacionId: data.id,
+        enunciado: pregunta.enunciado,
+        tipo: pregunta.tipo,
+        puntos: pregunta.puntos,
+        orden: pregunta.orden,
+        opciones: pregunta.opciones.map((opt: any) => ({
+          texto: opt.texto,
+          esCorrecta: opt.esCorrecta,
+          orden: opt.orden,
+        })),
+      }))
+      setSavedQuestions(questionsFormatted)
+    } else {
+      setSavedQuestions([])
+    }
+    
+    setActiveTab('datos')
+  }, [courseIdParam])
+
+  const onCreateEvaluation = async (values: CreateFormValues) => {
     setBackendErrors([])
     const payload: CreateEvaluationDto = {
-      cursoId: values.cursoId,
+      id: isEdit ? evaluationIdToEdit : undefined,
+      cursoId: selectedCourseId || values.cursoId,
       titulo: values.titulo,
       descripcion: values.descripcion?.trim() || undefined,
       tipo: values.tipo,
@@ -99,12 +178,31 @@ export function EvaluationManagementPage() {
       tiempoLimiteMax: values.tiempoLimiteMax,
     }
 
-    createEvaluation.mutate(payload, {
-      onSuccess: response => {
-        setEvaluationId(response.id)
-      },
-      onError: error => setBackendErrors(getApiErrorMessages(error)),
-    })
+    if (isEdit && evaluationIdToEdit) {
+      setIsUpdating(true)
+      try {
+        await evaluationService.deleteQuestions(evaluationIdToEdit)
+        
+        await evaluationService.update(evaluationIdToEdit, payload)
+        
+        for (const question of savedQuestions) {
+          await evaluationService.addQuestion(question)
+        }
+        
+        navigate('/teacher/my-evaluations')
+      } catch (error) {
+        setBackendErrors(getApiErrorMessages(error))
+        setIsUpdating(false)
+      }
+    } else {
+      createEvaluation.mutate(payload, {
+        onSuccess: response => {
+          setEvaluationId(response.id)
+          setActiveTab('preguntas')
+        },
+        onError: error => setBackendErrors(getApiErrorMessages(error)),
+      })
+    }
   }
 
   const onAddQuestion = (values: QuestionFormValues) => {
@@ -133,10 +231,32 @@ export function EvaluationManagementPage() {
     addQuestion.mutate(payload, {
       onSuccess: () => {
         setSavedQuestions(prev => [...prev, payload])
-        questionForm.reset({ tipo: 'opcion_unica', puntos: 1, orden: savedQuestions.length + 2, correcta: 'A' })
+        questionForm.reset({ tipo: 'opcion_unica', puntos: 1, orden: savedQuestions.length + 2, correcta: 'A', opcionC: '', opcionD: '' })
       },
       onError: error => setBackendErrors(getApiErrorMessages(error)),
     })
+  }
+
+  const handleFinalizeEvaluation = () => {
+    setBackendErrors([])
+
+    if (isEdit) {
+      const values = createForm.getValues()
+      onCreateEvaluation(values)
+      return
+    }
+
+    if (!evaluationId) {
+      setBackendErrors(['Debes crear la evaluación antes de finalizar.'])
+      return
+    }
+
+    if (savedQuestions.length === 0) {
+      setBackendErrors(['Debes agregar al menos una pregunta antes de finalizar.'])
+      return
+    }
+
+    navigate('/teacher/my-evaluations')
   }
 
   const handleSelectCourse = (cursoId: number, courseName: string) => {
@@ -152,8 +272,8 @@ export function EvaluationManagementPage() {
           <ClipboardList className="w-5 h-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Crear evaluaciones</h1>
-          <p className="text-sm text-muted-foreground">Crea evaluaciones para tus cursos de forma rápida y sencilla.</p>
+          <h1 className="text-2xl font-bold tracking-tight">{isEdit ? 'Editar evaluación' : 'Crear evaluaciones'}</h1>
+          <p className="text-sm text-muted-foreground">{isEdit ? 'Modifica los detalles de tu evaluación.' : 'Crea evaluaciones para tus cursos de forma rápida y sencilla.'}</p>
         </div>
       </div>
 
@@ -201,7 +321,7 @@ export function EvaluationManagementPage() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <Button className="w-full">
+                      <Button type="button" className="w-full">
                         Seleccionar
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -218,6 +338,7 @@ export function EvaluationManagementPage() {
       {selectedCourseId && (
         <>
           <Button
+            type="button"
             variant="outline"
             onClick={() => {
               setSelectedCourseId(null)
@@ -229,17 +350,17 @@ export function EvaluationManagementPage() {
             ← Cambiar curso
           </Button>
 
-          <Tabs defaultValue="datos" className="w-full">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="datos">
                 Paso 1: Datos
                 {evaluationId && <Badge variant="default" className="ml-2">✓</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="preguntas" disabled={!evaluationId}>
+              <TabsTrigger value="preguntas">
                 Paso 2: Preguntas
                 {(savedQuestions.length ?? 0) > 0 && <Badge variant="default" className="ml-2">{savedQuestions.length}</Badge>}
               </TabsTrigger>
-              <TabsTrigger value="resumen" disabled={!evaluationId || (savedQuestions.length ?? 0) === 0}>
+              <TabsTrigger value="resumen">
                 Paso 3: Resumen
               </TabsTrigger>
             </TabsList>
@@ -296,7 +417,7 @@ export function EvaluationManagementPage() {
                           render={({ field }) => (
                             <Field>
                               <FieldLabel>Puntaje máximo</FieldLabel>
-                              <Input type="number" step="0.5" placeholder="20" {...field} />
+                              <Input type="number" step="0.5" placeholder="20" value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur} />
                             </Field>
                           )}
                         />
@@ -306,7 +427,7 @@ export function EvaluationManagementPage() {
                           render={({ field }) => (
                             <Field>
                               <FieldLabel>Puntaje mínimo (aprobar)</FieldLabel>
-                              <Input type="number" step="0.5" placeholder="12" {...field} />
+                              <Input type="number" step="0.5" placeholder="12" value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur} />
                             </Field>
                           )}
                         />
@@ -316,7 +437,7 @@ export function EvaluationManagementPage() {
                           render={({ field }) => (
                             <Field>
                               <FieldLabel>Tiempo límite (minutos)</FieldLabel>
-                              <Input type="number" placeholder="60" {...field} />
+                              <Input type="number" placeholder="60" value={field.value ?? ''} onChange={field.onChange} onBlur={field.onBlur} />
                             </Field>
                           )}
                         />
@@ -337,16 +458,24 @@ export function EvaluationManagementPage() {
                       </div>
                     </FieldGroup>
 
-                    <Button type="submit" disabled={createEvaluation.isPending || Boolean(evaluationId)} className="w-full">
-                      <PlusCircle className="w-4 h-4 mr-2" />
-                      {createEvaluation.isPending ? 'Creando...' : 'Crear evaluación'}
-                    </Button>
+                    {!isEdit && (
+                      <Button type="submit" disabled={createEvaluation.isPending} className="w-full">
+                        <PlusCircle className="w-4 h-4 mr-2" />
+                        {createEvaluation.isPending ? 'Creando...' : 'Crear evaluación'}
+                      </Button>
+                    )}
 
-                    {evaluationId && (
+                    {!isEdit && evaluationId && (
                       <Alert>
                         <AlertTitle>✓ Evaluación creada</AlertTitle>
                         <AlertDescription>ID: {evaluationId}</AlertDescription>
                       </Alert>
+                    )}
+
+                    {(evaluationId || isEdit) && (
+                      <Button type="button" onClick={() => setActiveTab('preguntas')} className="w-full">
+                        {isEdit ? 'Ver preguntas' : 'Siguiente: Agregar preguntas'}
+                      </Button>
                     )}
                   </form>
                 </CardContent>
@@ -482,7 +611,7 @@ export function EvaluationManagementPage() {
                     ) : (
                       <div className="space-y-3">
                         {savedQuestions.map((question, index) => (
-                          <Card key={`${question.orden}-${index}`}>
+                          <Card key={`question-saved-${index}`}>
                             <CardHeader>
                               <div className="flex items-start justify-between">
                                 <div>
@@ -494,6 +623,7 @@ export function EvaluationManagementPage() {
                                   </CardDescription>
                                 </div>
                                 <Button
+                                  type="button"
                                   variant="ghost"
                                   size="icon"
                                   onClick={() => setSavedQuestions(prev => prev.filter((_, i) => i !== index))}
@@ -509,6 +639,12 @@ export function EvaluationManagementPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {savedQuestions.length > 0 && (
+                <Button type="button" onClick={() => setActiveTab('resumen')} className="w-full">
+                  Siguiente: Ver resumen
+                </Button>
+              )}
             </TabsContent>
 
             {/* Tab: Resumen */}
@@ -516,7 +652,7 @@ export function EvaluationManagementPage() {
               <Card>
                 <CardHeader>
                   <CardTitle>Resumen de tu evaluación</CardTitle>
-                  <CardDescription>Revisa los detalles antes de publicar.</CardDescription>
+                  <CardDescription>Revisa las preguntas y detalles antes de finalizar.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="bg-muted p-4 rounded-lg space-y-3">
@@ -538,12 +674,39 @@ export function EvaluationManagementPage() {
                     </div>
                   </div>
 
-                  <Alert>
-                    <AlertTitle>✓ Evaluación lista para usar</AlertTitle>
-                    <AlertDescription>
-                      Tu evaluación está configurada. Los estudiantes que completen el curso podrán responderla.
-                    </AlertDescription>
-                  </Alert>
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold">Preguntas</h3>
+                    {savedQuestions.map((question, index) => (
+                      <Card key={`question-resumen-${index}`}>
+                        <CardHeader>
+                          <CardTitle className="text-base">
+                            {index + 1}. {question.enunciado}
+                          </CardTitle>
+                          <CardDescription>{question.puntos} punto(s)</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-2">
+                            {question.opciones.map((option, optIndex) => (
+                              <div key={`option-resumen-${index}-${optIndex}`} className={`p-2 rounded ${option.esCorrecta ? 'bg-green-100 border border-green-300' : 'bg-gray-50'}`}>
+                                <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span> {option.texto}
+                                {option.esCorrecta && <span className="ml-2 text-green-600 font-semibold">(Correcta)</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    type="button"
+                    onClick={handleFinalizeEvaluation}
+                    disabled={isEdit ? isUpdating : createEvaluation.isPending}
+                  >
+                    {isEdit ? (isUpdating ? 'Actualizando...' : 'Actualizar evaluación') : (createEvaluation.isPending ? 'Finalizando...' : 'Finalizar evaluación')}
+                  </Button>
                 </CardContent>
               </Card>
             </TabsContent>

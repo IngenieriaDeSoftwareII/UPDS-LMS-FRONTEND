@@ -49,7 +49,7 @@ export function QuestionCard({
 
       <CardContent>
         <RadioGroup
-          value={selectedAnswerId ? String(selectedAnswerId) : undefined}
+          value={selectedAnswerId !== undefined ? String(selectedAnswerId) : ''}
           onValueChange={value => onAnswerChange(Number(value))}
           disabled={isReviewMode}
         >

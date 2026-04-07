@@ -2,17 +2,24 @@ import { useState } from 'react'
 import { BarChart3, ArrowLeft } from 'lucide-react'
 import { useEvaluationGradesForTeacher, getApiErrorMessages } from '@/hooks/useEvaluations'
 import { useMyCourses } from '@/hooks/useMyCourses'
+import { useCoursesWithoutEvaluation } from '@/hooks/useCoursesWithoutEvaluation'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import type { TeacherEvaluationGrade } from '@/types'
 
 export function EvaluationGradesPage() {
   const [selectedCourseId, setSelectedCourseId] = useState<number | undefined>()
 
   const myCoursesQuery = useMyCourses()
+  const coursesWithoutEvaluationQuery = useCoursesWithoutEvaluation()
   const { data, isLoading, isError, error } = useEvaluationGradesForTeacher(selectedCourseId)
+
+  const coursesWithEvaluation = myCoursesQuery.data?.filter(course =>
+    !coursesWithoutEvaluationQuery.data?.some(c => c.id === course.curso.id)
+  )
 
   const selectedCourseName = selectedCourseId
     ? myCoursesQuery.data?.find(c => c.curso.id === selectedCourseId)?.curso.titulo
@@ -20,10 +27,10 @@ export function EvaluationGradesPage() {
 
   // Estadísticas
   const stats = data ? {
-    totalEstudiantes: new Set(data.map(d => d.estudianteId)).size,
-    aprobados: data.filter(d => d.aprobado).length,
-    reprobados: data.filter(d => !d.aprobado).length,
-    promedio: (data.reduce((sum, d) => sum + d.puntajeObtenido, 0) / (data.length || 1)).toFixed(1),
+    totalEstudiantes: new Set(data.map((d: TeacherEvaluationGrade) => d.estudianteId)).size,
+    aprobados: data.filter((d: TeacherEvaluationGrade) => d.aprobado).length,
+    reprobados: data.filter((d: TeacherEvaluationGrade) => !d.aprobado).length,
+    promedio: (data.reduce((sum: number, d: TeacherEvaluationGrade) => sum + d.puntajeObtenido, 0) / (data.length || 1)).toFixed(1),
   } : null
 
   return (
@@ -53,16 +60,16 @@ export function EvaluationGradesPage() {
                 <AlertTitle>Error al cargar cursos</AlertTitle>
                 <AlertDescription>No se pudieron cargar tus cursos. Intenta nuevamente.</AlertDescription>
               </Alert>
-            ) : (myCoursesQuery.data?.length ?? 0) === 0 ? (
+            ) : (coursesWithEvaluation?.length ?? 0) === 0 ? (
               <Alert>
-                <AlertTitle>Sin cursos</AlertTitle>
-                <AlertDescription>No tienes cursos con evaluaciones.</AlertDescription>
+                <AlertTitle>Sin cursos con evaluaciones</AlertTitle>
+                <AlertDescription>No tienes cursos que tengan evaluaciones creadas.</AlertDescription>
               </Alert>
             ) : (
               <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                {myCoursesQuery.data?.map(inscription => (
+                {coursesWithEvaluation?.map(inscription => (
                   <Card
-                    key={inscription.id}
+                    key={inscription.curso.id}
                     className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-primary"
                     onClick={() => setSelectedCourseId(inscription.curso.id)}
                   >
@@ -189,7 +196,7 @@ export function EvaluationGradesPage() {
                         </TableCell>
                       </TableRow>
                     ) : data?.length ? (
-                      data.map(row => {
+                      data.map((row: TeacherEvaluationGrade) => {
                         const percentage = ((row.puntajeObtenido / row.puntajeMaximo) * 100).toFixed(1)
                         return (
                           <TableRow key={row.intentoId}>

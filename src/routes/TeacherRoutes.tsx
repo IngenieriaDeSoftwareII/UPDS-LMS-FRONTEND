@@ -2,6 +2,7 @@ import { Route, Routes } from 'react-router-dom'
 import { TeacherDashboard } from '@/pages/teacher/Dashboard'
 import { EvaluationManagementPage } from '@/pages/teacher/EvaluationManagementPage'
 import { EvaluationGradesPage } from '@/pages/teacher/EvaluationGradesPage'
+import { MyEvaluationsPage } from '@/pages/teacher/MyEvaluationsPage'
 import { TeacherReportsPage } from '@/pages/teacher/reports/TeacherReportsPage'
 import { TeacherCourseReportPage } from '@/pages/teacher/reports/TeacherCourseReportPage'
 import { TeacherCoursesPage } from '@/pages/teacher/TeacherCoursesPage'
@@ -25,7 +26,9 @@ export function TeacherRoutes() {
       <Route path="dashboard" element={<TeacherDashboard />} />
       <Route path="courses" element={<TeacherCoursesPage />} />
       <Route path="evaluations" element={<EvaluationManagementPage />} />
+      <Route path="evaluations/edit/:courseId" element={<EvaluationManagementPage />} />
       <Route path="evaluations/grades" element={<EvaluationGradesPage />} />
+      <Route path="my-evaluations" element={<MyEvaluationsPage />} />
 
       {/* pagina para seleccionar un mudlo y listar lecciones y contenidos del curso, pasarle el id de curso */}
       <Route path="lessons/:id" element={<TeacherLessonsPage />} />

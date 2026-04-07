@@ -16,7 +16,7 @@ export function useMyCourses() {
       if (role === 'Docente') {
         return courseService.getByTeacher(teacherProfileQuery.data?.teacherId ?? 0)
           .then(courses => courses.map(course => ({
-            id: 0,
+            id: course.id,
             estado: 'activo',
             fechaCompletado: null,
             createdAt: new Date().toISOString(),
