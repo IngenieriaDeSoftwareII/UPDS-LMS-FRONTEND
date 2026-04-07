@@ -20,21 +20,20 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  // Admin routes (Catálogos eliminado)
+  // Admin routes
   { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard, roles: ['Admin'] },
   { label: 'Personas', path: '/admin/persons', icon: Users, roles: ['Admin'] },
   { label: 'Usuarios', path: '/admin/users', icon: UserCog, roles: ['Admin'] },
-  { label: 'Reportes (Cursos)', path: '/admin/reports/courses', icon: BarChart3, roles: ['Admin'] },
-  { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
   { label: 'Cursos', path: '/admin/courses', icon: BookOpen, roles: ['Admin'] },
   { label: 'Categorías', path: '/admin/categories', icon: Tags, roles: ['Admin'] },
-  // { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] }, // ELIMINADO
   { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] },
   { label: 'Módulos', path: '/admin/modules', icon: LayoutPanelLeft, roles: ['Admin'] },
   { label: 'Lecciones', path: '/admin/lessons', icon: List, roles: ['Admin'] },
   { label: 'Imagenes', path: '/admin/images', icon: Image, roles: ['Admin'] },
   { label: 'Documentos', path: '/admin/documents', icon: FileText, roles: ['Admin'] },
   { label: 'Videos', path: '/admin/videos', icon: Video, roles: ['Admin'] },
+  { label: 'Reportes (Cursos)', path: '/admin/reports/courses', icon: BarChart3, roles: ['Admin'] },
+  { label: 'Reportes (Docentes)', path: '/admin/reports/teachers', icon: BarChart3, roles: ['Admin'] },
 
 
   // Docente (rutas bajo /teacher/*)
