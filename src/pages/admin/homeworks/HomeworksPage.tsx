@@ -166,7 +166,7 @@ function HomeworkForm({
             )}
           />
 
-           <Controller
+          <Controller
             name="fechaLimite"
             control={control}
             render={({ field, fieldState }) => (
@@ -178,36 +178,36 @@ function HomeworkForm({
             )}
           />
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="formato"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Formato</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Formato..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {documentFormats.map(f => (
-                        <SelectItem key={f} value={f}>{f.toUpperCase()}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            
-            <Field data-invalid={!!errors.file}>
-              <FieldLabel>Archivo Adjunto</FieldLabel>
-              <Input type="file" {...register('file')} />
-              {errors.file && <FieldError errors={[errors.file]} />}
-            </Field>
+          <Controller
+            name="formato"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Formato</FieldLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Formato..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentFormats.map(f => (
+                      <SelectItem key={f} value={f}>{f.toUpperCase()}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+
+          <Field data-invalid={!!errors.file}>
+            <FieldLabel>Archivo Adjunto</FieldLabel>
+            <Input type="file" {...register('file')} />
+            {errors.file && <FieldError errors={[errors.file]} />}
+          </Field>
         </div>
-        
+
         <Controller
           name="urlArchivo"
           control={control}
@@ -243,7 +243,7 @@ export function HomeworksPage() {
 
   const { getAll, create, update, remove } = useHomeWork()
   const { data: homeworks, isLoading, error } = getAll
-  
+
   const { useLessonsList } = useLessons()
   const { data: lessons = [] } = useLessonsList()
 
@@ -261,19 +261,20 @@ export function HomeworksPage() {
 
   const handleCreate = (values: FormValues) => {
     const formData = new FormData()
-    formData.append('lessonId', values.lessonId.toString())
-    formData.append('titulo', values.titulo)
-    formData.append('descripcion', values.descripcion)
-    formData.append('fechaApertura', new Date(values.fechaApertura).toISOString())
-    formData.append('fechaEntrega', new Date(values.fechaEntrega).toISOString())
-    formData.append('fechaLimite', new Date(values.fechaLimite).toISOString())
-    formData.append('formato', values.formato)
-    if (values.urlArchivo) formData.append('urlArchivo', values.urlArchivo)
+    formData.append('LessonId', values.lessonId.toString())
+    formData.append('Titulo', values.titulo)
+    formData.append('Descripcion', values.descripcion)
+    formData.append('FechaApertura', new Date(values.fechaApertura).toISOString())
+    formData.append('FechaEntrega', new Date(values.fechaEntrega).toISOString())
+    formData.append('FechaLimite', new Date(values.fechaLimite).toISOString())
+    formData.append('Formato', values.formato)
+
+    if (values.urlArchivo) formData.append('UrlArchivo', values.urlArchivo)
     if (values.file && values.file.length > 0) {
-      formData.append('file', values.file[0])
-      formData.append('tamanoKb', Math.round(values.file[0].size / 1024).toString())
+      formData.append('File', values.file[0])
+      formData.append('TamanoKb', Math.round(values.file[0].size / 1024).toString())
     } else {
-      formData.append('tamanoKb', '0')
+      formData.append('TamanoKb', '0')
     }
 
     create.mutate(formData, {
@@ -288,17 +289,19 @@ export function HomeworksPage() {
   const handleUpdate = (values: FormValues) => {
     if (!editHomework) return
     const formData = new FormData()
-    formData.append('lessonId', values.lessonId.toString())
-    formData.append('titulo', values.titulo)
-    formData.append('descripcion', values.descripcion)
-    formData.append('fechaApertura', new Date(values.fechaApertura).toISOString())
-    formData.append('fechaEntrega', new Date(values.fechaEntrega).toISOString())
-    formData.append('fechaLimite', new Date(values.fechaLimite).toISOString())
-    formData.append('formato', values.formato)
-    if (values.urlArchivo) formData.append('urlArchivo', values.urlArchivo)
+    formData.append('Id', editHomework.id.toString())
+    formData.append('LessonId', values.lessonId.toString())
+    formData.append('Titulo', values.titulo)
+    formData.append('Descripcion', values.descripcion)
+    formData.append('FechaApertura', new Date(values.fechaApertura).toISOString())
+    formData.append('FechaEntrega', new Date(values.fechaEntrega).toISOString())
+    formData.append('FechaLimite', new Date(values.fechaLimite).toISOString())
+    formData.append('Formato', values.formato)
+
+    if (values.urlArchivo) formData.append('UrlArchivo', values.urlArchivo)
     if (values.file && values.file.length > 0) {
-      formData.append('file', values.file[0])
-      formData.append('tamanoKb', Math.round(values.file[0].size / 1024).toString())
+      formData.append('File', values.file[0])
+      formData.append('TamanoKb', Math.round(values.file[0].size / 1024).toString())
     }
 
     update.mutate(
@@ -312,13 +315,13 @@ export function HomeworksPage() {
       },
     )
   }
-  
+
   const handleDelete = (id: number) => {
     if (confirm('¿Está seguro de eliminar esta tarea?')) {
-        remove.mutate(id, {
-            onSuccess: () => toast.success('Tarea eliminada'),
-            onError: (err) => toast.error(getApiErrorMessage(err, 'Error al eliminar')),
-        })
+      remove.mutate(id, {
+        onSuccess: () => toast.success('Tarea eliminada'),
+        onError: (err) => toast.error(getApiErrorMessage(err, 'Error al eliminar')),
+      })
     }
   }
 
@@ -463,7 +466,7 @@ export function HomeworksPage() {
                       <TableCell>{new Date(homework.fechaApertura).toLocaleDateString()}</TableCell>
                       <TableCell>{new Date(homework.fechaEntrega).toLocaleDateString()}</TableCell>
                       <TableCell>
-                         <span className="uppercase text-xs font-bold text-muted-foreground">{homework.formato as any}</span>
+                        <span className="uppercase text-xs font-bold text-muted-foreground">{homework.formato as any}</span>
                       </TableCell>
                       <TableCell className="text-right whitespace-nowrap">
                         <Button

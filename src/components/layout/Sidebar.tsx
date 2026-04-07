@@ -4,7 +4,7 @@ import {
   Menu, ChevronLeft, X, ClipboardList,
   BarChart3, BookOpenCheck, GraduationCap,
   BookOpen, Tags, Library, LibraryBig,
-  Contact, LayoutPanelLeft, Image, List,
+  LayoutPanelLeft, Image, List,
   ListTodo, FileText, Video
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';

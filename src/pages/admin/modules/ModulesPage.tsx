@@ -16,12 +16,20 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import {
   TableRow,
   TableCell,
   TableHead,
 } from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 import { PageHeader } from '@/components/common/PageHeader'
 import { DataTable } from '@/components/common/DataTable'
@@ -154,26 +162,31 @@ export default function ModulesPage() {
             <DialogTitle>
               {isEditing ? 'Editar Módulo' : 'Nuevo Módulo'}
             </DialogTitle>
+            <DialogDescription>
+              {isEditing ? 'Modifica los campos del módulo seleccionado.' : 'Completa los campos para crear un nuevo módulo.'}
+            </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
 
             {/* CURSO */}
             <div>
-              <label>Curso</label>
-              <select
-                className="w-full border rounded p-2"
-                value={cursoId}
-                onChange={e => setCursoId(Number(e.target.value))}
+              <label className="text-sm font-medium mb-1 block">Curso</label>
+              <Select
+                value={cursoId ? cursoId.toString() : ""}
+                onValueChange={(value) => setCursoId(Number(value))}
               >
-                <option value="">Seleccione un curso</option>
-
-                {courses.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.titulo} (ID: {c.id})
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full bg-background">
+                  <SelectValue placeholder="Seleccione un curso" />
+                </SelectTrigger>
+                <SelectContent>
+                  {courses.map((c) => (
+                    <SelectItem key={c.id} value={c.id.toString()}>
+                      {c.titulo} (ID: {c.id})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             {/* TITULO */}
