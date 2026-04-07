@@ -126,7 +126,7 @@ export function MyEvaluationsPage() {
                   <div className="space-y-6">
                     {evaluationQuery.data.preguntas && evaluationQuery.data.preguntas.length > 0 ? (
                       evaluationQuery.data.preguntas.map((pregunta, idx) => (
-                        <Card key={`pregunta-${idx}`} className="bg-slate-50">
+                        <Card key={`pregunta-${idx}`} className="bg-slate-50 dark:bg-slate-950">
                           <CardHeader>
                             <CardTitle className="text-base">
                               Pregunta {idx + 1} - {pregunta.puntos} pts
@@ -137,7 +137,7 @@ export function MyEvaluationsPage() {
                             <div className="space-y-3">
                               {pregunta.opciones && pregunta.opciones.length > 0 ? (
                                 pregunta.opciones.map((opcion, optIdx) => (
-                                  <div key={`opcion-${idx}-${optIdx}`} className="flex items-start gap-3 p-3 border rounded-md">
+                                  <div key={`opcion-${idx}-${optIdx}`} className="flex items-start gap-3 p-3 border border-border rounded-md bg-background dark:bg-slate-900 dark:border-slate-700">
                                     <div className="flex-1">
                                       <p className="text-sm">{opcion.texto}</p>
                                     </div>

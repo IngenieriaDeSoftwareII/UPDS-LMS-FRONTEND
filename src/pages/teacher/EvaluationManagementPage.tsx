@@ -687,7 +687,7 @@ export function EvaluationManagementPage() {
                         <CardContent>
                           <div className="space-y-2">
                             {question.opciones.map((option, optIndex) => (
-                              <div key={`option-resumen-${index}-${optIndex}`} className={`p-2 rounded ${option.esCorrecta ? 'bg-green-100 border border-green-300' : 'bg-gray-50'}`}>
+                              <div key={`option-resumen-${index}-${optIndex}`} className={`p-2 rounded ${option.esCorrecta ? 'bg-green-100 border border-green-300 dark:bg-green-900/30 dark:border-green-900/50' : 'bg-gray-50 dark:bg-slate-950'}`}>
                                 <span className="font-medium">{String.fromCharCode(65 + optIndex)}.</span> {option.texto}
                                 {option.esCorrecta && <span className="ml-2 text-green-600 font-semibold">(Correcta)</span>}
                               </div>
