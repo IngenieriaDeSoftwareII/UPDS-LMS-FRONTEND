@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { PlusCircle, Pencil, Trash2 } from 'lucide-react'
@@ -19,7 +19,15 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -55,17 +63,17 @@ export function LessonsPage() {
   } = useLessons()
 
   const { data: lessons, isLoading, error } = useLessonsList()
-  const { mutate: createLesson } = useCreateLesson() 
+  const { mutate: createLesson } = useCreateLesson()
   const { mutate: updateLesson } = useUpdateLesson()
   const { mutate: deleteLesson } = useDeleteLesson()
   const { data: modules, isLoading: loadingModules } = useModules()
 
   const isEditing = !!editingLesson
 
-  const { register, handleSubmit, reset, setValue } = useForm<FormValues>({
+  const { register, handleSubmit, reset, setValue, control } = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      moduleId: 1,
+      moduleId: 0,
       title: '',
       description: '',
       order: 1,
@@ -75,7 +83,7 @@ export function LessonsPage() {
   const handleCreate = () => {
     setEditingLesson(null)
     reset({
-      moduleId: 1,
+      moduleId: 0,
       title: '',
       description: '',
       order: 1,
@@ -140,27 +148,36 @@ export function LessonsPage() {
             <DialogTitle>
               {isEditing ? 'Editar Lección' : 'Nueva Lección'}
             </DialogTitle>
+            <DialogDescription>
+              {isEditing ? 'Modifica los detalles de la lección seleccionada.' : 'Completa los campos para crear una nueva lección.'}
+            </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
             <div>
-              <label>Módulo ID</label>
-              <select
-                {...register('moduleId', { valueAsNumber: true })}
-                className="w-full border rounded px-2 py-1"
-                disabled={loadingModules}
-              >
-                <option value="">
-                  {loadingModules ? 'Cargando módulos...' : 'Seleccione un módulo'}
-                </option>
-
-                {modules?.map((module) => (
-                  <option key={module.id} value={module.id}>
-                    ID: {module.id} -{module.titulo}
-                  </option>
-                ))}
-              </select>
+              <label className="text-sm font-medium mb-1 block">Módulo</label>
+              <Controller
+                name="moduleId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value?.toString() || ""}
+                    onValueChange={(val) => field.onChange(Number(val))}
+                  >
+                    <SelectTrigger className="w-full bg-background">
+                      <SelectValue placeholder={loadingModules ? 'Cargando módulos...' : 'Seleccione un módulo'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {modules?.map((module) => (
+                        <SelectItem key={module.id} value={module.id.toString()}>
+                          {module.titulo} (ID: {module.id})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
             <div>

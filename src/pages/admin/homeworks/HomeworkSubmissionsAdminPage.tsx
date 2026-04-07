@@ -92,7 +92,7 @@ function SubmissionForm({
             <Field data-invalid={fieldState.invalid}>
               <FieldLabel>Tarea Destino</FieldLabel>
               <Select value={field.value?.toString() || ''} onValueChange={(val) => field.onChange(Number(val))}>
-                <SelectTrigger>
+                <SelectTrigger className="bg-background">
                   <SelectValue placeholder="Seleccione una tarea..." />
                 </SelectTrigger>
                 <SelectContent>
@@ -121,32 +121,32 @@ function SubmissionForm({
         />
 
         <div className="grid grid-cols-2 gap-4">
-            <Controller
-              name="formato"
-              control={control}
-              render={({ field, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel>Formato</FieldLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Formato..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {documentFormats.map(f => (
-                        <SelectItem key={f} value={f}>{f.toUpperCase()}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-            
-            <Field data-invalid={!!errors.file}>
-              <FieldLabel>Archivo Adjunto</FieldLabel>
-              <Input type="file" {...register('file')} />
-              {errors.file && <FieldError errors={[errors.file]} />}
-            </Field>
+          <Controller
+            name="formato"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Field data-invalid={fieldState.invalid}>
+                <FieldLabel>Formato</FieldLabel>
+                <Select value={field.value || ''} onValueChange={field.onChange}>
+                  <SelectTrigger className="bg-background">
+                    <SelectValue placeholder="Formato..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {documentFormats.map(f => (
+                      <SelectItem key={f} value={f}>{f.toUpperCase()}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+              </Field>
+            )}
+          />
+
+          <Field data-invalid={!!errors.file}>
+            <FieldLabel>Archivo Adjunto</FieldLabel>
+            <Input type="file" {...register('file')} />
+            {errors.file && <FieldError errors={[errors.file]} />}
+          </Field>
         </div>
 
         <Controller
@@ -182,7 +182,7 @@ export function HomeworkSubmissionsAdminPage() {
 
   const { getAll, submit, update, remove } = useHomeworkSubmission()
   const { data: submissions, isLoading, error } = getAll
-  
+
   const { getAll: getHomeworks } = useHomeWork()
   const { data: homeworks = [] } = getHomeworks
 
@@ -193,10 +193,10 @@ export function HomeworkSubmissionsAdminPage() {
     if (!submissions) return []
     const q = search.toLowerCase()
     if (!q) return submissions
-    return submissions.filter(c => 
-        c.homeworkTitulo?.toLowerCase().includes(q) || 
-        c.comentario?.toLowerCase().includes(q) ||
-        c.estudianteNombre?.toLowerCase().includes(q)
+    return submissions.filter(c =>
+      c.homeworkTitulo?.toLowerCase().includes(q) ||
+      c.comentario?.toLowerCase().includes(q) ||
+      c.estudianteNombre?.toLowerCase().includes(q)
     )
   }, [submissions, search])
 
@@ -205,7 +205,8 @@ export function HomeworkSubmissionsAdminPage() {
     formData.append('homeworkId', values.homeworkId.toString())
     formData.append('Formato', values.formato)
     if (values.comentario) formData.append('Comentario', values.comentario)
-    if (values.urlArchivo) formData.append('urlArchivo', values.urlArchivo)
+    if (values.urlArchivo) formData.append('UrlArchivo', values.urlArchivo)
+
     if (values.file && values.file.length > 0) {
       formData.append('File', values.file[0])
       formData.append('TamanoKb', Math.round(values.file[0].size / 1024).toString())
@@ -225,17 +226,22 @@ export function HomeworkSubmissionsAdminPage() {
   const handleUpdate = (values: FormValues) => {
     if (!editSubmission) return
     const formData = new FormData()
+    formData.append('Id', editSubmission.id.toString())
+    formData.append('UsuarioId', editSubmission.usuarioId.toString())
     formData.append('homeworkId', values.homeworkId.toString())
     formData.append('Formato', values.formato)
     if (values.comentario) formData.append('Comentario', values.comentario)
-    if (values.urlArchivo) formData.append('urlArchivo', values.urlArchivo)
+    if (values.urlArchivo) formData.append('UrlArchivo', values.urlArchivo)
+
     if (values.file && values.file.length > 0) {
       formData.append('File', values.file[0])
       formData.append('TamanoKb', Math.round(values.file[0].size / 1024).toString())
+    } else {
+      formData.append('TamanoKb', (editSubmission.tamanoKb || 0).toString())
     }
 
     update.mutate(
-      { id: editSubmission.id, data: formData },
+      { id: values.homeworkId, data: formData },
       {
         onSuccess: () => {
           toast.success('Entrega actualizada')
@@ -245,13 +251,13 @@ export function HomeworkSubmissionsAdminPage() {
       },
     )
   }
-  
+
   const handleDelete = (id: number) => {
     if (confirm('¿Está seguro de eliminar esta entrega?')) {
-        remove.mutate(id, {
-            onSuccess: () => toast.success('Entrega eliminada'),
-            onError: (err) => toast.error(getApiErrorMessage(err, 'Error al eliminar')),
-        })
+      remove.mutate(id, {
+        onSuccess: () => toast.success('Entrega eliminada'),
+        onError: (err) => toast.error(getApiErrorMessage(err, 'Error al eliminar')),
+      })
     }
   }
 

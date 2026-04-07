@@ -200,9 +200,7 @@ export function CourseDetail() {
 
   const estadoInscripcion = (learning?.estadoInscripcion ?? '').toLowerCase()
   const yaInscrito = Boolean(learning?.inscrito)
-  const hasPendingLessons =
-    learning?.modulos?.some(m => m.lecciones?.some(l => !l.completada)) ?? false
-  const terminado = estadoInscripcion === 'terminado' && !hasPendingLessons
+  const terminado = estadoInscripcion === 'terminado'
   const puedeCertificado =
     learning?.puedeDescargarCertificado !== undefined
       ? Boolean(learning.puedeDescargarCertificado)
@@ -483,15 +481,6 @@ export function CourseDetail() {
             </div>
           ) : null}
 
-          {learning && yaInscrito && estadoInscripcion === 'terminado' && hasPendingLessons ? (
-            <Alert className="border-emerald-300 bg-emerald-50 text-emerald-900">
-              <AlertTitle>Se agregaron nuevas lecciones</AlertTitle>
-              <AlertDescription>
-                El curso estaba marcado como completado, pero ahora tiene lecciones pendientes. Marca las nuevas lecciones para actualizar tu progreso.
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
           {learning && learning.modulos.length > 0 ? (
             <div className="space-y-3">
               <h2 className="text-lg font-semibold">Contenido del curso</h2>
@@ -552,12 +541,12 @@ export function CourseDetail() {
                       return Number(lessonId) === Number(leccion.id)
                     })
                     // VIDEOS
-                      const lessonVideos = (videos ?? []).filter((v: any) => {
-                        const lessonId =
-                          v.content?.lessonId ??
-                          v.lessonId
+                    const lessonVideos = (videos ?? []).filter((v: any) => {
+                      const lessonId =
+                        v.content?.lessonId ??
+                        v.lessonId
 
-                        return Number(lessonId) === Number(leccion.id)
+                      return Number(lessonId) === Number(leccion.id)
                     })
 
                     //  TAREAS (HOMEWORKS)
@@ -607,7 +596,7 @@ export function CourseDetail() {
                         id: v.contentId,
                         title: v.content?.title ?? 'Video',
                         order: Number(v.content?.order ?? 0),
-                        url: v.videoUrl, 
+                        url: v.videoUrl,
                       })),
 
                       ...lessonHWs.map((hw: getHomeWorkDto) => {
@@ -793,7 +782,7 @@ export function CourseDetail() {
                           </div>
 
                           {/* BOTÓN */}
-                          {yaInscrito ? (
+                          {yaInscrito && !terminado ? (
                             <Button
                               size="sm"
                               variant={leccion.completada ? 'outline' : 'default'}
@@ -833,20 +822,22 @@ export function CourseDetail() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>Entregar Tarea</DialogTitle>
-            <DialogDescription>
-              {submissionHomework?.titulo}
-              {submissionHomework && (
-                <div className="mt-4 p-3 bg-muted rounded-md space-y-1 text-xs">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-muted-foreground uppercase opacity-70">Apertura</span>
-                    <span>{new Date(submissionHomework.fechaApertura).toLocaleString()}</span>
+            <DialogDescription asChild>
+              <div>
+                {submissionHomework?.titulo}
+                {submissionHomework && (
+                  <div className="mt-4 p-3 bg-muted rounded-md space-y-1 text-xs">
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-muted-foreground uppercase opacity-70">Apertura</span>
+                      <span>{new Date(submissionHomework.fechaApertura).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between border-t border-border pt-1 mt-1 font-medium text-destructive">
+                      <span className="uppercase opacity-70">Fecha Límite</span>
+                      <span>{new Date(submissionHomework.fechaEntrega).toLocaleString()}</span>
+                    </div>
                   </div>
-                  <div className="flex justify-between border-t border-border pt-1 mt-1 font-medium text-destructive">
-                    <span className="uppercase opacity-70">Fecha Límite</span>
-                    <span>{new Date(submissionHomework.fechaEntrega).toLocaleString()}</span>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
 
