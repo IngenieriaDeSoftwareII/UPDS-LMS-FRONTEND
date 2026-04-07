@@ -10,6 +10,7 @@ export interface LoginDto {
 export interface AuthResponse {
   accessToken: string
   refreshToken: string
+  sessionTTL: number   // ms hasta que expira el refresh token
   role: UserRole
   redirectTo: string
 }

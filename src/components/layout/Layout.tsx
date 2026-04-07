@@ -5,9 +5,11 @@ import { Sidebar } from './Sidebar'
 import { Navbar } from './Navbar'
 import { cn } from '@/lib/utils'
 import { useIdleTimeout } from '@/hooks/useIdleTimeout'
+import { useSessionExpiry } from '@/hooks/useSessionExpiry'
 import { IdleWarningModal } from '@/components/IdleWarningModal'
 import { SessionLockModal } from '@/components/SessionLockModal'
 import { useAuthStore } from '@/store/auth.store'
+import { authService } from '@/services/auth.service'
 
 type IdleState = 'active' | 'warning' | 'locked'
 
@@ -15,9 +17,17 @@ const COUNTDOWN_START = 60
 
 export function Layout() {
   const navigate = useNavigate()
-  const logout = useAuthStore(s => s.logout)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const [idleState, setIdleState]     = useState<IdleState>('active')
+  const logout         = useAuthStore(s => s.logout)
+  const setAuth        = useAuthStore(s => s.setAuth)
+  const sessionTTL     = useAuthStore(s => s.sessionTTL)
+  const sessionExpiresAt = useAuthStore(s => s.sessionExpiresAt)
+
+  const ttl = sessionTTL ?? 15 * 60 * 1000
+  const buffer = ttl >= 120_000 ? 60_000 : 15_000
+  const warnAfter = ttl - buffer
+  const lockAfter = ttl
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true)
+  const [idleState, setIdleState] = useState<IdleState>('active')
   const [secondsLeft, setSecondsLeft] = useState(COUNTDOWN_START)
   const countdownRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
@@ -40,11 +50,29 @@ export function Layout() {
     setSecondsLeft(COUNTDOWN_START)
   }, [])
 
+  const handleRenewNeeded = useCallback(async () => {
+    const { refreshToken } = useAuthStore.getState()
+    if (!refreshToken) return
+    try {
+      const data = await authService.refresh(refreshToken)
+      setAuth(data)
+    } catch {
+      // Si falla, useSessionExpiry manejará el logout al expirar
+    }
+  }, [setAuth])
+
+  useSessionExpiry(() => setIdleState('locked'))
+
   const { reset } = useIdleTimeout({
-    onWarn:   handleWarn,
-    onLock:   handleLock,
+    warnAfter,
+    lockAfter,
+    onWarn: handleWarn,
+    onLock: handleLock,
     onActive: handleActive,
-    enabled:  idleState !== 'locked',
+    enabled: idleState !== 'locked',
+    expiresAt: sessionExpiresAt,
+    renewThreshold: buffer + 5_000,
+    onRenewNeeded: handleRenewNeeded,
   })
 
   const handleContinue = useCallback(() => reset(), [reset])
@@ -57,7 +85,7 @@ export function Layout() {
 
   const handleUnlocked = useCallback(() => reset(), [reset])
 
-  const handleLogoutFromLock = useCallback(() => navigate('/login'), [navigate])
+  const handleLogoutFromLock = useCallback(() => navigate('/login', { replace: true }), [navigate])
 
   useEffect(() => () => clearInterval(countdownRef.current), [])
 

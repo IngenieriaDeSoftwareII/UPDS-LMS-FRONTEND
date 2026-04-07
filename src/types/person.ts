@@ -12,6 +12,11 @@ export interface PersonDto {
   phoneNumber: string | null
   address: string | null
   profilePictureUrl: string | null
+  isActive: boolean
+}
+
+export interface ChangePersonStatusDto {
+  isActive: boolean
 }
 
 export interface CreatePersonDto {

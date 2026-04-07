@@ -3,17 +3,10 @@ import { useNavigate } from 'react-router-dom'
 import { authService } from '@/services/auth.service'
 import { profileService } from '@/services/profile.service'
 import { useAuthStore } from '@/store/auth.store'
-import type { LoginDto, UserRole } from '@/types/auth'
-
-const roleRoutes: Record<UserRole, string> = {
-  Admin: '/admin/dashboard',
-  Docente: '/teacher/dashboard',
-  Estudiante: '/student/dashboard',
-}
+import type { LoginDto } from '@/types/auth'
 
 export const useLogin = () => {
   const { setAuth, setProfile } = useAuthStore()
-  const navigate = useNavigate()
 
   return useMutation({
     mutationFn: (data: LoginDto) => authService.login(data),
@@ -22,7 +15,6 @@ export const useLogin = () => {
       // El token ya está en el store — el interceptor lo incluirá en esta llamada
       const profile = await profileService.getMe()
       setProfile(profile)
-      navigate(roleRoutes[data.role], { replace: true })
     },
   })
 }
