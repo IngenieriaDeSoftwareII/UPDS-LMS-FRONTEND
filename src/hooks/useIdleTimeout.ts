@@ -35,9 +35,6 @@ export function useIdleTimeout({
     warnTimer.current = setTimeout(onWarn, warnAfter)
     lockTimer.current = setTimeout(onLock, lockAfter)
 
-    console.log(lockAfter);
-    console.log(DEFAULT_RENEW_THRESHOLD);
-
     if (expiresAt && onRenewNeeded && !isRenewing.current) {
       const remaining = expiresAt - Date.now()
       if (remaining > 0 && remaining < renewThreshold) {
