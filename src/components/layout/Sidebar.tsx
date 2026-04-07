@@ -6,7 +6,7 @@ import {
   BookOpen, Tags, Library
   BookOpen, Tags, Library, LibraryBig,
   LayoutPanelLeft, Image, List,
-  ListTodo, FileText, Video
+  FileText, Video
 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth.store';
 import type { UserRole } from '@/types';
@@ -32,8 +32,6 @@ const navItems: NavItem[] = [
   // { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] }, // ELIMINADO
   { label: 'Catálogos', path: '/admin/catalogs', icon: LibraryBig, roles: ['Admin'] },
   { label: 'Módulos', path: '/admin/modules', icon: LayoutPanelLeft, roles: ['Admin'] },
-  { label: 'Tareas', path: '/admin/homeworks', icon: FileText, roles: ['Admin'] },
-  { label: 'Entregas', path: '/admin/homeworkSubmissions', icon: ListTodo, roles: ['Admin'] },
   { label: 'Lecciones', path: '/admin/lessons', icon: List, roles: ['Admin'] },
   { label: 'Imagenes', path: '/admin/images', icon: Image, roles: ['Admin'] },
   { label: 'Documentos', path: '/admin/documents', icon: FileText, roles: ['Admin'] },

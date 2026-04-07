@@ -40,6 +40,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Progress } from '@/components/ui/progress'
 import { Skeleton } from '@/components/ui/skeleton'
 //mio
@@ -66,8 +73,9 @@ export function CourseDetail() {
   const { data: documents } = useDocumentsList()
   const { useImagesList } = useImageContents()
   const { data: images } = useImagesList()
-  const { getAll: getHomeworks } = useHomeWork()
+  const { getAll: getHomeworks, getUrl: getHomeworkUrl } = useHomeWork()
   const { data: homeworks = [] } = getHomeworks
+  console.log('STUDENT_HOMEWORKS:', homeworks)
   const { getAll: getSubmissions, submit: submitHomework } = useHomeworkSubmission()
   const { data: submissions = [] } = getSubmissions
   const { useVideosList } = useVideoContents()
@@ -480,17 +488,21 @@ export function CourseDetail() {
 
               {/* SELECT DE MÓDULOS */}
               <label className="text-sm font-medium">Módulos:</label>
-              <select
-                className="w-full border rounded-lg p-2"
+              <Select
                 value={selectedModuleId?.toString() ?? ''}
-                onChange={(e) => setSelectedModuleId(Number(e.target.value))}
+                onValueChange={(val) => setSelectedModuleId(Number(val))}
               >
-                {learning.modulos.map(mod => (
-                  <option key={mod.id} value={mod.id}>
-                    {mod.titulo}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Seleccione un módulo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {learning.modulos.map((mod) => (
+                    <SelectItem key={mod.id} value={mod.id.toString()}>
+                      {mod.titulo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
               {/* 🔥 LECCIONES DEL MÓDULO SELECCIONADO */}
               {!selectedModule ? (
@@ -593,6 +605,7 @@ export function CourseDetail() {
                       })),
 
                       ...lessonHWs.map((hw: getHomeWorkDto) => {
+                        console.log('STUDENT_HW_ITEM:', hw)
                         const mySubmission = submissions.find(s =>
                           s.homeworkId === hw.id &&
                           s.usuarioId === profileQuery.data?.personId
@@ -735,16 +748,41 @@ export function CourseDetail() {
                                           </p>
                                         )}
 
-                                        <div className="flex justify-end mt-2">
+                                        <div className="flex justify-end mt-2 gap-2">
                                           {isAuthenticated && role === 'Estudiante' && yaInscrito && (
-                                            <Button
-                                              size="xs"
-                                              variant={isSubmitted ? 'outline' : 'default'}
-                                              disabled={isSubmitted && isGraded}
-                                              onClick={() => setSubmissionHomework(hw)}
-                                            >
-                                              {isSubmitted ? 'Ver / Editar entrega' : 'Realizar entrega'}
-                                            </Button>
+                                            <>
+                                              {(hw.urlArchivo || (hw as any).url_archivo) && (
+                                                <Button
+                                                  size="xs"
+                                                  variant="outline"
+                                                  className="gap-1.5"
+                                                  onClick={async () => {
+                                                    try {
+                                                      const res = await getHomeworkUrl.mutateAsync(hw.id)
+                                                      window.open(res.url, '_blank')
+                                                    } catch {
+                                                       toast.error('No se pudo abrir el archivo de la tarea')
+                                                    }
+                                                  }}
+                                                  disabled={getHomeworkUrl.isPending}
+                                                >
+                                                  {getHomeworkUrl.isPending && getHomeworkUrl.variables === hw.id ? (
+                                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                                  ) : (
+                                                    <FileText className="h-3.5 w-3.5" />
+                                                  )}
+                                                  Ver enunciado
+                                                </Button>
+                                              )}
+                                              <Button
+                                                size="xs"
+                                                variant={isSubmitted ? 'outline' : 'default'}
+                                                disabled={isSubmitted && isGraded}
+                                                onClick={() => setSubmissionHomework(hw)}
+                                              >
+                                                {isSubmitted ? 'Ver / Editar entrega' : 'Realizar entrega'}
+                                              </Button>
+                                            </>
                                           )}
                                         </div>
                                       </div>
