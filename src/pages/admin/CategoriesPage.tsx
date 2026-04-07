@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { BookOpenText, Pencil, PlusCircle, Search, ServerCrash, Link2, Trash2 } from 'lucide-react'
+import { BookOpenText, Pencil, PlusCircle, Search, ServerCrash, Link2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '@/lib/api.error'
@@ -384,7 +384,7 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
       } else if (Array.isArray(categoryDetail.cursos) && categoryDetail.cursos.length > 0) {
         ids = categoryDetail.cursos.map(c => c.id)
       } else if (Array.isArray((categoryDetail as any).Cursos) && (categoryDetail as any).Cursos.length > 0) {
-        ids = (categoryDetail as any).Cursos.map(c => c.id)
+        ids = (categoryDetail as any).Cursos.map((c: any) => c.id)
       }
       setLocalSelectedIds(ids)
     }
@@ -406,7 +406,7 @@ function ManageCategoryCoursesDialog({ category }: { category: Category }) {
       } else if (categoryDetail?.cursos && Array.isArray(categoryDetail.cursos)) {
         originalIds = categoryDetail.cursos.map(c => c.id)
       } else if ((categoryDetail as any)?.Cursos && Array.isArray((categoryDetail as any).Cursos)) {
-        originalIds = (categoryDetail as any).Cursos.map(c => c.id)
+        originalIds = (categoryDetail as any).Cursos.map((c: any) => c.id)
       }
 
       const toUnlink = originalIds.filter(id => !localSelectedIds.includes(id))
