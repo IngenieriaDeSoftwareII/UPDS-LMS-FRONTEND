@@ -3,7 +3,6 @@ import {
   LayoutDashboard, Users, UserCog,
   Menu, ChevronLeft, X, ClipboardList,
   BarChart3, BookOpenCheck, GraduationCap,
-  BookOpen, Tags, Library
   BookOpen, Tags, Library, LibraryBig,
   LayoutPanelLeft, Image, List,
   FileText, Video
