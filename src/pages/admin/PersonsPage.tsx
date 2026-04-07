@@ -2,12 +2,12 @@ import { useState, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { PlusCircle, Pencil, Users, ServerCrash, Search } from 'lucide-react'
+import { PlusCircle, Pencil, Users, ServerCrash, Search, UserX, UserCheck } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { getApiErrorMessage } from '@/lib/api.error'
 
-import { usePersons, useCreatePerson, useUpdatePerson } from '@/hooks/usePersons'
+import { usePersons, useCreatePerson, useUpdatePerson, useChangePersonStatus } from '@/hooks/usePersons'
 import type { Gender, PersonDto } from '@/types/person'
 import { DEPARTAMENTOS } from '@/types/person'
 
@@ -48,6 +48,17 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 
 // ─── Validación ──────────────────────────────────────────────────────────────
 
@@ -220,11 +231,69 @@ function PersonForm({
   )
 }
 
+// ─── AlertDialog: cambiar estado ─────────────────────────────────────────────
+
+function ToggleStatusDialog({
+  person,
+  onClose,
+}: {
+  person: PersonDto | null
+  onClose: () => void
+}) {
+  const { mutate: changeStatus, isPending } = useChangePersonStatus()
+  const isDeactivating = person?.isActive ?? false
+
+  const handleConfirm = () => {
+    if (!person) return
+    changeStatus(
+      { id: person.id, data: { isActive: !person.isActive } },
+      {
+        onSuccess: () => {
+          toast.success(isDeactivating ? 'Persona desactivada correctamente' : 'Persona reactivada correctamente')
+          onClose()
+        },
+        onError: (err) => toast.error(getApiErrorMessage(err, 'No se pudo cambiar el estado')),
+      },
+    )
+  }
+
+  return (
+    <AlertDialog open={!!person} onOpenChange={(v) => { if (!v) onClose() }}>
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogMedia>
+            {isDeactivating ? <UserX /> : <UserCheck />}
+          </AlertDialogMedia>
+          <AlertDialogTitle>
+            {isDeactivating ? '¿Desactivar persona?' : '¿Activar persona?'}
+          </AlertDialogTitle>
+          <AlertDialogDescription>
+            {isDeactivating
+              ? `${person?.firstName} ${person?.lastName} quedará inactiva en el sistema.`
+              : `${person?.firstName} ${person?.lastName} será reactivada en el sistema.`}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={onClose}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            variant={isDeactivating ? 'destructive' : 'default'}
+            onClick={handleConfirm}
+            disabled={isPending}
+          >
+            {isPending ? 'Procesando...' : isDeactivating ? 'Desactivar' : 'Activar'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export function PersonsPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [editPerson, setEditPerson] = useState<PersonDto | null>(null)
+  const [togglePerson, setTogglePerson] = useState<PersonDto | null>(null)
   const [search, setSearch] = useState('')
 
   const { data: persons, isLoading, error } = usePersons()
@@ -373,6 +442,7 @@ export function PersonsPage() {
                   <TableHead>Género</TableHead>
                   <TableHead>Teléfono</TableHead>
                   <TableHead>Dirección</TableHead>
+                  <TableHead>Estado</TableHead>
                   <TableHead className="text-right">Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -380,20 +450,20 @@ export function PersonsPage() {
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <TableRow key={i}>
-                      {Array.from({ length: 6 }).map((_, j) => (
+                      {Array.from({ length: 7 }).map((_, j) => (
                         <TableCell key={j}><Skeleton className="h-4 w-full" /></TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : filteredPersons.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-10 text-muted-foreground">
                       {search ? 'Sin resultados para la búsqueda.' : 'No hay personas registradas.'}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredPersons.map(person => (
-                    <TableRow key={person.id}>
+                    <TableRow key={person.id} className={!person.isActive ? 'opacity-50' : ''}>
                       <TableCell className="font-medium">
                         {person.firstName} {person.lastName} {person.motherLastName}
                       </TableCell>
@@ -412,15 +482,32 @@ export function PersonsPage() {
                       <TableCell className="max-w-[160px] truncate">
                         {person.address ?? '—'}
                       </TableCell>
+                      <TableCell>
+                        <Badge variant={person.isActive ? 'default' : 'outline'}>
+                          {person.isActive ? 'Activo' : 'Inactivo'}
+                        </Badge>
+                      </TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          title="Editar"
-                          onClick={() => setEditPerson(person)}
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </Button>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Editar"
+                            onClick={() => setEditPerson(person)}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title={person.isActive ? 'Desactivar' : 'Activar'}
+                            onClick={() => setTogglePerson(person)}
+                          >
+                            {person.isActive
+                              ? <UserX className="w-4 h-4" />
+                              : <UserCheck className="w-4 h-4" />}
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -430,6 +517,8 @@ export function PersonsPage() {
           )}
         </CardContent>
       </Card>
+
+      <ToggleStatusDialog person={togglePerson} onClose={() => setTogglePerson(null)} />
     </div>
   )
 }

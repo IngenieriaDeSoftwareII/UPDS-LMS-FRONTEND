@@ -7,7 +7,13 @@ interface Props {
 }
 
 export function ProtectedRoute({ allowedRoles }: Props) {
-  const { isAuthenticated, hasRole } = useAuthStore()
+  const { isAuthenticated, sessionExpiresAt, hasRole, logout } = useAuthStore()
+
+  // Sesión expirada mientras el navegador estaba cerrado
+  if (isAuthenticated && sessionExpiresAt && Date.now() > sessionExpiresAt) {
+    logout()
+    return <Navigate to="/login" replace />
+  }
 
   if (!isAuthenticated) return <Navigate to="/login" replace />
 

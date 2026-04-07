@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { getApiErrorMessage } from '@/lib/api.error';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -41,13 +42,8 @@ export function Login() {
     login(
       { Email: email, Password: password },
       {
-        onSuccess: ({ redirectTo }) => {
-          navigate(redirectTo);
-        },
-        onError: (err: any) => {
-          console.log(err);
-          setError(err?.response?.data?.message || 'Error al iniciar sesión');
-        },
+        onSuccess: ({ redirectTo }) => navigate(redirectTo, { replace: true }),
+        onError: (err) => setError(getApiErrorMessage(err, 'Error al iniciar sesión')),
       }
     );
   };

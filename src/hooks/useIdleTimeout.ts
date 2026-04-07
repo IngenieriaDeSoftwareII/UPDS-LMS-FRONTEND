@@ -1,28 +1,48 @@
 import { useEffect, useRef, useCallback } from 'react'
 
-const WARN_AFTER = 1 * 60 * 1000
-const LOCK_AFTER = 2 * 60 * 1000
-
 const EVENTS = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'] as const
+const DEFAULT_RENEW_THRESHOLD = 5_000
 
 interface Options {
+  warnAfter: number
+  lockAfter: number
   onWarn: () => void
   onLock: () => void
   onActive: () => void
   enabled?: boolean
+  expiresAt?: number | null
+  renewThreshold?: number
+  onRenewNeeded?: () => void
 }
 
-export function useIdleTimeout({ onWarn, onLock, onActive, enabled = true }: Options) {
+export function useIdleTimeout({
+  warnAfter, lockAfter, onWarn, onLock, onActive, enabled = true,
+  expiresAt, renewThreshold = DEFAULT_RENEW_THRESHOLD, onRenewNeeded,
+}: Options) {
   const warnTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const lockTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
+  const isRenewing = useRef(false)
+
+  // Cuando sessionExpiresAt cambia (refresh exitoso) habilitamos la renovación nuevamente
+  useEffect(() => {
+    isRenewing.current = false
+  }, [expiresAt])
 
   const reset = useCallback(() => {
     clearTimeout(warnTimer.current)
     clearTimeout(lockTimer.current)
     onActive()
-    warnTimer.current = setTimeout(onWarn, WARN_AFTER)
-    lockTimer.current = setTimeout(onLock, LOCK_AFTER)
-  }, [onWarn, onLock, onActive])
+    warnTimer.current = setTimeout(onWarn, warnAfter)
+    lockTimer.current = setTimeout(onLock, lockAfter)
+
+    if (expiresAt && onRenewNeeded && !isRenewing.current) {
+      const remaining = expiresAt - Date.now()
+      if (remaining > 0 && remaining < renewThreshold) {
+        isRenewing.current = true
+        onRenewNeeded()
+      }
+    }
+  }, [warnAfter, lockAfter, onWarn, onLock, onActive, expiresAt, renewThreshold, onRenewNeeded])
 
   useEffect(() => {
     if (!enabled) {
