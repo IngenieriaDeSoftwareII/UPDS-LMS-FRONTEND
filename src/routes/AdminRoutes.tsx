@@ -17,8 +17,6 @@ import { CoursesPage } from '@/pages/admin/CoursesPage'
 import { CategoriesPage } from '@/pages/admin/CategoriesPage'
 import { CatalogsPage } from '@/pages/admin/CatalogsPage'
 import { TeachersPage } from '@/pages/admin/TeachersPage'
-import { HomeworksPage } from '@/pages/admin/homeworks/HomeworksPage'
-import { HomeworkSubmissionsAdminPage } from '@/pages/admin/homeworks/HomeworkSubmissionsAdminPage'
 import { VideosPage } from '@/pages/admin/videos/VideosPage'
 import { VideoUploadPage } from '@/pages/admin/videos/VideoUploadPage'
 import { VideoEditPage } from '@/pages/admin/videos/VideoEditPage'
@@ -47,10 +45,6 @@ export function AdminRoutes() {
       <Route path="videos" element={<VideosPage />} />
       <Route path="videos/upload" element={<VideoUploadPage />} />
       <Route path="videos/edit/:id" element={<VideoEditPage />} />
-
-      {/* Homeworks */}
-      <Route path="homeworks" element={<HomeworksPage />} />
-      <Route path="homeworkSubmissions" element={<HomeworkSubmissionsAdminPage />} />
 
       <Route path="reports/courses" element={<AdminCourseReportsPage />} />
       <Route path="reports/teachers" element={<AdminTeacherReportsPage />} />
