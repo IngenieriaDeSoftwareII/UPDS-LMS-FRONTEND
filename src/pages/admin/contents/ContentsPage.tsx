@@ -39,7 +39,12 @@ import {
 import { useContents } from '@/hooks/useContents'
 import type { Content } from '@/hooks/useContents'
 import { useLessons } from '@/hooks/useLessons'
-import type { Lesson } from '@/hooks/useLessons'
+
+type Lesson = {
+  id: number
+  title: string
+  [key: string]: any
+}
 
 // 🔥 Schema
 const formSchema = z.object({

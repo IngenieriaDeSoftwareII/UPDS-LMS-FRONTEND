@@ -20,6 +20,7 @@ interface MultiSelectProps {
   onChange: (selected: string[]) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function MultiSelect({

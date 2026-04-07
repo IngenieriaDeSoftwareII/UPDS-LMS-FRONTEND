@@ -23,9 +23,7 @@ import type { getHomeWorkDto } from '@/types/homeWork'
 import { useAuthStore } from '@/store/auth.store'
 import { inscriptionService } from '@/services/inscription.service'
 import { studentProgressService } from '@/services/student-progress.service'
-import { getApiErrorMessage } from '@/lib/api.error'
 import { getErrorMessage } from '@/lib/api.error'
-import type { Course } from '@/types/course'
 import { useVideoContents } from '@/hooks/useVideoContents'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -518,6 +516,7 @@ export function CourseDetail() {
                   {selectedModule?.lecciones?.map(leccion => {
                     const busy = completingLessonId === leccion.id
 
+                    const API_ORIGIN = (import.meta.env.VITE_API_URL ?? 'http://localhost:5024/api').replace(/\/api\/?$/, '')
                     const fixUrl = (url?: string) => {
                       if (!url) return ''
                       if (url.startsWith('http')) return url
