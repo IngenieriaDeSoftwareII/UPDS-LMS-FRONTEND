@@ -16,4 +16,7 @@ export const coursePruebaService = {
 
   delete: (id: number) =>
     http.delete(`/Courses/${id}`),
+
+  getByTeacher: (teacherId: number) =>
+  http.get<Course[]>(`/Courses/teacher/${teacherId}`).then(r => r.data),
 }

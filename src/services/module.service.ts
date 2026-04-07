@@ -16,4 +16,6 @@ export const moduleService = {
 
   delete: (id: number) =>
     http.delete(`/Modules/Delete/${id}`),
+  getModuleByCourseId: (courseId: number) =>
+    http.get<ModuleDto[]>(`/Modules/GetByCourseId/${courseId}`).then(r => r.data),
 }

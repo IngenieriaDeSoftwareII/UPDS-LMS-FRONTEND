@@ -4,42 +4,40 @@ import { imageContentService } from '@/services/imageContent.service'
 export const useImageContents = () => {
   const qc = useQueryClient()
 
+  // LIST
   const useImagesList = () =>
     useQuery({
       queryKey: ['images'],
       queryFn: imageContentService.getAll,
     })
 
+  // UPLOAD
   const useUploadImage = () =>
     useMutation({
-      mutationFn: (formData: FormData) =>
-        imageContentService.upload(formData),
+      mutationFn: imageContentService.upload,
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: ['images'] })
       },
     })
 
+  // DELETE
   const useDeleteImage = () =>
     useMutation({
-      mutationFn: (id: number) =>
-        imageContentService.delete(id),
+      mutationFn: imageContentService.delete,
       onSuccess: () => {
         qc.invalidateQueries({ queryKey: ['images'] })
       },
     })
 
-    const useUpdateImage = () =>
+  //  UPDATE 
+  const useUpdateImage = () =>
     useMutation({
-        mutationFn: ({ id, formData }: { id: number; formData: FormData }) =>
+      mutationFn: ({ id, formData }: { id: number; formData: FormData }) =>
         imageContentService.update(id, formData),
 
-        onSuccess: () => {
+      onSuccess: () => {
         qc.invalidateQueries({ queryKey: ['images'] })
-        },
-
-        onError: (err: any) => {
-        console.error('Error al actualizar imagen:', err)
-        },
+      },
     })
 
   return {

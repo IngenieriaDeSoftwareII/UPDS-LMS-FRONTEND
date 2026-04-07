@@ -30,9 +30,8 @@ import {
 } from '@/components/ui/table'
 
 import { useLessons } from '@/hooks/useLessons'
-import { useModules } from '@/hooks/useModules' // 🔥 NUEVO
-
-import type { Lesson } from '@/hooks/useLessons'
+import type { Lesson } from '@/services/lessons.service'
+import { useModules } from '@/hooks/useModules'
 
 // 🔥 Schema
 const formSchema = z.object({
@@ -56,13 +55,10 @@ export function LessonsPage() {
   } = useLessons()
 
   const { data: lessons, isLoading, error } = useLessonsList()
-
-  // 🔥 módulos reales
-  const { data: modules = [], isLoading: loadingModules } = useModules()
-
-  const { mutate: createLesson } = useCreateLesson()
+  const { mutate: createLesson } = useCreateLesson() 
   const { mutate: updateLesson } = useUpdateLesson()
   const { mutate: deleteLesson } = useDeleteLesson()
+  const { data: modules, isLoading: loadingModules } = useModules()
 
   const isEditing = !!editingLesson
 
@@ -79,7 +75,7 @@ export function LessonsPage() {
   const handleCreate = () => {
     setEditingLesson(null)
     reset({
-      moduleId: modules[0]?.id || 1, // 🔥 primer módulo automático
+      moduleId: 1,
       title: '',
       description: '',
       order: 1,
@@ -126,15 +122,6 @@ export function LessonsPage() {
     }
   }
 
-  if (isLoading || loadingModules) {
-    return (
-      <div className="p-6">
-        <Skeleton className="h-6 w-40 mb-4" />
-        <Skeleton className="h-40 w-full" />
-      </div>
-    )
-  }
-
   return (
     <div className="space-y-6">
 
@@ -147,7 +134,6 @@ export function LessonsPage() {
         </Button>
       </div>
 
-      {/* MODAL */}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
@@ -158,17 +144,20 @@ export function LessonsPage() {
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
 
-            {/* 🔥 SELECT MODULOS */}
             <div>
-              <label>Módulo</label>
+              <label>Módulo ID</label>
               <select
-                className="w-full border rounded p-2"
                 {...register('moduleId', { valueAsNumber: true })}
-                disabled={isEditing}
+                className="w-full border rounded px-2 py-1"
+                disabled={loadingModules}
               >
-                {modules.map(m => (
-                  <option key={m.id} value={m.id}>
-                    {m.titulo}
+                <option value="">
+                  {loadingModules ? 'Cargando módulos...' : 'Seleccione un módulo'}
+                </option>
+
+                {modules?.map((module) => (
+                  <option key={module.id} value={module.id}>
+                    ID: {module.id} -{module.titulo}
                   </option>
                 ))}
               </select>
@@ -205,7 +194,6 @@ export function LessonsPage() {
         </DialogContent>
       </Dialog>
 
-      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Listado de lecciones</CardTitle>
@@ -228,29 +216,43 @@ export function LessonsPage() {
               </TableHeader>
 
               <TableBody>
-                {lessons?.map((lesson) => {
-                  const module = modules.find(m => m.id === lesson.moduleId)
-
-                  return (
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6}>
+                      <Skeleton className="h-4 w-full" />
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  lessons?.map((lesson) => (
                     <TableRow key={lesson.id}>
                       <TableCell>{lesson.id}</TableCell>
-                      <TableCell>{module?.titulo ?? 'N/A'}</TableCell>
+                      <TableCell>
+                        ID: {lesson.moduleId} - {lesson.title}
+                      </TableCell>
                       <TableCell>{lesson.title}</TableCell>
                       <TableCell>{lesson.description}</TableCell>
                       <TableCell>{lesson.order}</TableCell>
 
-                      <TableCell>
-                        <Button onClick={() => handleEdit(lesson)}>
-                          <Pencil />
+                      <TableCell className="flex gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEdit(lesson)}
+                        >
+                          <Pencil className="w-4 h-4" />
                         </Button>
 
-                        <Button onClick={() => handleDelete(lesson.id)}>
-                          <Trash2 />
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(lesson.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
                         </Button>
                       </TableCell>
                     </TableRow>
-                  )
-                })}
+                  ))
+                )}
               </TableBody>
             </Table>
           )}

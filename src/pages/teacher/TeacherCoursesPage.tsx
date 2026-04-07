@@ -3,8 +3,10 @@ import { Controller, useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Pencil, ServerCrash, Search, BookOpen, GraduationCap, Clock, Users } from 'lucide-react'
+import { Pencil, ServerCrash, Search, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { useNavigate } from 'react-router-dom'
 import { getApiErrorMessage } from '@/lib/api.error'
 import { useTeacherCourses, useUpdateCourse } from '@/hooks/useCourses'
 import { useTeacherProfile } from '@/hooks/useTeacherProfile'
@@ -213,6 +215,17 @@ export function TeacherCoursesPage() {
   const totalDuration = courses?.reduce((acc: number, c: Course) => acc + (c.duracion_total_min || 0), 0) ?? 0
   const avgDuration = totalCourses > 0 ? Math.round(totalDuration / totalCourses) : 0
   const totalCapacity = courses?.reduce((acc: number, c: Course) => acc + (c.max_estudiantes || 0), 0) ?? 0
+  const navigate = useNavigate()
+  return (
+    <div className="space-y-6 p-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Mis Cursos Asignados</h2>
+          <p className="text-muted-foreground">
+            Administra y edita los cursos que dictas (Lectura/Edición).
+          </p>
+        </div>
+      </div>
 
   return (
     <div className="space-y-6">
@@ -375,6 +388,30 @@ export function TeacherCoursesPage() {
                       </TableCell>
                     </TableRow>
                   ))}
+                  ) : (
+                    filtered.map((course: Course) => (
+                      <TableRow key={course.id}>
+                        <TableCell className="font-medium">{course.titulo}</TableCell>
+                        <TableCell>{course.nivel}</TableCell>
+                        <TableCell>{course.duracion_total_min} min</TableCell>
+                        <TableCell>
+                          <Badge variant={course.publicado ? 'default' : 'secondary'}>
+                            {course.publicado ? 'Publicado' : 'Borrador'}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <EditCourseDialog course={course} />
+                          <Button variant="ghost" size="icon" title="Ver curso"
+                            onClick={() => {
+                              navigate(`/teacher/lessons/${course.id}`)
+                            }}>
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>

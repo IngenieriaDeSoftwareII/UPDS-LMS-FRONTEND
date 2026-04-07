@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { Pencil, Trash2 } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -17,14 +18,53 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { useImageContents } from '@/hooks/useImageContents'
+import { useLessons } from '@/hooks/useLessons'
+import { useModules } from '@/hooks/useModules'
+import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
+
+// TIPOS CORRECTOS
+type Lesson = {
+  id: number
+  title: string
+  moduleId: number
+}
+
+type ModuleDto = {
+  id: number
+  cursoId: number // 🔥 nombre correcto
+  titulo: string
+}
+
+type Course = {
+  id: number
+  titulo: string
+}
 
 export function ImagesPage() {
   const navigate = useNavigate()
 
   const { useImagesList, useDeleteImage } = useImageContents()
+  const { useLessonsList } = useLessons()
+  const { data: modules = [] } = useModules()
+  const { data: courses = [] } = useCoursesPrueba()
 
-  const { data, isLoading } = useImagesList()
+  const { data = [], isLoading } = useImagesList()
+  const { data: lessons = [] } = useLessonsList()
+
   const { mutate: deleteImage } = useDeleteImage()
+
+  // ✅ MAPAS CORREGIDOS
+  const lessonsMap: Record<number, Lesson> = Object.fromEntries(
+    lessons.map((l: Lesson) => [l.id, l])
+  )
+
+  const modulesMap: Record<number, ModuleDto> = Object.fromEntries(
+    modules.map((m) => [m.id, m]) // 🔥 sin tipar manualmente
+  )
+
+  const coursesMap: Record<number, Course> = Object.fromEntries(
+    courses.map((c: Course) => [c.id, c])
+  )
 
   const handleDelete = (id: number) => {
     if (confirm('¿Eliminar imagen?')) {
@@ -35,14 +75,16 @@ export function ImagesPage() {
   return (
     <div className="space-y-6">
 
+      {/* HEADER */}
       <div className="flex justify-between">
         <h2 className="text-xl font-semibold">Gestión de Imágenes</h2>
 
-        <Button onClick={() => navigate('/admin/uploadimage')}>
+        <Button onClick={() => navigate('/admin/images/upload')}>
           + Subir Imagen
         </Button>
       </div>
 
+      {/* TABLE */}
       <Card>
         <CardHeader>
           <CardTitle>Listado de Imágenes</CardTitle>
@@ -54,12 +96,12 @@ export function ImagesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID</TableHead>
-                <TableHead>Lesson</TableHead> {/* 🔥 NUEVO */}
+                <TableHead>Ubicación</TableHead>
                 <TableHead>Título</TableHead>
                 <TableHead>Imagen</TableHead>
                 <TableHead>Formato</TableHead>
                 <TableHead>Tamaño</TableHead>
-                <TableHead>Orden</TableHead> {/* 🔥 NUEVO */}
+                <TableHead>Orden</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -67,81 +109,108 @@ export function ImagesPage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={8}>
+                  <TableCell colSpan={10}>
                     <Skeleton className="h-4 w-full" />
                   </TableCell>
                 </TableRow>
-              ) : data?.length === 0 ? (
+              ) : data.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center">
+                  <TableCell colSpan={10} className="text-center">
                     No hay imágenes registradas
                   </TableCell>
                 </TableRow>
               ) : (
-                data?.map((img: any) => (
-                  <TableRow key={img.contentId}>
+                data.map((img: any) => {
 
-                    {/* ID */}
-                    <TableCell>{img.contentId}</TableCell>
+                  const lesson = lessonsMap[img.content?.lessonId]
+                  const module = lesson ? modulesMap[lesson.moduleId] : null
+                  const course = module ? coursesMap[module.cursoId] : null // 🔥 FIX
 
-                    {/* 🔥 LESSON ID */}
-                    <TableCell>
-                      {img.content?.lessonId ?? '—'}
-                    </TableCell>
+                  return (
+                    <TableRow key={img.contentId}>
 
-                    {/* 🔥 TÍTULO REAL DESDE CONTENT */}
-                    <TableCell>
-                      {img.content?.title ?? img.altText}
-                    </TableCell>
+                      {/* ID */}
+                      <TableCell>{img.contentId}</TableCell>
 
-                    {/* IMAGEN */}
-                    <TableCell>
-                      <img
-                        src={img.imageUrl}
-                        alt={img.altText}
-                        className="w-20 h-20 object-cover rounded border"
-                        onError={(e) => {
-                          e.currentTarget.src =
-                            'https://via.placeholder.com/80?text=Error'
-                        }}
-                      />
-                    </TableCell>
+                      {/* UBICACIÓN (Curso + Módulo + Lección) */}
+                      <TableCell>
+                        {lesson && module && course ? (
+                          <div className="flex flex-col text-sm leading-tight">
+                            <span>
+                              <strong>Curso:</strong> {course.titulo}
+                            </span>
+                            <span>
+                              <strong>Módulo:</strong> {module.titulo}
+                            </span>
+                            <span>
+                              <strong>Lección:</strong> {lesson.title}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              ID: {lesson.id}
+                            </span>
+                          </div>
+                        ) : (
+                          '—'
+                        )}
+                      </TableCell>
 
-                    {/* FORMATO */}
-                    <TableCell>{img.format}</TableCell>
+                      {/* TÍTULO */}
+                      <TableCell>
+                        {img.content?.title ?? img.altText}
+                      </TableCell>
 
-                    {/* TAMAÑO */}
-                    <TableCell>
-                      {img.sizeKb ? `${img.sizeKb} KB` : '—'}
-                    </TableCell>
+                      {/* IMAGEN */}
+                      <TableCell>
+                        <img
+                          src={img.imageUrl}
+                          alt={img.altText}
+                          className="w-20 h-20 object-cover rounded border"
+                          onError={(e) => {
+                            e.currentTarget.src =
+                              'https://via.placeholder.com/80?text=Error'
+                          }}
+                        />
+                      </TableCell>
 
-                    {/* 🔥 ORDEN */}
-                    <TableCell>
-                      {img.content?.order ?? '—'}
-                    </TableCell>
+                      {/* FORMATO */}
+                      <TableCell>{img.format}</TableCell>
 
-                    <TableCell className="text-right space-x-2">
+                      {/* TAMAÑO */}
+                      <TableCell>
+                        {img.sizeKb ? `${img.sizeKb} KB` : '—'}
+                      </TableCell>
 
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          navigate(`/admin/images/edit/${img.contentId}`)
-                        }
-                      >
-                        Editar
-                      </Button>
+                      {/* ORDEN */}
+                      <TableCell>
+                        {img.content?.order ?? '—'}
+                      </TableCell>
 
-                      <Button
-                        variant="destructive"
-                        onClick={() => handleDelete(img.contentId)}
-                      >
-                        Eliminar
-                      </Button>
+                      {/* ACCIONES */}
+                      <TableCell className="flex justify-end gap-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Editar"
+                          onClick={() =>
+                            navigate(`/admin/images/edit/${img.contentId}`)
+                          }
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
 
-                    </TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Eliminar"
+                          onClick={() => handleDelete(img.contentId)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </TableCell>
 
-                  </TableRow>
-                ))
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
 

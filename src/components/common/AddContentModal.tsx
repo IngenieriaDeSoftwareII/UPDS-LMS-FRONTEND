@@ -5,7 +5,7 @@ type Props = {
   open: boolean
   onClose: () => void
   lessonId: number
-  onSelect: (type: 'document' | 'image') => void
+  onSelect: (type: 'document' | 'image' | 'video' | 'homework') => void
 }
 
 export function AddContentModal({ open, onClose, onSelect }: Props) {
@@ -17,13 +17,20 @@ export function AddContentModal({ open, onClose, onSelect }: Props) {
         </DialogHeader>
 
         <div className="flex flex-col gap-4 mt-4">
-
-          <Button onClick={() => onSelect('document')}>
+          <Button onClick={() => { onSelect('document'); onClose() }}>
             📄 Documento
           </Button>
 
-          <Button onClick={() => onSelect('image')}>
+          <Button onClick={() => { onSelect('image'); onClose() }}>
             🖼️ Imagen
+          </Button>
+
+          <Button onClick={() => { onSelect('video'); onClose() }}>
+            🎬 Video
+          </Button>
+
+          <Button onClick={() => { onSelect('homework'); onClose() }}>
+            📝 Tarea
           </Button>
 
         </div>

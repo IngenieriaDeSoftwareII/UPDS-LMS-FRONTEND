@@ -17,6 +17,11 @@ import { CoursesPage } from '@/pages/admin/CoursesPage'
 import { CategoriesPage } from '@/pages/admin/CategoriesPage'
 import { CatalogsPage } from '@/pages/admin/CatalogsPage'
 import { TeachersPage } from '@/pages/admin/TeachersPage'
+import { HomeworksPage } from '@/pages/admin/homeworks/HomeworksPage'
+import { HomeworkSubmissionsAdminPage } from '@/pages/admin/homeworks/HomeworkSubmissionsAdminPage'
+import { VideosPage } from '@/pages/admin/videos/VideosPage'
+import { VideoUploadPage } from '@/pages/admin/videos/VideoUploadPage'
+import { VideoEditPage } from '@/pages/admin/videos/VideoEditPage'
 
 export function AdminRoutes() {
   return (
@@ -29,15 +34,24 @@ export function AdminRoutes() {
       {/* Content */}
       <Route path="/contents" element={<ContentsPage />} />
       {/* DocumentContent */}
-      <Route path="/documents" element={<DocumentsPage />} />
-      <Route path="/uploaddocuments" element={<DocumentUploadPage />} />
-      <Route path="/documents/edit/:id" element={<DocumentEditPage />} />
+      <Route path="documents" element={<DocumentsPage />} />
+      <Route path="documents/upload" element={<DocumentUploadPage />} />
+      <Route path="documents/edit/:id" element={<DocumentEditPage />} />
       {/* ImageContent */}
-      <Route path="/images" element={<ImagesPage />} />
-      <Route path="/uploadimage" element={<ImageUploadPage />} />
-      <Route path="/images/edit/:id" element={<ImageEditPage />} />
+      <Route path="images" element={<ImagesPage />} />
+      <Route path="images/upload" element={<ImageUploadPage />} />
+      <Route path="images/edit/:id" element={<ImageEditPage />} />
       {/* Modules */}
       <Route path="modules" element={<ModulesPage />} />
+      {/* VideoContent */}
+      <Route path="videos" element={<VideosPage />} />
+      <Route path="videos/upload" element={<VideoUploadPage />} />
+      <Route path="videos/edit/:id" element={<VideoEditPage />} />
+
+      {/* Homeworks */}
+      <Route path="homeworks" element={<HomeworksPage />} />
+      <Route path="homeworkSubmissions" element={<HomeworkSubmissionsAdminPage />} />
+
       <Route path="reports/courses" element={<AdminCourseReportsPage />} />
       <Route path="reports/teachers" element={<AdminTeacherReportsPage />} />
       <Route path="courses" element={<CoursesPage />} />

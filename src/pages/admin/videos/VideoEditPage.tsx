@@ -10,71 +10,79 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 
-import { useImageContents } from '@/hooks/useImageContents'
+import { useVideoContents } from '@/hooks/useVideoContents'
 import { useLessons } from '@/hooks/useLessons'
 import { useModules } from '@/hooks/useModules'
 import { useCoursesPrueba } from '@/hooks/useCoursesPrueba'
 
-export function ImageEditPage() {
+export function VideoEditPage() {
   const { id } = useParams()
   const navigate = useNavigate()
 
-  const { useImagesList, useUpdateImage } = useImageContents()
+  const { useVideosList, useUpdateVideo } = useVideoContents()
   const { useLessonsList } = useLessons()
 
-  const { data, isLoading } = useImagesList()
+  const { data, isLoading } = useVideosList()
   const { data: lessons } = useLessonsList()
 
   const { data: modules } = useModules()
   const { data: courses } = useCoursesPrueba()
 
-  const { mutate: update, isPending } = useUpdateImage()
+  const { mutate: update, isPending } = useUpdateVideo()
 
-  const [title, setTitle] = useState('')
   const [lessonId, setLessonId] = useState<number | undefined>()
+  const [order, setOrder] = useState<number>(1)
+  const [duration, setDuration] = useState<number>(0)
   const [file, setFile] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
-  const image = data?.find((i: any) => i.contentId === Number(id))
+  const video = data?.find((v: any) => v.contentId === Number(id))
 
-  //  cargar datos
+  // 🔥 cargar datos iniciales
   useEffect(() => {
-    if (image) {
-      setTitle(image.altText)
-      setLessonId(image.content?.lessonId)
+    if (video) {
+      setLessonId(video.content?.lessonId)
+      setOrder(video.content?.order || 1)
+      setDuration(video.duracionSeg || 0)
     }
-  }, [image])
+  }, [video])
 
-  //  preview
-  useEffect(() => {
-    if (!file) {
-      setPreview(null)
-      return
+  // 🔥 auto detectar duración si cambia archivo
+  const handleFileChange = (f: File) => {
+    setFile(f)
+
+    const vid = document.createElement('video')
+    vid.src = URL.createObjectURL(f)
+
+    vid.onloadedmetadata = () => {
+      setDuration(Math.floor(vid.duration))
+      URL.revokeObjectURL(vid.src)
     }
-
-    const objectUrl = URL.createObjectURL(file)
-    setPreview(objectUrl)
-
-    return () => URL.revokeObjectURL(objectUrl)
-  }, [file])
+  }
 
   const handleUpdate = () => {
     setError(null)
-
-    if (!title.trim()) {
-      setError('El título es obligatorio')
-      return
-    }
 
     if (!lessonId) {
       setError('Debes seleccionar una lección')
       return
     }
 
+    if (order <= 0) {
+      setError('Orden inválido')
+      return
+    }
+
+    if (duration <= 0) {
+      setError('Duración inválida')
+      return
+    }
+
     const formData = new FormData()
-    formData.append('altText', title)
+
     formData.append('lessonId', String(lessonId))
+    formData.append('order', String(order))
+    formData.append('duracionSeg', String(duration))
 
     if (file) {
       formData.append('file', file)
@@ -87,14 +95,14 @@ export function ImageEditPage() {
       },
       {
         onSuccess: () => {
-          alert('Imagen actualizada correctamente ✅')
-          navigate('/admin/images')
+          alert('Video actualizado correctamente ✅')
+          navigate('/admin/videos')
         },
         onError: (err: any) => {
           const message =
             err?.response?.data?.errors?.[0] ||
             err?.response?.data ||
-            'No se pudo actualizar la imagen ❌'
+            'No se pudo actualizar el video ❌'
 
           setError(message)
         },
@@ -106,10 +114,10 @@ export function ImageEditPage() {
     return <div className="p-6">Cargando...</div>
   }
 
-  if (!image) {
+  if (!video) {
     return (
       <div className="p-6 text-red-500">
-        Imagen no encontrada ❌
+        Video no encontrado ❌
       </div>
     )
   }
@@ -117,13 +125,13 @@ export function ImageEditPage() {
   return (
     <div className="space-y-6">
 
-      <Button onClick={() => navigate('/admin/images')}>
+      <Button onClick={() => navigate('/admin/videos')}>
         ← Volver
       </Button>
 
       <Card>
         <CardHeader>
-          <CardTitle>Editar Imagen</CardTitle>
+          <CardTitle>Editar Video</CardTitle>
         </CardHeader>
 
         <CardContent className="space-y-6">
@@ -135,60 +143,64 @@ export function ImageEditPage() {
             </div>
           )}
 
-          {/* PREVIEW */}
+          {/* VIDEO PREVIEW */}
           <div className="flex justify-center">
-            <img
-              src={preview || image.imageUrl}
-              alt={title}
-              className="w-40 h-40 object-cover rounded border"
-              onError={(e) => {
-                e.currentTarget.src =
-                  'https://via.placeholder.com/150?text=Error'
-                setError('Error al cargar la imagen')
-              }}
+            <video
+              src={file ? URL.createObjectURL(file) : video.videoUrl}
+              controls
+              className="w-64 rounded border"
             />
           </div>
 
           {/* FILE */}
           <div>
             <label className="block text-sm font-medium">
-              Cambiar imagen
+              Cambiar video
             </label>
             <Input
               type="file"
-              accept="image/*"
+              accept="video/*"
               onChange={(e) => {
                 const selected = e.target.files?.[0]
 
                 if (!selected) return
 
-                if (!selected.type.startsWith('image/')) {
-                  setError('Solo se permiten archivos de imagen')
+                if (!selected.type.startsWith('video/')) {
+                  setError('Solo se permiten videos')
                   return
                 }
 
                 setError(null)
-                setFile(selected)
+                handleFileChange(selected)
               }}
             />
           </div>
 
-          {/* TITLE */}
+          {/* DURACIÓN */}
           <div>
             <label className="block text-sm font-medium">
-              Título
+              Duración (segundos)
             </label>
             <Input
-              value={title}
-              onChange={(e) => {
-                setTitle(e.target.value)
-                if (error) setError(null)
-              }}
-              placeholder="Nombre de la imagen"
+              type="number"
+              value={duration}
+              onChange={(e) => setDuration(Number(e.target.value))}
             />
           </div>
 
-          {/*  LECCIÓN CON CURSO + MÓDULO */}
+          {/* ORDEN */}
+          <div>
+            <label className="block text-sm font-medium">
+              Orden
+            </label>
+            <Input
+              type="number"
+              value={order}
+              onChange={(e) => setOrder(Number(e.target.value))}
+            />
+          </div>
+
+          {/* LECCIÓN */}
           <div>
             <label className="block text-sm font-medium">
               Lección
@@ -214,6 +226,7 @@ export function ImageEditPage() {
             </select>
           </div>
 
+          {/* SUBMIT */}
           <div className="flex justify-end">
             <Button onClick={handleUpdate} disabled={isPending}>
               {isPending ? 'Guardando...' : 'Guardar cambios'}
